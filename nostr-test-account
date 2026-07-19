@@ -8,3 +8,12 @@ nsec
 
 generator for testing
 https://nostr-tools.com/
+
+
+create kind 0 event with data like this in order to publish profile
+{
+  "name": "nebergyo",
+  "display_name": "Neberg yo",
+  "about": "Test-Account für n8n Workflow",
+  "picture": "https://example.com/avatar.png"
+}
