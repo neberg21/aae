@@ -17,3 +17,8 @@ create kind 0 event with data like this in order to publish profile
   "about": "Test-Account für n8n Workflow",
   "picture": "https://example.com/avatar.png"
 }
+
+
+
+send message to the npub easily, eg via 
+https://snort.social/messages/nchat171qgs28g0ncxk8ga0enqh72ltuxe7qle30qewd5ku78aujgzrex6etupc6hwp47
