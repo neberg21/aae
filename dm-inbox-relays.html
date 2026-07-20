@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DM-Inbox-Relays veröffentlichen (Kind 10050)</title>
+<title>Nostr Account Setup & DM-Inbox-Relays (Kind 10050)</title>
 <style>
   :root {
     --bg: #0f1115;
@@ -71,7 +71,7 @@
   .field { margin-bottom: 14px; }
   .hint { font-size: 0.78rem; color: var(--muted); margin-top: 5px; }
 
-  .toggle-btn {
+  .toggle-btn, .sec-btn {
     background: none;
     border: none;
     color: var(--accent);
@@ -80,6 +80,7 @@
     padding: 0;
     margin-top: 6px;
   }
+  .sec-btn { margin-left: 14px; font-weight: bold; }
 
   button.primary {
     background: var(--accent);
@@ -121,59 +122,123 @@
   .result-box { display: none; }
   .pubkey-line { font-size: 0.82rem; color: var(--muted); margin-bottom: 10px; word-break: break-all; }
   .error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 10px; display: none; }
+  
+  .generated-keys-box {
+    background: #0d0f14;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 14px;
+    display: none;
+  }
+  .generated-keys-box div {
+    font-size: 0.82rem;
+    margin-bottom: 6px;
+    word-break: break-all;
+  }
+  .generated-keys-box strong {
+    color: var(--accent);
+    font-family: monospace;
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <h1>DM-Inbox-Relays veröffentlichen</h1>
-  <p class="sub">Erstellt und signiert ein NIP-17 Kind-10050-Event lokal in deinem Browser und sendet es an die angegebenen Relays.</p>
+  <h1>Nostr Account Setup &amp; Relays veröffentlichen</h1>
+  <p class="sub">Generiere Schlüssel, erstelle ein Profil (Kind 0) und hinterlege deine DM-Inbox-Relays (Kind 10050) sicher im Browser.</p>
 
   <div class="warning">
-    <strong>Sicherheitshinweise, bitte lesen</strong>
+    <strong>Wichtige Sicherheitshinweise</strong>
     <ul>
-      <li>Nutze diese Seite nur lokal (Datei herunterladen und im Browser öffnen) oder offline — nicht auf einem fremden/öffentlichen Rechner.</li>
-      <li>Dein Private Key wird nirgendwo hochgeladen. Er bleibt im Browser, signiert dort das Event, und nur das <em>signierte Event</em> (keine Keys) wird an die Relays geschickt.</li>
-      <li>Für den täglichen Gebrauch ist ein Browser-Signer (z. B. nos2x, Alby) sicherer, da dort nie ein Eingabefeld mit deinem Key nötig ist.</li>
-      <li>Schließe den Tab danach und leere bei Bedarf die Zwischenablage.</li>
+      <li>Nutze diese Seite idealerweise lokal (als HTML-Datei speichern) oder offline.</li>
+      <li>Dein Private Key (nsec) verlässt niemals deinen Browser. Nur die fertig signierten Events werden an die Relays geschickt.</li>
+      <li><strong>Wichtig:</strong> Wenn du neue Schlüssel generierst, kopiere und sichere deinen <strong>nsec</strong> sofort! Sobald die Seite neu geladen wird, ist er weg.</li>
     </ul>
   </div>
 
+  <!-- Karte 1: Schlüsselverwaltung -->
   <div class="card">
+    <label>Schlüssel-Optionen</label>
+    <div class="field" style="margin-top: 8px; margin-bottom: 18px;">
+      <button class="toggle-btn" style="font-size:0.88rem;" id="generateBtn">⚡ Neuen privaten Schlüssel (nsec) erzeugen</button>
+    </div>
+
+    <!-- Anzeigebox für frisch generierte Schlüssel -->
+    <div class="generated-keys-box" id="genKeysBox">
+      <div><strong>WICHTIG - BITTE SICHERN:</strong></div>
+      <div><strong>nsec (Geheim):</strong> <span id="genNsec" style="font-family:monospace; color:#fff;"></span></div>
+      <div><strong>npub (Öffentlich):</strong> <span id="genNpub" style="font-family:monospace;"></span></div>
+      <div><strong>Hex-Pubkey:</strong> <span id="genHexPub" style="font-family:monospace; font-size: 0.75rem;"></span></div>
+    </div>
+
     <div class="field">
-      <label for="privkey">Private Key (nsec1... oder 64-stelliger Hex-Key)</label>
+      <label for="privkey">Private Key für die Veröffentlichung (wird automatisch ausgefüllt bei Klick oben)</label>
       <input type="password" id="privkey" placeholder="nsec1... oder hex" autocomplete="off">
       <button class="toggle-btn" id="toggleVis">anzeigen</button>
     </div>
+  </div>
 
+  <!-- Karte 2: Profil-Metadaten (Kind 0) -->
+  <div class="card">
+    <label>Optional: Profil-Metadaten veröffentlichen (Kind 0)</label>
+    <div style="font-size: 0.78rem; color: var(--muted); margin-bottom: 12px;">
+      Damit dein Account einen Namen hat und in Clients gefunden wird.
+    </div>
+    
     <div class="field">
-      <label for="relays">DM-Inbox-Relays (eine URL pro Zeile)</label>
-      <textarea id="relays">wss://inbox.nostr.wine
-wss://auth.nostr1.com
-wss://relay.damus.io</textarea>
-      <div class="hint">Empfehlung: 2–3 Relays, mindestens eines öffentlich (für Zustellung), optional ein privates.</div>
+      <label for="profName">Name / Display Name</label>
+      <input type="text" id="profName" placeholder="Z. B. NostrNerd">
     </div>
 
-    <button class="primary" id="publishBtn">Event signieren &amp; veröffentlichen</button>
+    <div class="field">
+      <label for="profAbout">Über mich (About)</label>
+      <textarea id="profAbout" placeholder="Hallo Nostr! Dies ist mein neues Profil..." style="min-height: 60px;"></textarea>
+    </div>
+  </div>
+
+  <!-- Karte 3: Relays & Senden -->
+  <div class="card">
+    <div class="field">
+      <label for="relays">DM-Inbox &amp; Profil-Relays (eine URL pro Zeile)</label>
+      <textarea id="relays">wss://inbox.nostr.wine
+wss://auth.nostr1.com
+wss://relay.damus.io
+wss://relay.nostr.band</textarea>
+      <div class="hint">Hier werden sowohl deine Erreichbarkeit (Kind 10050) als auch dein Name (Kind 0) hingeschrieben.</div>
+    </div>
+
+    <button class="primary" id="publishBtn">Daten signieren &amp; veröffentlichen</button>
     <div class="error-msg" id="errorMsg"></div>
   </div>
 
+  <!-- Karte 4: Statusausgabe -->
   <div class="card result-box" id="resultBox">
     <div class="pubkey-line" id="pubkeyLine"></div>
     <div class="status-list" id="statusList"></div>
-    <label style="margin-top:14px;">Signiertes Event (JSON)</label>
+    
+    <label style="margin-top:14px;">Letztes signiertes Event (JSON)</label>
     <pre id="eventJson"></pre>
   </div>
 
 </div>
 
 <script type="module">
-  import { finalizeEvent, getPublicKey } from 'https://esm.sh/nostr-tools@2.10.4/pure';
+  import { finalizeEvent, getPublicKey, generateSecretKey } from 'https://esm.sh/nostr-tools@2.10.4/pure';
   import { SimplePool } from 'https://esm.sh/nostr-tools@2.10.4/pool';
   import * as nip19 from 'https://esm.sh/nostr-tools@2.10.4/nip19';
 
   const privInput = document.getElementById('privkey');
   const toggleVis = document.getElementById('toggleVis');
+  const generateBtn = document.getElementById('generateBtn');
+  const genKeysBox = document.getElementById('genKeysBox');
+  const genNsec = document.getElementById('genNsec');
+  const genNpub = document.getElementById('genNpub');
+  const genHexPub = document.getElementById('genHexPub');
+
+  const profName = document.getElementById('profName');
+  const profAbout = document.getElementById('profAbout');
+
   const relaysInput = document.getElementById('relays');
   const publishBtn = document.getElementById('publishBtn');
   const errorMsg = document.getElementById('errorMsg');
@@ -182,10 +247,36 @@ wss://relay.damus.io</textarea>
   const statusList = document.getElementById('statusList');
   const eventJson = document.getElementById('eventJson');
 
+  // nsec Sichtbarkeit umschalten
   toggleVis.addEventListener('click', () => {
     const show = privInput.type === 'password';
     privInput.type = show ? 'text' : 'password';
     toggleVis.textContent = show ? 'verbergen' : 'anzeigen';
+  });
+
+  // Neuen Key generieren und Felder befüllen
+  generateBtn.addEventListener('click', () => {
+    try {
+      const skBytes = generateSecretKey();
+      const pubHex = getPublicKey(skBytes);
+      
+      const nsecString = nip19.nsecEncode(skBytes);
+      const npubString = nip19.npubEncode(pubHex);
+
+      // In der Infobox anzeigen
+      genNsec.textContent = nsecString;
+      genNpub.textContent = npubString;
+      genHexPub.textContent = pubHex;
+      genKeysBox.style.display = 'block';
+
+      // Automatisch in das Input-Feld für das Formular eintragen
+      privInput.value = nsecString;
+      
+      // Fehler löschen falls vorhanden
+      errorMsg.style.display = 'none';
+    } catch(e) {
+      showError('Fehler bei der Key-Generierung: ' + e.message);
+    }
   });
 
   function hexToBytes(hex) {
@@ -206,7 +297,7 @@ wss://relay.damus.io</textarea>
     if (/^[0-9a-fA-F]{64}$/.test(val)) {
       return hexToBytes(val);
     }
-    throw new Error('Unbekanntes Format. Erwartet: nsec1... oder 64-stelliger Hex-String.');
+    throw new Error('Kein gültiger Key im Feld. Erzeuge erst einen oder füge einen nsec ein.');
   }
 
   function showError(msg) {
@@ -214,6 +305,7 @@ wss://relay.damus.io</textarea>
     errorMsg.style.display = 'block';
   }
 
+  // Sende-Prozess
   publishBtn.addEventListener('click', async () => {
     errorMsg.style.display = 'none';
     resultBox.style.display = 'none';
@@ -242,55 +334,101 @@ wss://relay.damus.io</textarea>
 
     publishBtn.disabled = true;
     publishBtn.textContent = 'Signiere & sende…';
+    statusList.innerHTML = '';
+    resultBox.style.display = 'block';
 
     try {
       const pubkey = getPublicKey(sk);
+      const userNpub = nip19.npubEncode(pubkey);
+      pubkeyLine.innerHTML = `<strong>Aktiv für Account:</strong> ${userNpub}`;
 
-      const template = {
+      const pool = new SimplePool();
+      let lastSignedEvent = null;
+
+      // --- EVENT 1: Profil-Metadaten (Kind 0) falls Name gesetzt ist ---
+      if (profName.value.trim() !== '') {
+        const profileContent = {
+          name: profName.value.trim(),
+          display_name: profName.value.trim(),
+          about: profAbout.value.trim()
+        };
+
+        const profileTemplate = {
+          kind: 0,
+          created_at: Math.floor(Date.now() / 1000),
+          tags: [],
+          content: JSON.stringify(profileContent)
+        };
+
+        const signedProfile = finalizeEvent(profileTemplate, sk);
+        lastSignedEvent = signedProfile;
+
+        // Visuelle Zeilen für das Profil-Publishing anlegen
+        relayUrls.forEach(url => {
+          const row = document.createElement('div');
+          row.className = 'status-row';
+          row.innerHTML = `<span>[Kind 0] ${url}</span><span class="status-pending" id="p-${btoa(url)}">wird gesendet…</span>`;
+          statusList.appendChild(row);
+        });
+
+        const profilePubs = pool.publish(relayUrls, signedProfile);
+        profilePubs.forEach((p, i) => {
+          const url = relayUrls[i];
+          const cell = document.getElementById('p-' + btoa(url));
+          p.then(() => {
+            cell.textContent = '✓ Profil live';
+            cell.className = 'status-ok';
+          }).catch(err => {
+            cell.textContent = '✗ Fehler';
+            cell.className = 'status-fail';
+          });
+        });
+      }
+
+      // --- EVENT 2: DM-Inbox-Relays (Kind 10050) ---
+      const inboxTemplate = {
         kind: 10050,
         created_at: Math.floor(Date.now() / 1000),
         tags: relayUrls.map(r => ['relay', r]),
         content: ''
       };
 
-      const signedEvent = finalizeEvent(template, sk);
+      const signedInbox = finalizeEvent(inboxTemplate, sk);
+      lastSignedEvent = signedInbox; // Das wird unten im Textbereich gezeigt
 
-      // Key aus dem Speicher/Feld entfernen, sobald signiert wurde
-      sk = null;
-      privInput.value = '';
-
-      pubkeyLine.textContent = 'npub: ' + nip19.npubEncode(pubkey);
-      eventJson.textContent = JSON.stringify(signedEvent, null, 2);
-      statusList.innerHTML = '';
+      // Visuelle Zeilen für die Inbox-Verknüpfung anlegen
       relayUrls.forEach(url => {
         const row = document.createElement('div');
         row.className = 'status-row';
-        row.innerHTML = `<span>${url}</span><span class="status-pending" id="s-${btoa(url)}">wird gesendet…</span>`;
+        row.innerHTML = `<span>[Kind 10050] ${url}</span><span class="status-pending" id="i-${btoa(url)}">wird gesendet…</span>`;
         statusList.appendChild(row);
       });
-      resultBox.style.display = 'block';
 
-      const pool = new SimplePool();
-      const pubs = pool.publish(relayUrls, signedEvent);
-
-      pubs.forEach((p, i) => {
+      const inboxPubs = pool.publish(relayUrls, signedInbox);
+      inboxPubs.forEach((p, i) => {
         const url = relayUrls[i];
-        const cell = document.getElementById('s-' + btoa(url));
+        const cell = document.getElementById('i-' + btoa(url));
         p.then(() => {
-          cell.textContent = '✓ angenommen';
+          cell.textContent = '✓ Inbox hinterlegt';
           cell.className = 'status-ok';
         }).catch(err => {
-          cell.textContent = '✗ fehlgeschlagen';
+          cell.textContent = '✗ Fehler';
           cell.className = 'status-fail';
           cell.title = err?.message || String(err);
         });
       });
 
+      // JSON-Vorschau füttern
+      eventJson.textContent = JSON.stringify(lastSignedEvent, null, 2);
+
+      // Wichtig: Secret Key aus dem Arbeitsspeicher werfen
+      sk = null;
+
     } catch (e) {
       showError('Fehler beim Signieren/Senden: ' + e.message);
     } finally {
       publishBtn.disabled = false;
-      publishBtn.textContent = 'Event signieren & veröffentlichen';
+      publishBtn.textContent = 'Daten signieren & veröffentlichen';
     }
   });
 </script>
