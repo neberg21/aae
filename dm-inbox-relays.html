@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DM-Inbox-Relays veröffentlichen (Kind 10050)</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --border: #2a2f3a;
+    --text: #e6e8eb;
+    --muted: #9aa3af;
+    --accent: #8b5cf6;
+    --accent-hover: #7c4ee0;
+    --danger: #ef4444;
+    --danger-bg: #2a1416;
+    --ok: #22c55e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+    padding: 24px 16px 64px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 1.35rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; font-size: 0.92rem; }
+
+  .warning {
+    background: var(--danger-bg);
+    border: 1px solid #4a2024;
+    color: #fca5a5;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    margin-bottom: 24px;
+  }
+  .warning strong { color: #fff; }
+  .warning ul { margin: 8px 0 0; padding-left: 20px; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 18px 20px;
+    margin-bottom: 16px;
+  }
+  label {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  input[type="password"], input[type="text"], textarea {
+    width: 100%;
+    background: #0d0f14;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.86rem;
+  }
+  textarea { min-height: 90px; resize: vertical; }
+  .field { margin-bottom: 14px; }
+  .hint { font-size: 0.78rem; color: var(--muted); margin-top: 5px; }
+
+  .toggle-btn {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 0.78rem;
+    cursor: pointer;
+    padding: 0;
+    margin-top: 6px;
+  }
+
+  button.primary {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-size: 0.94rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+  }
+  button.primary:hover { background: var(--accent-hover); }
+  button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .status-list { margin-top: 16px; font-size: 0.85rem; }
+  .status-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .status-row:last-child { border-bottom: none; }
+  .status-ok { color: var(--ok); }
+  .status-fail { color: var(--danger); }
+  .status-pending { color: var(--muted); }
+
+  pre {
+    background: #0d0f14;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 0.78rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .result-box { display: none; }
+  .pubkey-line { font-size: 0.82rem; color: var(--muted); margin-bottom: 10px; word-break: break-all; }
+  .error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 10px; display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>DM-Inbox-Relays veröffentlichen</h1>
+  <p class="sub">Erstellt und signiert ein NIP-17 Kind-10050-Event lokal in deinem Browser und sendet es an die angegebenen Relays.</p>
+
+  <div class="warning">
+    <strong>Sicherheitshinweise, bitte lesen</strong>
+    <ul>
+      <li>Nutze diese Seite nur lokal (Datei herunterladen und im Browser öffnen) oder offline — nicht auf einem fremden/öffentlichen Rechner.</li>
+      <li>Dein Private Key wird nirgendwo hochgeladen. Er bleibt im Browser, signiert dort das Event, und nur das <em>signierte Event</em> (keine Keys) wird an die Relays geschickt.</li>
+      <li>Für den täglichen Gebrauch ist ein Browser-Signer (z. B. nos2x, Alby) sicherer, da dort nie ein Eingabefeld mit deinem Key nötig ist.</li>
+      <li>Schließe den Tab danach und leere bei Bedarf die Zwischenablage.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label for="privkey">Private Key (nsec1... oder 64-stelliger Hex-Key)</label>
+      <input type="password" id="privkey" placeholder="nsec1... oder hex" autocomplete="off">
+      <button class="toggle-btn" id="toggleVis">anzeigen</button>
+    </div>
+
+    <div class="field">
+      <label for="relays">DM-Inbox-Relays (eine URL pro Zeile)</label>
+      <textarea id="relays">wss://inbox.nostr.wine
+wss://auth.nostr1.com
+wss://relay.damus.io</textarea>
+      <div class="hint">Empfehlung: 2–3 Relays, mindestens eines öffentlich (für Zustellung), optional ein privates.</div>
+    </div>
+
+    <button class="primary" id="publishBtn">Event signieren &amp; veröffentlichen</button>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <div class="card result-box" id="resultBox">
+    <div class="pubkey-line" id="pubkeyLine"></div>
+    <div class="status-list" id="statusList"></div>
+    <label style="margin-top:14px;">Signiertes Event (JSON)</label>
+    <pre id="eventJson"></pre>
+  </div>
+
+</div>
+
+<script type="module">
+  import { finalizeEvent, getPublicKey } from 'https://esm.sh/nostr-tools@2.10.4/pure';
+  import { SimplePool } from 'https://esm.sh/nostr-tools@2.10.4/pool';
+  import * as nip19 from 'https://esm.sh/nostr-tools@2.10.4/nip19';
+
+  const privInput = document.getElementById('privkey');
+  const toggleVis = document.getElementById('toggleVis');
+  const relaysInput = document.getElementById('relays');
+  const publishBtn = document.getElementById('publishBtn');
+  const errorMsg = document.getElementById('errorMsg');
+  const resultBox = document.getElementById('resultBox');
+  const pubkeyLine = document.getElementById('pubkeyLine');
+  const statusList = document.getElementById('statusList');
+  const eventJson = document.getElementById('eventJson');
+
+  toggleVis.addEventListener('click', () => {
+    const show = privInput.type === 'password';
+    privInput.type = show ? 'text' : 'password';
+    toggleVis.textContent = show ? 'verbergen' : 'anzeigen';
+  });
+
+  function hexToBytes(hex) {
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < bytes.length; i++) {
+      bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+    }
+    return bytes;
+  }
+
+  function parseSecretKey(raw) {
+    const val = raw.trim();
+    if (val.startsWith('nsec1')) {
+      const decoded = nip19.decode(val);
+      if (decoded.type !== 'nsec') throw new Error('Das ist kein gültiger nsec-Key.');
+      return decoded.data;
+    }
+    if (/^[0-9a-fA-F]{64}$/.test(val)) {
+      return hexToBytes(val);
+    }
+    throw new Error('Unbekanntes Format. Erwartet: nsec1... oder 64-stelliger Hex-String.');
+  }
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.style.display = 'block';
+  }
+
+  publishBtn.addEventListener('click', async () => {
+    errorMsg.style.display = 'none';
+    resultBox.style.display = 'none';
+
+    const relayUrls = relaysInput.value
+      .split('\n')
+      .map(r => r.trim())
+      .filter(r => r.length > 0);
+
+    if (relayUrls.length === 0) {
+      showError('Bitte mindestens ein Relay angeben.');
+      return;
+    }
+    if (relayUrls.some(r => !r.startsWith('wss://') && !r.startsWith('ws://'))) {
+      showError('Alle Relay-URLs müssen mit wss:// (oder ws://) beginnen.');
+      return;
+    }
+
+    let sk;
+    try {
+      sk = parseSecretKey(privInput.value);
+    } catch (e) {
+      showError(e.message);
+      return;
+    }
+
+    publishBtn.disabled = true;
+    publishBtn.textContent = 'Signiere & sende…';
+
+    try {
+      const pubkey = getPublicKey(sk);
+
+      const template = {
+        kind: 10050,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: relayUrls.map(r => ['relay', r]),
+        content: ''
+      };
+
+      const signedEvent = finalizeEvent(template, sk);
+
+      // Key aus dem Speicher/Feld entfernen, sobald signiert wurde
+      sk = null;
+      privInput.value = '';
+
+      pubkeyLine.textContent = 'npub: ' + nip19.npubEncode(pubkey);
+      eventJson.textContent = JSON.stringify(signedEvent, null, 2);
+      statusList.innerHTML = '';
+      relayUrls.forEach(url => {
+        const row = document.createElement('div');
+        row.className = 'status-row';
+        row.innerHTML = `<span>${url}</span><span class="status-pending" id="s-${btoa(url)}">wird gesendet…</span>`;
+        statusList.appendChild(row);
+      });
+      resultBox.style.display = 'block';
+
+      const pool = new SimplePool();
+      const pubs = pool.publish(relayUrls, signedEvent);
+
+      pubs.forEach((p, i) => {
+        const url = relayUrls[i];
+        const cell = document.getElementById('s-' + btoa(url));
+        p.then(() => {
+          cell.textContent = '✓ angenommen';
+          cell.className = 'status-ok';
+        }).catch(err => {
+          cell.textContent = '✗ fehlgeschlagen';
+          cell.className = 'status-fail';
+          cell.title = err?.message || String(err);
+        });
+      });
+
+    } catch (e) {
+      showError('Fehler beim Signieren/Senden: ' + e.message);
+    } finally {
+      publishBtn.disabled = false;
+      publishBtn.textContent = 'Event signieren & veröffentlichen';
+    }
+  });
+</script>
+</body>
+</html>
