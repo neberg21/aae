@@ -28,7 +28,7 @@ Content-Type: application/json
   "target_agent": "@Helga",
   "intent": "hr_request",
   "payload": {
-    "message": "Create Teamleiter Finanzen",
+    "message": "Create Researcher Finanzen",
     "context": "",
     "module_scope": "Module.Finanzen",
     "role": "researcher"
