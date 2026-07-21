@@ -4,10 +4,20 @@ import {
   parseHrRequest,
   deriveAgentId,
   validateHelgaIdentity,
+  extractHelgaCandidate,
   buildPublicIdentity,
   identityRepoPath,
   parseGithubFileJson,
 } from './helpers.mjs';
+
+const validIdentity = {
+  agent_id: 'teamleiter-finanzen',
+  role_title: 'Teamleiter Finanzen',
+  department: 'Operations',
+  system_prompt: 'Du bist der Teamleiter im Finanzmodul.',
+  required_tools: ['financial_report_generator'],
+  guardrails: ['Regel 1: Darf nur im Verzeichnis Module.Finanzen arbeiten'],
+};
 
 describe('deriveAgentId', () => {
   it('builds domain-role from Module.Finanzen + teamleiter', () => {
@@ -93,6 +103,64 @@ describe('validateHelgaIdentity', () => {
     });
     assert.equal(r.ok, false);
     assert.equal(r.error, 'invalid_identity');
+  });
+});
+
+describe('extractHelgaCandidate', () => {
+  it('parses Flowise fullResponse body.text JSON string', () => {
+    const res = {
+      statusCode: 200,
+      body: { text: JSON.stringify(validIdentity), question: 'Create Teamleiter Finanzen' },
+    };
+    const r = extractHelgaCandidate(res);
+    assert.equal(r.ok, true);
+    assert.equal(r.value.role_title, 'Teamleiter Finanzen');
+    assert.deepEqual(r.value.required_tools, ['financial_report_generator']);
+  });
+
+  it('accepts body.text when already an object', () => {
+    const res = {
+      statusCode: 200,
+      body: { text: validIdentity, question: 'Create Teamleiter Finanzen' },
+    };
+    const r = extractHelgaCandidate(res);
+    assert.equal(r.ok, true);
+    assert.equal(r.value.department, 'Operations');
+  });
+
+  it('falls back to agentFlowExecutedData output.content', () => {
+    const res = {
+      statusCode: 200,
+      body: {
+        text: 'not-json',
+        agentFlowExecutedData: [
+          {
+            nodeLabel: 'Helga',
+            data: { output: { content: JSON.stringify(validIdentity) } },
+          },
+        ],
+      },
+    };
+    const r = extractHelgaCandidate(res);
+    assert.equal(r.ok, true);
+    assert.equal(r.value.role_title, 'Teamleiter Finanzen');
+  });
+
+  it('returns helga_unavailable on HTTP error status', () => {
+    const r = extractHelgaCandidate({ statusCode: 500, body: { text: '{}' } });
+    assert.equal(r.ok, false);
+    assert.equal(r.error, 'helga_unavailable');
+    assert.equal(r.httpStatus, 502);
+  });
+
+  it('returns invalid_identity when text is non-JSON prose', () => {
+    const r = extractHelgaCandidate({
+      statusCode: 200,
+      body: { text: '**Stellenbeschreibung: Teamleiter Finanzen**' },
+    });
+    assert.equal(r.ok, false);
+    assert.equal(r.error, 'invalid_identity');
+    assert.equal(r.httpStatus, 422);
   });
 });
 
