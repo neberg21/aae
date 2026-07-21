@@ -47,7 +47,7 @@ console.log('Parse HR Request: body', JSON.stringify(body));
 const parsed = parseHrRequest(body);
 if (!parsed.ok) {
   console.log('Parse HR Request: failed', parsed.error, parsed.details);
-  return [{ json: { ok: false, error: parsed.error, details: parsed.details, httpStatus: 400 } }];
+  return { json: { ok: false, error: parsed.error, details: parsed.details, httpStatus: 400 } };
 }
 console.log('Parse HR Request: ok', parsed.value.agent_id, parsed.value.path);
 return [{ json: { ok: true, ...parsed.value, githubRepo: cfg.githubRepo, relay: cfg.relay, helgaPredictionUrl: cfg.helgaPredictionUrl } }];
