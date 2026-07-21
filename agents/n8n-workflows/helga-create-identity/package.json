@@ -1,0 +1,8 @@
+{
+  "name": "helga-create-identity-helpers",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test helpers.test.mjs"
+  }
+}
