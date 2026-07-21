@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AAE — Architektur-Blaupause</title>
+<style>
+  :root{
+    --bg:        #0e2740;
+    --bg-panel:  #123a5e;
+    --bg-deep:   #081826;
+    --line:      #4d80ab;
+    --line-dim:  #2c5478;
+    --line-bright:#8fc1ea;
+    --ink:       #eaf3fb;
+    --ink-dim:   #a9c3da;
+    --ink-faint: #6d8caa;
+    --amber:     #e2963f;
+    --red:       #e06a56;
+    --green:     #6cbf8f;
+    --mono: ui-monospace, "SFMono-Regular", "IBM Plex Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: "Segoe UI", -apple-system, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(143,193,234,0.05) 28px),
+      repeating-linear-gradient(90deg, transparent, transparent 27px, rgba(143,193,234,0.05) 28px),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  @media (prefers-reduced-motion: no-preference){
+    .stamp{ transition: transform .25s ease; }
+    .stamp:hover{ transform: rotate(-3deg) scale(1.04); }
+    .callout-num{ transition: box-shadow .2s ease; }
+    section:hover .callout-num{ box-shadow:0 0 0 4px rgba(143,193,234,0.15); }
+  }
+
+  /* ---------- margin ruler ---------- */
+  .ruler{
+    position:fixed;
+    left:0; top:0; bottom:0;
+    width:34px;
+    border-right:1px solid var(--line-dim);
+    background:var(--bg-deep);
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:24px 0;
+    z-index:40;
+  }
+  .ruler span{
+    display:block;
+    writing-mode:vertical-rl;
+    font-family:var(--mono);
+    font-size:9px;
+    letter-spacing:0.15em;
+    color:var(--ink-faint);
+    text-align:center;
+  }
+
+  /* ---------- title block (signature) ---------- */
+  .titleblock{
+    margin:56px auto 0;
+    max-width:900px;
+    border:1px solid var(--line);
+    background:var(--bg-panel);
+    display:grid;
+    grid-template-columns: 1.6fr 1fr 1fr;
+    position:relative;
+  }
+  .titleblock::before{
+    content:"";
+    position:absolute; inset:-8px;
+    border:1px solid var(--line-dim);
+    pointer-events:none;
+  }
+  .tb-cell{
+    padding:14px 18px;
+    border-right:1px solid var(--line-dim);
+    border-bottom:1px solid var(--line-dim);
+  }
+  .tb-cell:nth-child(3n){ border-right:none; }
+  .tb-label{
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:0.14em;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+    margin:0 0 4px;
+  }
+  .tb-value{ margin:0; font-size:14px; color:var(--ink); font-weight:600; }
+  .tb-value.mono{ font-family:var(--mono); font-weight:400; }
+  .tb-big{
+    grid-column:1 / -1;
+    padding:22px 20px 18px;
+    border-bottom:1px solid var(--line-dim);
+  }
+  .tb-big h1{
+    margin:0 0 6px;
+    font-family:var(--mono);
+    font-size:clamp(22px,3.4vw,32px);
+    letter-spacing:0.02em;
+    color:var(--ink);
+  }
+  .tb-big p{
+    margin:0;
+    color:var(--line-bright);
+    font-size:14px;
+    letter-spacing:0.03em;
+  }
+  .crosshair{
+    position:absolute;
+    width:14px; height:14px;
+    pointer-events:none;
+  }
+  .crosshair::before, .crosshair::after{
+    content:""; position:absolute; background:var(--line-bright);
+  }
+  .crosshair::before{ left:6px; top:0; width:2px; height:14px; }
+  .crosshair::after{ top:6px; left:0; width:14px; height:2px; }
+  .crosshair.tl{ top:-7px; left:-7px; }
+  .crosshair.tr{ top:-7px; right:-7px; }
+  .crosshair.bl{ bottom:-7px; left:-7px; }
+  .crosshair.br{ bottom:-7px; right:-7px; }
+
+  /* ---------- page shell ---------- */
+  .sheet{
+    max-width:900px;
+    margin:0 auto;
+    padding:56px 24px 120px;
+  }
+
+  /* ---------- topology diagram beneath header ---------- */
+  .topo-caption{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:0.12em;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+    margin:40px 0 10px;
+  }
+
+  /* ---------- sections ---------- */
+  section{
+    margin-top:64px;
+    scroll-margin-top:24px;
+  }
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    gap:16px;
+    margin-bottom:22px;
+    border-bottom:1px solid var(--line-dim);
+    padding-bottom:14px;
+  }
+  .callout-num{
+    flex:0 0 auto;
+    width:40px; height:40px;
+    border:1px solid var(--line-bright);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--line-bright);
+    background:var(--bg-deep);
+  }
+  h2{
+    margin:0;
+    font-family:var(--mono);
+    font-size:clamp(18px,2.4vw,23px);
+    font-weight:600;
+    letter-spacing:0.01em;
+    color:var(--ink);
+  }
+  h3{
+    font-family:var(--mono);
+    font-size:15px;
+    letter-spacing:0.03em;
+    color:var(--line-bright);
+    margin:28px 0 10px;
+    text-transform:none;
+  }
+  h4{
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--ink-dim);
+    letter-spacing:0.05em;
+    margin:20px 0 8px;
+  }
+  p{ color:var(--ink-dim); margin:0 0 14px; max-width:68ch; }
+  strong{ color:var(--ink); font-weight:600; }
+  ul{ margin:0 0 16px; padding-left:0; list-style:none; }
+  ul li{
+    color:var(--ink-dim);
+    padding:6px 0 6px 22px;
+    position:relative;
+    border-bottom:1px dashed var(--line-dim);
+    max-width:68ch;
+  }
+  ul li:last-child{ border-bottom:none; }
+  ul li::before{
+    content:"—";
+    position:absolute; left:0; top:6px;
+    color:var(--line-bright);
+    font-family:var(--mono);
+  }
+  code{
+    font-family:var(--mono);
+    font-size:0.86em;
+    background:var(--bg-deep);
+    color:var(--amber);
+    padding:1px 5px;
+    border:1px solid var(--line-dim);
+    border-radius:3px;
+  }
+
+  /* ---------- code / diagram panels ---------- */
+  .panel{
+    position:relative;
+    margin:16px 0 24px;
+    border:1px solid var(--line);
+    background:var(--bg-deep);
+  }
+  .panel-tab{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--bg-deep);
+    background:var(--line-bright);
+    padding:4px 10px;
+    position:relative;
+    top:-1px;
+    left:-1px;
+  }
+  .panel pre{
+    margin:0;
+    padding:18px 20px 20px;
+    overflow-x:auto;
+    font-family:var(--mono);
+    font-size:12.5px;
+    line-height:1.7;
+    color:#cfe6f7;
+  }
+  .panel pre code{
+    background:none; border:none; padding:0; color:inherit; font-size:1em;
+  }
+  .tok-kw{ color:#e2963f; }
+  .tok-str{ color:#6cbf8f; }
+  .tok-cm{ color:#6d8caa; font-style:italic; }
+  .tok-type{ color:#8fc1ea; }
+
+  /* ---------- risk table ---------- */
+  .tbl-wrap{
+    border:1px solid var(--line);
+    overflow-x:auto;
+    margin:16px 0 8px;
+  }
+  table{ width:100%; border-collapse:collapse; min-width:640px; }
+  thead th{
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--bg-deep);
+    background:var(--line-bright);
+    text-align:left;
+    padding:10px 16px;
+  }
+  tbody td{
+    padding:14px 16px;
+    border-top:1px solid var(--line-dim);
+    color:var(--ink-dim);
+    font-size:13.5px;
+    vertical-align:top;
+  }
+  tbody td:first-child{ color:var(--ink); font-weight:600; white-space:nowrap; }
+  tbody tr:nth-child(odd){ background:rgba(143,193,234,0.03); }
+
+  .stamp{
+    display:inline-block;
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:4px 10px;
+    border:1.5px solid currentColor;
+    border-radius:3px;
+    transform:rotate(-2deg);
+    white-space:nowrap;
+  }
+  .stamp.crit{ color:var(--red); }
+  .stamp.ok{ color:var(--green); }
+  .stamp.mid{ color:var(--amber); }
+
+  /* ---------- footer ---------- */
+  footer{
+    margin-top:80px;
+    padding-top:22px;
+    border-top:1px solid var(--line-dim);
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+  }
+
+  a:focus-visible, .stamp:focus-visible{
+    outline:2px solid var(--line-bright);
+    outline-offset:2px;
+  }
+
+  @media (max-width:640px){
+    .ruler{ display:none; }
+    .sheet{ padding:36px 16px 90px; }
+    .titleblock{ grid-template-columns:1fr; margin:36px 16px 0; }
+    .tb-cell{ border-right:none; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- decorative drafting ruler -->
+  <div class="ruler" aria-hidden="true">
+    <span>AAE—01</span>
+    <span>MASSSTAB N.T.M.</span>
+    <span>BLATT 1/1</span>
+  </div>
+
+  <div class="sheet">
+
+    <!-- Title block: signature element -->
+    <div class="titleblock">
+      <div class="crosshair tl" aria-hidden="true"></div>
+      <div class="crosshair tr" aria-hidden="true"></div>
+      <div class="crosshair bl" aria-hidden="true"></div>
+      <div class="crosshair br" aria-hidden="true"></div>
+      <div class="tb-big">
+        <h1>Autonomous Agent Ecosystem</h1>
+        <p>Zentrale System- und Architektur-Dokumentation</p>
+      </div>
+      <div class="tb-cell">
+        <p class="tb-label">Projekt</p>
+        <p class="tb-value">AAE.WebApplication</p>
+      </div>
+      <div class="tb-cell">
+        <p class="tb-label">Revision</p>
+        <p class="tb-value mono">Rev. B</p>
+      </div>
+      <div class="tb-cell">
+        <p class="tb-label">Blatt</p>
+        <p class="tb-value mono">01 / 01</p>
+      </div>
+      <div class="tb-cell">
+        <p class="tb-label">Stack</p>
+        <p class="tb-value mono">n8n · Flowise · Nostr</p>
+      </div>
+      <div class="tb-cell">
+        <p class="tb-label">Host</p>
+        <p class="tb-value mono">Docker → Koyeb</p>
+      </div>
+      <div class="tb-cell">
+        <p class="tb-label">Status</p>
+        <p class="tb-value mono" style="color:var(--amber)">Entwurf / Freigabe ausstehend</p>
+      </div>
+    </div>
+
+    <!-- Section 1 -->
+    <section id="s1">
+      <div class="section-head">
+        <div class="callout-num">01</div>
+        <h2>Executive Summary &amp; Vision</h2>
+      </div>
+      <p>
+        Dieses Dokument dient als architektonisches Fundament für das <strong>Autonomous Agent Ecosystem (AAE)</strong>.
+        Die Kernvision beschreibt eine selbst-expandierende, KI-gesteuerte Plattform, auf der spezialisierte
+        Agenten-Teams (bereitgestellt über Flowise) autark Module einer Webapplikation verwalten, erweitern und
+        mit Endnutzern interagieren.
+      </p>
+      <p>Das System setzt auf einen hybriden Ansatz aus etablierten Anwendungs-Stacks, moderner Event-Automatisierung und dezentralen Kommunikationsprotokollen:</p>
+      <ul>
+        <li><strong>Orchestrierung &amp; Event-Bus:</strong> n8n</li>
+        <li><strong>Kognitive Ebene (LLM-Logik):</strong> Flowise</li>
+        <li><strong>Interface-Protokolle:</strong> Nostr (dezentral &amp; asynchron) + natives KI-Modul</li>
+        <li><strong>Anwendungs-Stack:</strong> .NET Core Backend &amp; React Frontend</li>
+        <li><strong>Infrastruktur/Hosting:</strong> Docker-Monolith auf Koyeb</li>
+      </ul>
+
+      <p class="topo-caption">Detail A — System-Topologie (Datenfluss & Rekursion)</p>
+      <div class="panel">
+        <span class="panel-tab">Schema · Datenfluss</span>
+        <pre><code>               ┌────────────────────────────────────────┐
+               │         Eingangs-Schnittstellen        │
+               │   [Nostr]        [KI-Modul / React]    │
+               └──────────────────┬───────────────────────┘
+                                  │ (Event Routing)
+                                  ▼
+               ┌──────────────────┴───────────────────────┐
+               │                  n8n                     │
+               │   (Event-Routing &amp; API-Orchestrierung)   │
+               └─────────┬─────────────────────┬──────────┘
+                         │                     │
+                         ▼                     ▼
+          ┌───────────────────────┐   ┌───────────────────────┐
+          │        Flowise        │   │    Anwendungs-Stack   │
+          │  (Orchestrator &amp;      │   │   (.NET Core + React) │
+          │    Agenten-Teams)     │   │    [Hosted auf Koyeb] │
+          └───────────────────────┘   └───────────────────────┘</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 2 -->
+    <section id="s2">
+      <div class="section-head">
+        <div class="callout-num">02</div>
+        <h2>Core System Architecture</h2>
+      </div>
+
+      <h3>2.1 &nbsp;Interface Layer (Nostr &amp; KI-Modul)</h3>
+      <p>
+        Neben dem <strong>Nostr-Protokoll</strong>, das als dezentrale Event-Infrastruktur dient, fungiert das interne <strong>KI-Modul</strong> der Webapplikation als gleichwertiger, nativer Eingang. Diese Architektur-Rekursion ermöglicht es den Agenten, dieselbe Plattform zur Kommunikation zu nutzen, an der sie selbst mitentwickeln.
+        <code>n8n</code> lauscht auf alle eingehenden Events (verschlüsselte Nostr-DMs, interne Web-Requests) und routet diese gebündelt weiter.
+      </p>
+
+      <div class="panel">
+        <span class="panel-tab">UI Mockup · Team-Chats</span>
+        <pre><code>+-----------------------------------------------------------------------+
+|  [≡] AAE Team-Workspace                               [Helga] [Profil]  |
+|-----------------------------------------------------------------------|
+|  [ KANÄLE ]            |  Team-Chat: #core-dev-squad                  |
+|  # general             |----------------------------------------------|
+|  # frontend            |                                              |
+|  # backend-api         | [User] 10:14 AM                              |
+|                        | Wir brauchen eine neue API-Route für die     |
+|  [ DIREKTNACHRICHTEN ] | D&amp;D Module.                                  |
+|  @ Helga (HR)          |                                              |
+|                        | [Orchestrator] 10:14 AM                      |
+|  [ TEAM AGENTEN ]      | Verstanden. Ich delegiere die Aufgabe an den |
+|  * Orchestrator        | Backend-Agenten zur Implementierung.         |
+|  * Backend-Agent       |                                              |
+|  * Frontend-Agent      | [Backend-Agent] 10:16 AM                     |
+|                        | Route erstellt und getestet. Commit in den   |
+|                        | Main-Branch wurde gepusht.                   |
+|-----------------------------------------------------------------------|
+| [ KI-Eingabe: @Agent erwähnen oder Nachricht tippen... ]   [ Senden ] |
++-----------------------------------------------------------------------+</code></pre>
+      </div>
+
+      <h3>2.2 &nbsp;Cognitive Layer &amp; Team Erstellung (Flowise)</h3>
+      <p>
+        Flowise verwaltet Prompt-Chains, das Gedächtnis und Tool-Bindings. Um eine Fragmentierung durch unzählige isolierte Flows zu verhindern, nutzt das System ein Supervisor-Muster. Ein universeller Master-Agenten-Flow fungiert als <strong>Orchestrator (Orchestra Tor)</strong> und primärer Laufzeit-Container. Dieser analysiert die Absicht des Nutzers, zerlegt Aufgaben und ruft dynamisch spezialisierte Kinder-Agenten auf, indem System-Prompts, Identitäten und Werkzeuge via Payload in den Master-Flow injiziert werden.
+      </p>
+      <p>
+        Die HR-Agentin <strong>Helga</strong> hat hierbei einen strikt limitierten Aktionsradius: Sie baut keine Infrastruktur und verknüpft keine Nodes. Helga fungiert als reine <em>Identitäts-Schmiede</em>. Wird ein neues Teammitglied benötigt, generiert sie den optimalen System-Prompt, definiert API-Werkzeuge, setzt Leitplanken und speichert diese "Software-Seele" als JSON in einer Datenbank ab, aus der der Orchestrator schöpft.
+      </p>
+
+      <div class="panel">
+        <span class="panel-tab">Schema · Agenten-Hierarchie</span>
+        <pre><code>               ┌────────────────────────────────────────┐
+               │           ORCHESTRATOR-AGENT           │
+               │  (Universeller Master-Agenten-Flow)    │
+               └─────────┬───────────────────┬──────────┘
+                         │ (Task)            │ (Task)
+                         ▼                   ▼
+                 ┌───────────────┐   ┌───────────────┐
+                 │ Kinder-Agent A│   │ Kinder-Agent B│
+                 │ (z.B. Backend)│   │ (z.B. Frontend)│
+                 └───────▲───────┘   └───────▲───────┘
+                         │                   │
+               ┌─────────┴───────────────────┴──────────┐
+               │        AGENTEN-DATENBANK               │
+               │  (Verhaltensparameter / Identitäten)   │
+               └──────────────────▲─────────────────────┘
+                                  │ (Schreibt Profile)
+                             [ HELGA (HR) ]</code></pre>
+      </div>
+
+      <h3>2.3 &nbsp;Automation &amp; Synchronization Layer (n8n)</h3>
+      <p>
+        n8n fungiert als zentrales Nervensystem. Es synchronisiert Workflows direkt via n8n Source Control
+        ins GitHub-Repo. Für Flowise-Flows extrahiert ein automatisierter n8n-Cronjob die Konfigurationen
+        über die Flowise-API und committet die JSON-Definitionen ins Repository.
+      </p>
+    </section>
+
+    <!-- Section 3 -->
+    <section id="s3">
+      <div class="section-head">
+        <div class="callout-num">03</div>
+        <h2>Modular .NET &amp; React Architecture Pattern</h2>
+      </div>
+      <p>
+        Um das performancelastige und fehleranfällige dynamische Kompilieren von Docker-Images zur Laufzeit
+        zu vermeiden, nutzt die Applikation ein <strong>Static Container / Dynamic Module Integration Pattern</strong>.
+        Die Struktur ist so aufgebaut, dass Agenten Code-Module hinzufügen können, ohne die
+        Kern-Bootstrapping-Logik zu brechen.
+      </p>
+
+      <h3>3.1 &nbsp;Backend Architecture (.NET Directory &amp; Code)</h3>
+      <div class="panel">
+        <span class="panel-tab">Verzeichnis · .NET</span>
+        <pre><code>AAE.WebApplication/
+├── AAE.Core/                  <span class="tok-cm"># Kern-Abstraktionen und Interfaces</span>
+│   ├── Modules/
+│   │   └── IModuleSettings.cs
+│   └── Models/
+├── AAE.Modules.Dnd/           <span class="tok-cm"># Gekapselte D&amp;D Logik (Controller &amp; Services)</span>
+├── AAE.Modules.Therapy/       <span class="tok-cm"># Gekapselte Psychotherapie Logik</span>
+└── AAE.Web/                   <span class="tok-cm"># Main Entrypoint, Host &amp; Startup Konfiguration</span>
+    ├── Program.cs
+    └── appsettings.json</code></pre>
+      </div>
+
+      <h4>Entwurf der Program.cs</h4>
+      <div class="panel">
+        <span class="panel-tab">C# · Program.cs</span>
+        <pre><code><span class="tok-kw">using</span> Microsoft.AspNetCore.Builder;
+<span class="tok-kw">using</span> Microsoft.Extensions.DependencyInjection;
+<span class="tok-kw">using</span> Microsoft.Extensions.Hosting;
+
+<span class="tok-kw">var</span> builder = WebApplication.CreateBuilder(args);
+
+<span class="tok-cm">// 1. Core Services registrieren</span>
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+
+<span class="tok-cm">// 2. Module programmatisch registrieren</span>
+<span class="tok-cm">// Ermöglicht es Agenten, neue Controller hinzuzufügen, ohne den Kern-Build zu modifizieren.</span>
+builder.Services.AddScoped&lt;<span class="tok-type">AAE.Core.Modules.IModuleSettings</span>, <span class="tok-type">AAE.Modules.Dnd.DndSettings</span>&gt;();
+builder.Services.AddScoped&lt;<span class="tok-type">AAE.Core.Modules.IModuleSettings</span>, <span class="tok-type">AAE.Modules.Therapy.TherapySettings</span>&gt;();
+
+<span class="tok-kw">var</span> app = builder.Build();
+
+<span class="tok-kw">if</span> (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+
+app.UseHttpsRedirection();
+app.UseRouting();
+app.UseAuthorization();
+
+<span class="tok-cm">// Globales Routing - .NET scannt geladene Assemblies automatisch nach [ApiController]</span>
+app.MapControllers();
+
+app.Run();</code></pre>
+      </div>
+
+      <h3>3.2 &nbsp;Frontend Architecture (React Registry)</h3>
+      <p>Das Frontend nutzt eine dynamische Feature-Registrierung. Agenten modifizieren ausschließlich ihren dedizierten Unterordner.</p>
+      <div class="panel">
+        <span class="panel-tab">Verzeichnis · React</span>
+        <pre><code>frontend/
+├── src/
+│   ├── components/            <span class="tok-cm"># Globale UI Elemente</span>
+│   ├── modules/                <span class="tok-cm"># Feature-Module Registry</span>
+│   │   ├── dnd/
+│   │   │   ├── DndDashboard.jsx
+│   │   │   └── index.js
+│   │   ├── therapy/
+│   │   │   ├── TherapySession.jsx
+│   │   │   └── index.js
+│   │   └── index.js           <span class="tok-cm"># Exportiert alle aktiven Module gesammelt</span>
+│   ├── App.jsx                 <span class="tok-cm"># Verteilt Routen dynamisch basierend auf der Registry</span>
+│   └── main.jsx</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 4 -->
+    <section id="s4">
+      <div class="section-head">
+        <div class="callout-num">04</div>
+        <h2>Containerization &amp; Deployment Pattern</h2>
+      </div>
+      <p>
+        Das Deployment erfolgt über ein optimiertes <strong>Multi-Stage Dockerfile</strong>. Sobald ein Agent
+        Code freigibt und in den Main-Branch pusht, baut Koyeb den Container vollautomatisch neu. Das Frontend
+        wird direkt in den Web-Root des .NET-Backends kompiliert, um Ressourcen zu sparen.
+      </p>
+
+      <h4>Die Produktions-Umgebung (Dockerfile)</h4>
+      <div class="panel">
+        <span class="panel-tab">Docker · Multi-Stage</span>
+        <pre><code><span class="tok-cm"># ==========================================
+# STAGE 1: Build der React Frontend Applikation
+# ==========================================</span>
+<span class="tok-kw">FROM</span> node:22-alpine <span class="tok-kw">AS</span> frontend-build
+<span class="tok-kw">WORKDIR</span> /app/frontend
+
+<span class="tok-kw">COPY</span> frontend/package*.json ./
+<span class="tok-kw">RUN</span> npm ci
+
+<span class="tok-kw">COPY</span> frontend/ ./
+<span class="tok-kw">RUN</span> npm run build
+
+<span class="tok-cm"># ==========================================
+# STAGE 2: Build der .NET Backend Applikation
+# ==========================================</span>
+<span class="tok-kw">FROM</span> mcr.microsoft.com/dotnet/sdk:10.0-alpine <span class="tok-kw">AS</span> backend-build
+<span class="tok-kw">WORKDIR</span> /app/backend
+
+<span class="tok-kw">COPY</span> AAE.WebApplication/*.sln ./
+<span class="tok-kw">COPY</span> AAE.WebApplication/AAE.Core/*.csproj ./AAE.Core/
+<span class="tok-kw">COPY</span> AAE.WebApplication/AAE.Web/*.csproj ./AAE.Web/
+<span class="tok-kw">COPY</span> AAE.WebApplication/AAE.Modules.Dnd/*.csproj ./AAE.Modules.Dnd/
+<span class="tok-kw">COPY</span> AAE.WebApplication/AAE.Modules.Therapy/*.csproj ./AAE.Modules.Therapy/
+<span class="tok-kw">RUN</span> dotnet restore
+
+<span class="tok-kw">COPY</span> AAE.WebApplication/ ./
+<span class="tok-kw">RUN</span> dotnet publish AAE.Web/AAE.Web.csproj -c Release -o /app/publish --no-restore
+
+<span class="tok-cm"># ==========================================
+# STAGE 3: Finaler Runtime Aggregations-Container
+# ==========================================</span>
+<span class="tok-kw">FROM</span> mcr.microsoft.com/dotnet/aspnet:10.0-alpine <span class="tok-kw">AS</span> runtime
+<span class="tok-kw">WORKDIR</span> /app
+<span class="tok-kw">EXPOSE</span> 8080
+<span class="tok-kw">ENV</span> ASPNETCORE_URLS=http://+:8080
+
+<span class="tok-cm"># Kopiert die kompilierten .NET Binaries</span>
+<span class="tok-kw">COPY</span> --from=backend-build /app/publish .
+
+<span class="tok-cm"># Integriert die statischen Frontend-Assets direkt in das wwwroot von .NET</span>
+<span class="tok-kw">COPY</span> --from=frontend-build /app/frontend/dist ./wwwroot
+
+<span class="tok-kw">ENTRYPOINT</span> [<span class="tok-str">"dotnet"</span>, <span class="tok-str">"AAE.Web.dll"</span>]</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 5 -->
+    <section id="s5">
+      <div class="section-head">
+        <div class="callout-num">05</div>
+        <h2>Feasibility Assessment &amp; Risk Mitigation</h2>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Komponente</th>
+              <th>Risiko-Bewertung</th>
+              <th>Empfehlung / Mitigation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Dynamische Container</td>
+              <td><span class="stamp crit">Kritisches Risiko</span></td>
+              <td>Kein dynamisches Image-Bauen zur Laufzeit. Nutzung des statischen Multi-Stage-Builds (Kapitel 4). KI modifiziert nur Code-Dateien, Git-Trigger auf Koyeb übernimmt den Build.</td>
+            </tr>
+            <tr>
+              <td>Nostr-Integration</td>
+              <td><span class="stamp ok">Sehr gut umsetzbar</span></td>
+              <td>n8n hält die WebSocket-Verbindung zu den Relays dauerhaft offen, filtert Nachrichten und leitet strukturierte JSONs an Flowise weiter.</td>
+            </tr>
+            <tr>
+              <td>HR-Agent „Helga"</td>
+              <td><span class="stamp mid">Mittleres Risiko</span></td>
+              <td>Helga darf keine Nodes programmatisch verknüpfen. Stattdessen schreibt Helga Verhaltensparameter und Identitäten in eine DB, die vom Orchestrator dynamisch ausgelesen werden.</td>
+            </tr>
+            <tr>
+              <td>Synchronisation</td>
+              <td><span class="stamp ok">Sehr gut umsetzbar</span></td>
+              <td>Nutzung von n8n Git-Source-Control für Workflows. Flowise-Flows werden per API-Call zyklisch als JSON exportiert und ins GitHub-Repository gepusht.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <span>AAE Architecture Blueprint</span>
+      <span>Generiert für die Repository-Initialisierung</span>
+    </footer>
+
+  </div>
+</body>
+</html>
