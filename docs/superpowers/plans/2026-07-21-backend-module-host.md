@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make the ASP.NET Core host auto-discover `Module.*` projects via `IModule`, ship a `Module.Demo` ping proof, and align living docs to the new naming.
+**Goal:** Make the ASP.NET Core host auto-discover `Module.*` projects via `IModule`, expose `/api/{name}/...` with one OpenAPI document per module, ship `Module.Demo`, and align living docs to the new naming.
 
-**Architecture:** `Service` references module projects explicitly (static container). At startup `Core` loads referenced `Module.*` assemblies, activates `IModule` implementations, registers their DI services and MVC application parts, then maps Minimal API endpoints. `Program.cs` stays free of module type names.
+**Architecture:** `Service` references module projects explicitly (static container). At startup `Core` loads referenced `Module.*` assemblies, activates `IModule` implementations, registers their DI services, MVC application parts, and per-module OpenAPI documents, then maps Minimal API endpoints under `/api/{Name}/...`. `Program.cs` stays free of module type names.
 
 **Tech Stack:** .NET 10, ASP.NET Core (`Microsoft.AspNetCore.App`), xUnit, NSubstitute, `Microsoft.AspNetCore.Mvc.Testing`, existing `backend/Service.slnx`.
 
@@ -17,10 +17,13 @@
 - No per-module lines or module type names in `Program.cs`
 - Specialists may add `ProjectReference` on `Service` (+ `Service.slnx` entry); must not edit discovery in `Core` or bootstrap shape in `Program.cs`
 - Remove manual `AddModule<T>` path; discovery is the only registration mechanism
+- HTTP routes for modules live under `/api/{Name}/...` (e.g. `/api/demo/ping`)
+- One OpenAPI document per module: document name = `IModule.Name`, URL `/openapi/{Name}.json`, filtered to paths under `api/{Name}`
+- Duplicate or invalid `IModule.Name` fails fast at startup
 - Unit test projects named `{Project}.Unit` under `backend/tests/` (e.g. `Core.Unit`, `Service.Unit`)
 - Test method names: `MethodName_Scenario_ExpectedOutcome`
 - Test framework: xUnit; mocking: NSubstitute (prefer substitutes over hand-rolled fakes when the SUT takes interfaces)
-- C#: no primary constructors; create objects in locals before passing into methods/ctors
+- C#: no primary constructors; create objects in locals before passing into methods/ctors; prefer `var` for locals when the type is clear from the RHS
 - Windows host: use CMD for shell steps; no PowerShell/bash scripts
 - Do not implement frontend registry, middleware hooks, or runtime plugin folders
 
@@ -30,23 +33,23 @@
 
 | File | Responsibility |
 |------|----------------|
-| `backend/src/Core/IModule.cs` | Module contract (`RegisterServices`, `MapEndpoints`) |
+| `backend/src/Core/IModule.cs` | Module contract (`Name`, `RegisterServices`, `MapEndpoints`) |
 | `backend/src/Core/IModuleCollection.cs` | Enumerable module collection + `ModuleCollection` |
 | `backend/src/Core/ModuleDiscovery.cs` | Load `Module.*` refs; find/activate `IModule` types |
-| `backend/src/Core/DependencyInjection.cs` | `AddCore` discovery + DI + MVC application parts |
+| `backend/src/Core/DependencyInjection.cs` | `AddCore` discovery + DI + MVC parts + per-module `AddOpenApi` |
 | `backend/src/Core/ModuleEndpointRouteBuilderExtensions.cs` | `MapModules` → controllers + module endpoints |
 | `backend/src/Core/Core.csproj` | Shared framework reference for ASP.NET abstractions |
 | `backend/src/Module.Demo/Module.Demo.csproj` | Proof module project |
-| `backend/src/Module.Demo/DemoModule.cs` | `IModule` with `/demo/ping` |
+| `backend/src/Module.Demo/DemoModule.cs` | `IModule` with `Name = "demo"` and `/api/demo/ping` |
 | `backend/src/Service/Service.csproj` | `ProjectReference` to `Core` + `Module.Demo` |
 | `backend/src/Service/Program.cs` | Module-agnostic host bootstrap |
 | `backend/src/Service/Program.Partial.cs` | `public partial class Program` for `WebApplicationFactory` |
-| `backend/Service.slnx` | Include `Module.Demo` + test project |
+| `backend/Service.slnx` | Include `Module.Demo` + test projects |
 | `backend/tests/Core.Unit/Core.Unit.csproj` | Unit tests for discovery |
 | `backend/tests/Core.Unit/ModuleDiscoveryTests.cs` | Discovery activation tests |
 | `backend/tests/Core.Unit/TestModules.cs` | Concrete `IModule` types for `Activator` (cannot substitute constructible types) |
 | `backend/tests/Service.Unit/Service.Unit.csproj` | Host tests (`WebApplicationFactory`) |
-| `backend/tests/Service.Unit/DemoPingTests.cs` | `/demo/ping` end-to-end |
+| `backend/tests/Service.Unit/DemoPingTests.cs` | `/api/demo/ping` + `/openapi/demo.json` |
 | `README.md` | Naming: `Module.[Name]` |
 | `docs/aae-architectutre.html` | §3.1 + Dockerfile samples aligned to real layout |
 | `docs/process/organigramm.md` | Specialist path → `Module.Dnd` |
@@ -73,12 +76,13 @@
 **Interfaces:**
 - Consumes: existing empty `IModule`, `IModuleCollection`, `ModuleCollection`
 - Produces:
+  - `IModule.Name` → `string` (route/OpenAPI identity)
   - `IModule.RegisterServices(IServiceCollection services)`
   - `IModule.MapEndpoints(IEndpointRouteBuilder endpoints)`
   - `ModuleDiscovery.DiscoverTypes(IEnumerable<Type> moduleTypes) → IReadOnlyList<IModule>`
   - `ModuleDiscovery.Discover(IEnumerable<Assembly> assemblies) → IReadOnlyList<IModule>`
   - `ModuleDiscovery.DiscoverLoadedModules() → IReadOnlyList<IModule>`
-  - `IServiceCollection.AddCore()` — discovers loaded modules, calls `RegisterServices`, registers `IModuleCollection`, calls `AddControllers` + application parts
+  - `IServiceCollection.AddCore()` — discovers loaded modules, validates distinct `Name`s, calls `RegisterServices`, registers `IModuleCollection`, `AddControllers` + application parts, and `AddOpenApi(name)` per module filtered to `api/{name}`
   - `WebApplication.MapModules()` — `MapControllers()` then each module `MapEndpoints`
 
 - [ ] **Step 1: Create the Core.Unit project and failing discovery tests**
@@ -123,6 +127,8 @@ namespace Core.Unit;
 
 public sealed class ValidTestModule : IModule
 {
+    public string Name => "test";
+
     public void RegisterServices(IServiceCollection services)
     {
         services.AddSingleton<ValidTestModuleMarker>();
@@ -130,7 +136,7 @@ public sealed class ValidTestModule : IModule
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/test-module/ping", () => "ok");
+        endpoints.MapGet("/api/test/ping", () => "ok");
     }
 }
 
@@ -140,6 +146,8 @@ public sealed class ValidTestModuleMarker
 
 public abstract class AbstractTestModule : IModule
 {
+    public string Name => "abstract";
+
     public void RegisterServices(IServiceCollection services)
     {
     }
@@ -155,6 +163,8 @@ public sealed class BrokenTestModule : IModule
     {
         _ = required;
     }
+
+    public string Name => "broken";
 
     public void RegisterServices(IServiceCollection services)
     {
@@ -181,9 +191,9 @@ public sealed class ModuleDiscoveryTests
     [Fact]
     public void DiscoverTypes_ConcreteAndAbstractTypes_ActivatesOnlyConcrete()
     {
-        Type[] types = [typeof(ValidTestModule), typeof(AbstractTestModule)];
+        var types = new[] { typeof(ValidTestModule), typeof(AbstractTestModule) };
 
-        IReadOnlyList<IModule> modules = ModuleDiscovery.DiscoverTypes(types);
+        var modules = ModuleDiscovery.DiscoverTypes(types);
 
         Assert.Contains(modules, static module => module is ValidTestModule);
         Assert.DoesNotContain(modules, static module => module is AbstractTestModule);
@@ -192,16 +202,16 @@ public sealed class ModuleDiscoveryTests
     [Fact]
     public void DiscoverTypes_ValidModule_RegistersModuleServices()
     {
-        IReadOnlyList<IModule> modules = ModuleDiscovery.DiscoverTypes([typeof(ValidTestModule)]);
-        ServiceCollection services = new();
+        var modules = ModuleDiscovery.DiscoverTypes([typeof(ValidTestModule)]);
+        var services = new ServiceCollection();
 
-        foreach (IModule module in modules)
+        foreach (var module in modules)
         {
             module.RegisterServices(services);
         }
 
-        ServiceProvider provider = services.BuildServiceProvider();
-        ValidTestModuleMarker marker = provider.GetRequiredService<ValidTestModuleMarker>();
+        var provider = services.BuildServiceProvider();
+        var marker = provider.GetRequiredService<ValidTestModuleMarker>();
 
         Assert.NotNull(marker);
     }
@@ -209,7 +219,7 @@ public sealed class ModuleDiscoveryTests
     [Fact]
     public void DiscoverTypes_TypeWithoutParameterlessCtor_ThrowsInvalidOperationException()
     {
-        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+        var exception = Assert.Throws<InvalidOperationException>(
             () => ModuleDiscovery.DiscoverTypes([typeof(BrokenTestModule)]));
 
         Assert.Contains(nameof(BrokenTestModule), exception.Message, StringComparison.Ordinal);
@@ -221,12 +231,12 @@ public sealed class ModuleCollectionTests
     [Fact]
     public void GetEnumerator_SubstitutedModules_YieldsAllModules()
     {
-        IModule first = Substitute.For<IModule>();
-        IModule second = Substitute.For<IModule>();
-        IModule[] modules = [first, second];
-        ModuleCollection collection = new(modules);
+        var first = Substitute.For<IModule>();
+        var second = Substitute.For<IModule>();
+        var modules = new[] { first, second };
+        var collection = new ModuleCollection(modules);
 
-        List<IModule> enumerated = collection.ToList();
+        var enumerated = collection.ToList();
 
         Assert.Equal(2, enumerated.Count);
         Assert.Same(first, enumerated[0]);
@@ -260,6 +270,7 @@ Replace `backend/src/Core/Core.csproj` with:
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
   </ItemGroup>
 
 </Project>
@@ -277,6 +288,8 @@ namespace Core;
 
 public interface IModule
 {
+    string Name { get; }
+
     void RegisterServices(IServiceCollection services);
 
     void MapEndpoints(IEndpointRouteBuilder endpoints);
@@ -298,11 +311,11 @@ public static class ModuleDiscovery
     {
         EnsureReferencedModuleAssembliesLoaded();
 
-        IEnumerable<Assembly> moduleAssemblies = AppDomain.CurrentDomain
+        var moduleAssemblies = AppDomain.CurrentDomain
             .GetAssemblies()
             .Where(static assembly =>
             {
-                string? name = assembly.GetName().Name;
+                var name = assembly.GetName().Name;
                 return name is not null
                        && name.StartsWith("Module.", StringComparison.Ordinal);
             });
@@ -312,7 +325,7 @@ public static class ModuleDiscovery
 
     public static IReadOnlyList<IModule> Discover(IEnumerable<Assembly> assemblies)
     {
-        IEnumerable<Type> moduleTypes = assemblies
+        var moduleTypes = assemblies
             .Distinct()
             .SelectMany(static assembly => assembly.GetTypes())
             .Where(static type =>
@@ -324,9 +337,9 @@ public static class ModuleDiscovery
 
     public static IReadOnlyList<IModule> DiscoverTypes(IEnumerable<Type> moduleTypes)
     {
-        List<IModule> modules = [];
+        var modules = new List<IModule>();
 
-        foreach (Type moduleType in moduleTypes.Distinct())
+        foreach (var moduleType in moduleTypes.Distinct())
         {
             if (!typeof(IModule).IsAssignableFrom(moduleType)
                 || moduleType.IsInterface
@@ -342,7 +355,7 @@ public static class ModuleDiscovery
             }
             catch (Exception exception)
             {
-                string message =
+                var message =
                     $"Failed to activate module type '{moduleType.FullName}'. " +
                     "Modules must have a public parameterless constructor.";
                 throw new InvalidOperationException(message, exception);
@@ -361,15 +374,15 @@ public static class ModuleDiscovery
 
     private static void EnsureReferencedModuleAssembliesLoaded()
     {
-        Assembly? entryAssembly = Assembly.GetEntryAssembly();
+        var entryAssembly = Assembly.GetEntryAssembly();
         if (entryAssembly is null)
         {
             return;
         }
 
-        foreach (AssemblyName referenced in entryAssembly.GetReferencedAssemblies())
+        foreach (var referenced in entryAssembly.GetReferencedAssemblies())
         {
-            string? name = referenced.Name;
+            var name = referenced.Name;
             if (name is null || !name.StartsWith("Module.", StringComparison.Ordinal))
             {
                 continue;
@@ -385,6 +398,7 @@ Replace `backend/src/Core/DependencyInjection.cs`:
 
 ```csharp
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Core;
@@ -393,22 +407,24 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddCore(this IServiceCollection services)
     {
-        IReadOnlyList<IModule> modules = ModuleDiscovery.DiscoverLoadedModules();
+        var modules = ModuleDiscovery.DiscoverLoadedModules();
+        EnsureDistinctModuleNames(modules);
 
-        foreach (IModule module in modules)
+        foreach (var module in modules)
         {
             module.RegisterServices(services);
+            RegisterModuleOpenApi(services, module);
         }
 
-        ModuleCollection moduleCollection = new(modules);
+        var moduleCollection = new ModuleCollection(modules);
         services.AddSingleton<IModuleCollection>(moduleCollection);
 
-        IMvcBuilder mvcBuilder = services.AddControllers();
+        var mvcBuilder = services.AddControllers();
         mvcBuilder.ConfigureApplicationPartManager(manager =>
         {
-            foreach (AssemblyPart part in GetModuleParts(modules))
+            foreach (var part in GetModuleParts(modules))
             {
-                bool alreadyAdded = manager.ApplicationParts
+                var alreadyAdded = manager.ApplicationParts
                     .OfType<AssemblyPart>()
                     .Any(existing => existing.Assembly == part.Assembly);
 
@@ -422,18 +438,67 @@ public static class DependencyInjection
         return services;
     }
 
+    private static void EnsureDistinctModuleNames(IReadOnlyList<IModule> modules)
+    {
+        var blankNames = modules
+            .Where(static module => string.IsNullOrWhiteSpace(module.Name))
+            .Select(static module => module.GetType().FullName ?? module.GetType().Name)
+            .ToList();
+
+        var duplicateNames = modules
+            .Where(static module => !string.IsNullOrWhiteSpace(module.Name))
+            .GroupBy(static module => module.Name, StringComparer.Ordinal)
+            .Where(static group => group.Count() > 1)
+            .Select(static group => group.Key)
+            .ToList();
+
+        if (blankNames.Count == 0 && duplicateNames.Count == 0)
+        {
+            return;
+        }
+
+        var details = new List<string>();
+        if (blankNames.Count > 0)
+        {
+            details.Add($"blank Name on: {string.Join(", ", blankNames)}");
+        }
+
+        if (duplicateNames.Count > 0)
+        {
+            details.Add($"duplicates: {string.Join(", ", duplicateNames.Select(static name => $"'{name}'"))}");
+        }
+
+        throw new InvalidOperationException(
+            $"Module names must be non-empty and unique. {string.Join("; ", details)}.");
+    }
+
+    private static void RegisterModuleOpenApi(IServiceCollection services, IModule module)
+    {
+        var name = module.Name;
+        var pathPrefix = $"api/{name}";
+
+        services.AddOpenApi(name, options =>
+        {
+            options.ShouldInclude = description =>
+                description.RelativePath is not null
+                && description.RelativePath.StartsWith(pathPrefix, StringComparison.OrdinalIgnoreCase);
+        });
+    }
+
     private static IEnumerable<AssemblyPart> GetModuleParts(IReadOnlyList<IModule> modules)
     {
-        foreach (System.Reflection.Assembly assembly in modules
+        foreach (var assembly in modules
                      .Select(static module => module.GetType().Assembly)
                      .Distinct())
         {
-            AssemblyPart part = new(assembly);
+            var part = new AssemblyPart(assembly);
             yield return part;
         }
     }
 }
 ```
+
+Note: If `OpenApiOptions.ShouldInclude` / `ApiDescription.RelativePath` differ slightly on the installed .NET 10 OpenAPI package, adjust the filter to the equivalent property while keeping the `api/{name}` prefix rule. Do not fall back to a single global OpenAPI document.
 
 Create `backend/src/Core/ModuleEndpointRouteBuilderExtensions.cs`:
 
@@ -450,8 +515,8 @@ public static class ModuleEndpointRouteBuilderExtensions
     {
         app.MapControllers();
 
-        IModuleCollection modules = app.Services.GetRequiredService<IModuleCollection>();
-        foreach (IModule module in modules)
+        var modules = app.Services.GetRequiredService<IModuleCollection>();
+        foreach (var module in modules)
         {
             module.MapEndpoints(app);
         }
@@ -515,7 +580,7 @@ del %TEMP%\commitmsg.txt
 
 **Interfaces:**
 - Consumes: `AddCore()`, `MapModules()`, `IModule`
-- Produces: `Module.Demo.DemoModule` mapping `GET /demo/ping` → `"pong"`; host serves it without naming `DemoModule` in `Program.cs`
+- Produces: `Module.Demo.DemoModule` with `Name = "demo"`, `GET /api/demo/ping` → `"pong"`, OpenAPI at `/openapi/demo.json`; host has no `DemoModule` type names in `Program.cs`
 
 - [ ] **Step 1: Add failing Service.Unit test project**
 
@@ -568,15 +633,27 @@ public sealed class DemoPingTests : IClassFixture<WebApplicationFactory<Program>
     }
 
     [Fact]
-    public async Task GetAsync_DemoPingPath_ReturnsPong()
+    public async Task GetAsync_ApiDemoPingPath_ReturnsPong()
     {
-        HttpClient client = _factory.CreateClient();
+        var client = _factory.CreateClient();
 
-        HttpResponseMessage response = await client.GetAsync("/demo/ping");
-        string body = await response.Content.ReadAsStringAsync();
+        var response = await client.GetAsync("/api/demo/ping");
+        var body = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("pong", body);
+    }
+
+    [Fact]
+    public async Task GetAsync_OpenApiDemoDocument_ReturnsOkWithDemoPath()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/openapi/demo.json");
+        var body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("/api/demo/ping", body, StringComparison.OrdinalIgnoreCase);
     }
 }
 ```
@@ -595,7 +672,7 @@ public partial class Program
 dotnet test backend\tests\Service.Unit\Service.Unit.csproj --nologo
 ```
 
-Expected: FAIL (404 or missing `/demo/ping` — `Module.Demo` not wired yet). If the project fails to compile because `Program` is inaccessible, ensure `Program.Partial.cs` exists first, then re-run; failure mode should then be assertion/404, not compile.
+Expected: FAIL (404 or missing `/api/demo/ping` — `Module.Demo` not wired yet). If the project fails to compile because `Program` is inaccessible, ensure `Program.Partial.cs` exists first, then re-run; failure mode should then be assertion/404, not compile.
 
 - [ ] **Step 3: Create `Module.Demo` and wire Service**
 
@@ -632,13 +709,15 @@ namespace Module.Demo;
 
 public sealed class DemoModule : IModule
 {
+    public string Name => "demo";
+
     public void RegisterServices(IServiceCollection services)
     {
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/demo/ping", () => "pong");
+        endpoints.MapGet("/api/demo/ping", () => "pong");
     }
 }
 ```
@@ -659,7 +738,6 @@ using Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
 builder.Services.AddCore();
 
 var app = builder.Build();
@@ -674,6 +752,8 @@ app.MapModules();
 
 app.Run();
 ```
+
+Note: per-module OpenAPI documents are registered inside `AddCore()` — do not call `builder.Services.AddOpenApi()` in `Program.cs`.
 
 Update `backend/Service.slnx` to:
 
@@ -708,10 +788,11 @@ dotnet run --project backend\src\Service\Service.csproj --no-launch-profile --ur
 In a second terminal:
 
 ```cmd
-curl -s http://127.0.0.1:5088/demo/ping
+curl -s http://127.0.0.1:5088/api/demo/ping
+curl -s http://127.0.0.1:5088/openapi/demo.json
 ```
 
-Expected: `pong`. Stop the server afterward (Ctrl+C).
+Expected: first command prints `pong`; second returns OpenAPI JSON mentioning `/api/demo/ping`. Stop the server afterward (Ctrl+C).
 
 Verify `Program.cs` contains no `Module.Demo` / `DemoModule` identifiers.
 
@@ -725,7 +806,7 @@ git add backend\src\Module.Demo\Module.Demo.csproj backend\src\Module.Demo\DemoM
 (
 echo feat: wire Module.Demo ping via auto-discovery
 echo.
-echo Add proof module, host MapModules bootstrap, and integration test for /demo/ping.
+echo Add proof module, host MapModules bootstrap, and tests for /api/demo/ping plus /openapi/demo.json.
 ) > %TEMP%\commitmsg.txt
 git commit -F %TEMP%\commitmsg.txt
 del %TEMP%\commitmsg.txt
@@ -787,18 +868,17 @@ In `docs/aae-architectutre.html`:
 
 <span class="tok-kw">var</span> builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
-builder.Services.AddCore(); <span class="tok-cm">// discovers Module.* assemblies via ProjectReference</span>
+builder.Services.AddCore(); <span class="tok-cm">// discovers Module.*; registers per-module OpenAPI docs</span>
 
 <span class="tok-kw">var</span> app = builder.Build();
 
 <span class="tok-kw">if</span> (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi(); <span class="tok-cm">// /openapi/{moduleName}.json</span>
 }
 
 app.UseHttpsRedirection();
-app.MapModules(); <span class="tok-cm">// MapControllers + each IModule.MapEndpoints</span>
+app.MapModules(); <span class="tok-cm">// MapControllers + each IModule.MapEndpoints under /api/{name}</span>
 
 app.Run();</code></pre>
 ```
@@ -881,7 +961,8 @@ del %TEMP%\commitmsg.txt
 | Auto-discovery, no per-module `Program.cs` lines | Tasks 1–2 |
 | DI + controllers (application parts) + Minimal APIs | Task 1 (`AddCore` / `MapModules`) + Task 2 (`DemoModule`) |
 | Remove `AddModule<T>` | Task 1 |
-| `Module.Demo` `/demo/ping` | Task 2 |
+| HTTP `/api/{name}/...` + per-module OpenAPI | Tasks 1–2 |
+| `Module.Demo` `/api/demo/ping` + `/openapi/demo.json` | Task 2 |
 | Fail fast on bad ctor; empty modules OK | Task 1 tests + discovery behavior |
 | Living docs rename | Task 3 |
 | Integration verification | Task 2 steps 4–5 |

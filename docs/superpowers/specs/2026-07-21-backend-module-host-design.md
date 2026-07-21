@@ -18,7 +18,9 @@ Set up the ASP.NET Core service so new feature modules can be added without chan
 | Loading | Explicit `ProjectReference` on `Service` (static container) |
 | Registration | Auto-discovery of loaded `Module.*` assemblies — no per-module lines in `Program.cs` |
 | Module capabilities | DI services + MVC controllers + Minimal API endpoint mapping |
-| Proof module | `Module.Demo` with `GET /demo/ping` → `"pong"` |
+| HTTP route prefix | All module HTTP surface under `/api/{name}/...` (e.g. `/api/demo`, `/api/abc`) |
+| OpenAPI | One OpenAPI document per module; document name = `IModule.Name`; served at `/openapi/{name}.json` |
+| Proof module | `Module.Demo` with `Name = "demo"` and `GET /api/demo/ping` → `"pong"` |
 | Middleware hooks | Out of scope |
 | Runtime plugin folder | Out of scope |
 
@@ -45,22 +47,34 @@ backend/
 
 Each module exposes one (or more) concrete implementations with:
 
+- `string Name { get; }` — short route/OpenAPI identity (e.g. `"demo"`, `"abc"`); must be URL-safe lowercase segment
 - `void RegisterServices(IServiceCollection services)` — module DI registrations
-- `void MapEndpoints(IEndpointRouteBuilder endpoints)` — Minimal API routes
+- `void MapEndpoints(IEndpointRouteBuilder endpoints)` — Minimal API routes under `/api/{Name}/...`
 
-Controllers: modules may include `[ApiController]` types. The host adds each discovered module assembly as an MVC application part so controllers are found without listing them in `Program.cs`.
+Controllers: modules may include `[ApiController]` types. Routes must also live under `/api/{Name}/...`. The host adds each discovered module assembly as an MVC application part so controllers are found without listing them in `Program.cs`.
+
+### HTTP & OpenAPI conventions
+
+| Concern | Convention |
+|---------|------------|
+| REST / Minimal APIs | `/api/{Name}/...` only — never bare `/demo/...` |
+| OpenAPI document name | Same as `IModule.Name` |
+| OpenAPI URL | `/openapi/{Name}.json` (ASP.NET Core built-in multi-document OpenAPI) |
+| Document contents | Only operations whose relative path starts with `api/{Name}` |
+
+`AddCore` registers `AddOpenApi(module.Name, ...)` for each discovered module with a `ShouldInclude` filter on that path prefix. The host calls `MapOpenApi()` once (no per-module lines in `Program.cs`). Do **not** register a single global default OpenAPI document in `Program.cs`.
 
 ### Discovery flow (in `Core`)
 
 1. Enumerate loaded assemblies whose simple name matches `Module.*`.
 2. Find concrete non-abstract types implementing `IModule`.
 3. Activate via parameterless constructor.
-4. Call `RegisterServices` for each; keep the instances for later endpoint mapping.
-5. After `WebApplication` is built: `MapControllers()` and call `MapEndpoints` on each module.
+4. Call `RegisterServices` for each; register per-module OpenAPI documents; keep instances for later endpoint mapping.
+5. After `WebApplication` is built: `MapOpenApi()`, `MapControllers()`, and call `MapEndpoints` on each module.
 
 ### `Program.cs` shape
 
-Conceptually: register controllers / OpenAPI / `AddCore()` (or equivalent that triggers discovery + service registration) → build → middleware → map controllers + module endpoints → `Run()`.
+Conceptually: `AddCore()` (discovery + DI + controllers/application parts + per-module OpenAPI registration) → build → middleware → `MapOpenApi()` + `MapModules()` → `Run()`.
 
 No per-module `using` and no `AddModule<T>()` calls in `Program.cs`.
 
@@ -69,18 +83,21 @@ Remove the existing manual `AddModule<T>` registration path from `Core`; discove
 ### `Module.Demo`
 
 - Project/assembly name: `Module.Demo`
-- Implements `IModule`
-- Maps `GET /demo/ping` returning `"pong"` (Minimal API)
+- `Name` → `"demo"`
+- Maps `GET /api/demo/ping` returning `"pong"` (Minimal API)
+- OpenAPI document `demo` at `/openapi/demo.json` includes that operation
 - Referenced from `Service` via `ProjectReference`
 
 ## Error handling
 
 | Case | Behavior |
 |------|----------|
-| No `Module.*` assemblies loaded | Host starts; empty module set |
+| No `Module.*` assemblies loaded | Host starts; empty module set; no OpenAPI documents |
 | Assembly name matches `Module.*` but no `IModule` | Skip; optional debug log |
-| Multiple `IModule` types in one assembly | Register all |
+| Multiple `IModule` types in one assembly | Register all (each needs a distinct `Name`) |
+| Duplicate `IModule.Name` across modules | Fail fast at startup with a clear exception |
 | Missing parameterless ctor / activation failure | Fail fast at startup with a clear exception |
+| Empty or invalid `Name` | Fail fast at startup with a clear exception |
 
 ## Docs updates (naming alignment)
 
@@ -95,7 +112,8 @@ Historical plan/spec files under `docs/superpowers/` may keep old wording as arc
 
 ## Testing
 
-- With `Module.Demo` referenced: host discovers the module and `GET /demo/ping` succeeds.
+- With `Module.Demo` referenced: host discovers the module and `GET /api/demo/ping` succeeds.
+- `GET /openapi/demo.json` returns 200 and describes `/api/demo/ping`.
 - Optional: host without any module `ProjectReference` still builds and runs.
 - Unit test projects: `{Project}.Unit` (xUnit + NSubstitute).
 - Test method names: `MethodName_Scenario_ExpectedOutcome`.
@@ -108,10 +126,11 @@ Historical plan/spec files under `docs/superpowers/` may keep old wording as arc
 - Real D&D / Therapy domain logic
 - Docker/Koyeb production packaging beyond documentation path fixes
 - Wildcard MSBuild auto-include of all `Module.*` projects
+- Single merged global OpenAPI document for all modules
 
 ## Verification
 
-- `dotnet run --project backend\src\Service\Service.csproj` serves `/demo/ping`
+- `dotnet run --project backend\src\Service\Service.csproj` serves `/api/demo/ping` and `/openapi/demo.json`
 - `Program.cs` contains no module-specific type names
-- New module recipe is: create `Module.{Name}` → implement `IModule` → `ProjectReference` on `Service` → rebuild
+- New module recipe is: create `Module.{Name}` → implement `IModule` (`Name`, services, `/api/{Name}/...` endpoints) → `ProjectReference` on `Service` → rebuild
 - Living docs no longer instruct agents to use `AAE.Modules.*`
