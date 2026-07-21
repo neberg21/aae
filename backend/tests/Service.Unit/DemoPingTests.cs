@@ -46,7 +46,7 @@ public sealed class DemoPingTests : IClassFixture<WebApplicationFactory<Program>
         var body = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("/openapi/demo.json", body, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("/demo/openapi.json", body, StringComparison.OrdinalIgnoreCase);
+        // Scalar strips the leading slash and resolves from the app root in JS.
+        Assert.Contains("\"url\":\"openapi/demo.json\"", body, StringComparison.Ordinal);
     }
 }
