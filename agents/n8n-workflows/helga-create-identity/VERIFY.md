@@ -3,15 +3,11 @@
 Operator checklist after image rebuild + workflow import on `https://n8n.neberg.de`.
 
 1. Set `NODE_FUNCTION_ALLOW_EXTERNAL=@faker-js/faker,@faker-js/faker/locale/de,nostr-tools` (do not include `@noble/hashes` — it crashes the JS task runner). Image must set `NODE_PATH=/home/node/.n8n/nodes/node_modules`.
-2. Attach GitHub credential; set Config `githubRepo`; replace `REPLACE_ME_HELGA_PREDICTION_URL` (REPLACE_ME_HELGA_PREDICTION_URL=https://odd-klarrisa-neberg-9ef6beed.koyeb.app/api/v1/prediction/b93259dd-6996-43b2-ad7e-f85221d30f95)
+2. Attach GitHub credential; set Config `githubRepo`; replace `REPLACE_ME_HELGA_PREDICTION_URL` (REPLACE_ME_HELGA_PREDICTION_URL=https://odd-klarrisa-neberg-9ef6beed.koyeb.app/api/v1/prediction/ba408c71-d62f-460b-a96a-3879a3a299b6)
 3. Activate workflow; note Production webhook URL
 
 ```cmd
 curl.exe -s -X POST https://n8n.neberg.de/webhook/helga-create-identity -H "Content-Type: application/json" -d "{\"action\":\"route_message\",\"target_agent\":\"@Helga\",\"intent\":\"hr_request\",\"payload\":{\"message\":\"Create Teamleiter Finanzen\",\"context\":\"\",\"module_scope\":\"Module.Finanzen\",\"role\":\"teamleiter\"}}"
-```
-
-```cmd
-curl.exe -s -X POST https://convenient-nonie-neberg-ad5744ad.koyeb.app/webhook/helga-create-identity -H "Content-Type: application/json" -d "{\"action\":\"route_message\",\"target_agent\":\"@Helga\",\"intent\":\"hr_request\",\"payload\":{\"message\":\"Create Teamleiter Finanzen\",\"context\":\"\",\"module_scope\":\"Module.Finanzen\",\"role\":\"teamleiter\"}}"
 ```
 
 Expect: `ok:true`, `already_exists:false`, `agent_id":"finanzen-teamleiter"`, `npub` present; GitHub file without `nsec`.
