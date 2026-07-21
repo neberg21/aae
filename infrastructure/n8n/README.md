@@ -31,13 +31,29 @@ Polling DM path runs about every 2 minutes (NIP-04). Dedupe in the Code node avo
 | Flowise calls | `https://flowise.neberg.de` + flow path |
 | Nostr relay | `wss://nostr.neberg.de` |
 
-Image installs `n8n-nodes-nostrobots@1.2.1` and `@noble/hashes@1.3.1` under `/home/node/.n8n/nodes`.
+Image installs `n8n-nodes-nostrobots@1.2.1`, `@noble/hashes@1.3.1`, `@noble/secp256k1@2.1.0`, `@faker-js/faker@9.3.0`, and `nostr-tools@2.10.4` under `/home/node/.n8n/nodes`.
+
+### Helga create-identity workflow
+
+Import [`agents/n8n-workflows/helga-create-identity.json`](../../agents/n8n-workflows/helga-create-identity.json).
+
+Host env (required for Code nodes):
+
+```text
+NODE_FUNCTION_ALLOW_EXTERNAL=faker,@faker-js/faker,@noble/secp256k1,@noble/hashes,nostr-tools
+```
+
+Design: [`docs/superpowers/specs/2026-07-21-helga-create-identity-n8n-design.md`](../../docs/superpowers/specs/2026-07-21-helga-create-identity-n8n-design.md).
+
+Helpers (unit-tested logic mirrored in Code nodes): [`agents/n8n-workflows/helga-create-identity/`](../../agents/n8n-workflows/helga-create-identity/).
 
 ### Common mistakes
 
 - Leaving example relays (`damus`, `nos.lol`, …) instead of `wss://nostr.neberg.de`
 - Expecting realtime DMs from the poll path (it is schedule-based)
 - Committing real credentials into workflow JSON
+- Forgetting `NODE_FUNCTION_ALLOW_EXTERNAL` for Helga HR (symptoms: `faker_unavailable`)
+- Committing employee `nsec` into `agents/identities/*.json`
 
 ## Implementation Details
 
