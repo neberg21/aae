@@ -540,13 +540,8 @@ builder.Services.AddCore(); <span class="tok-cm">// discovers Module.*; register
 
 <span class="tok-kw">var</span> app = builder.Build();
 
-<span class="tok-kw">if</span> (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi(); <span class="tok-cm">// /openapi/{moduleName}.json</span>
-}
-
 app.UseHttpsRedirection();
-app.MapModules(); <span class="tok-cm">// MapControllers + each IModule.MapEndpoints under /api/{name}</span>
+app.UseCoreHost(); <span class="tok-cm">// OpenAPI + controllers + all module endpoints under /api/{name}</span>
 
 app.Run();</code></pre>
       </div>

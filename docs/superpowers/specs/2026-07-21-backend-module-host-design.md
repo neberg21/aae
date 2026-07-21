@@ -62,7 +62,7 @@ Controllers: modules may include `[ApiController]` types. Routes must also live 
 | OpenAPI URL | `/openapi/{Name}.json` (ASP.NET Core built-in multi-document OpenAPI) |
 | Document contents | Only operations whose relative path starts with `api/{Name}` |
 
-`AddCore` registers `AddOpenApi(module.Name, ...)` for each discovered module with a `ShouldInclude` filter on that path prefix. The host calls `MapOpenApi()` once (no per-module lines in `Program.cs`). Do **not** register a single global default OpenAPI document in `Program.cs`.
+`AddCore` registers `AddOpenApi(module.Name, ...)` for each discovered module with a `ShouldInclude` filter on that path prefix. `UseCoreHost()` calls `MapOpenApi()` once for all registered documents. Do **not** register a single global default OpenAPI document in `Program.cs`.
 
 ### Discovery flow (in `Core`)
 
@@ -70,13 +70,23 @@ Controllers: modules may include `[ApiController]` types. Routes must also live 
 2. Find concrete non-abstract types implementing `IModule`.
 3. Activate via parameterless constructor.
 4. Call `RegisterServices` for each; register per-module OpenAPI documents; keep instances for later endpoint mapping.
-5. After `WebApplication` is built: `MapOpenApi()`, `MapControllers()`, and call `MapEndpoints` on each module.
+5. After `WebApplication` is built: `UseCoreHost()` maps OpenAPI (dev), controllers, and each module's `MapEndpoints`.
 
 ### `Program.cs` shape
 
-Conceptually: `AddCore()` (discovery + DI + controllers/application parts + per-module OpenAPI registration) → build → middleware → `MapOpenApi()` + `MapModules()` → `Run()`.
+Frozen host surface (never edited when adding a module):
 
-No per-module `using` and no `AddModule<T>()` calls in `Program.cs`.
+```csharp
+builder.Services.AddCore();   // discovery, DI, per-module OpenAPI registration, MVC parts
+var app = builder.Build();
+app.UseHttpsRedirection();
+app.UseCoreHost();            // MapOpenApi + MapControllers + all IModule.MapEndpoints
+app.Run();
+```
+
+`UseCoreHost()` is **host infrastructure**, not per-module wiring. Adding `Module.Foo` does **not** add any new line to `Program.cs` — only a `ProjectReference` on `Service` plus the module project.
+
+No per-module `using`, no `AddModule<T>()`, no `MapOpenApi("foo")`, no `MapModules` for individual modules.
 
 Remove the existing manual `AddModule<T>` registration path from `Core`; discovery is the only supported registration mechanism.
 
@@ -131,6 +141,6 @@ Historical plan/spec files under `docs/superpowers/` may keep old wording as arc
 ## Verification
 
 - `dotnet run --project backend\src\Service\Service.csproj` serves `/api/demo/ping` and `/openapi/demo.json`
-- `Program.cs` contains no module-specific type names
+- `Program.cs` contains no module-specific type names and no per-module Map/Add lines (only `AddCore` + `UseCoreHost`)
 - New module recipe is: create `Module.{Name}` → implement `IModule` (`Name`, services, `/api/{Name}/...` endpoints) → `ProjectReference` on `Service` → rebuild
 - Living docs no longer instruct agents to use `AAE.Modules.*`

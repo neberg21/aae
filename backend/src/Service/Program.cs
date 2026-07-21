@@ -6,12 +6,7 @@ builder.Services.AddCore();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
 app.UseHttpsRedirection();
-app.MapModules();
+app.UseCoreHost();
 
 app.Run();
