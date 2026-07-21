@@ -91,7 +91,7 @@ Replace `AAE.Modules.*`, `AAE.Core`, `AAE.Web`, and similar blueprint names with
 - `docs/process/organigramm.md` (specialist module path)
 - `agents/identities/leo.md`, `helga.md`, `template_domain-supervisor.md` (module path examples and guardrails)
 
-Historical plan/spec files under `docs/superpowers/` and `.superpowers/sdd/` may keep old wording as archived decisions, or get a one-line note that naming was superseded by this spec — prefer updating only living docs agents and humans still follow (README, architecture HTML, process, identities).
+Historical plan/spec files under `docs/superpowers/` may keep old wording as archived decisions, or get a one-line note that naming was superseded by this spec — prefer updating only living docs agents and humans still follow (README, architecture HTML, process, identities).
 
 ## Testing
 
