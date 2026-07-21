@@ -1,0 +1,573 @@
+{
+  "name": "Helga Create Identity",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Setup — Helga Create Identity\n1. Rebuild/redeploy n8n image from infrastructure/n8n (faker + noble + nostr-tools).\n2. Set env NODE_FUNCTION_ALLOW_EXTERNAL=faker,@faker-js/faker,@noble/secp256k1,@noble/hashes,nostr-tools\n3. Create GitHub credential with contents:write on the AAE repo; select it on GitHub HTTP nodes.\n4. Set Config node githubRepo (default neberg21/aae).\n5. Replace REPLACE_ME_HELGA_PREDICTION_URL in Call Helga Flowise with the Flowise Helga prediction URL (https://flowise.neberg.de/...).\n6. Activate workflow; copy Production webhook URL.\n7. Never commit nsec. Secrets live in workflow static data only.\n\nSpec: docs/superpowers/specs/2026-07-21-helga-create-identity-n8n-design.md\nRelay: wss://nostr.neberg.de\nWebhook path: helga-create-identity",
+        "height": 520,
+        "width": 520
+      },
+      "id": "sticky-setup",
+      "name": "Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-640, -200]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "helga-create-identity",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-320, 160],
+      "webhookId": "helga-create-identity"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg-repo",
+              "name": "githubRepo",
+              "value": "neberg21/aae",
+              "type": "string"
+            },
+            {
+              "id": "cfg-relay",
+              "name": "relay",
+              "value": "wss://nostr.neberg.de",
+              "type": "string"
+            },
+            {
+              "id": "cfg-helga",
+              "name": "helgaPredictionUrl",
+              "value": "REPLACE_ME_HELGA_PREDICTION_URL",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-config",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-100, 160]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function deriveAgentId(moduleScope, role) {\n  if (typeof moduleScope !== 'string' || typeof role !== 'string') throw new Error('moduleScope and role required');\n  const trimmedRole = role.trim().toLowerCase();\n  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(trimmedRole)) throw new Error('role must be kebab-case');\n  let domain = moduleScope.trim().replace(/^module\\./i, '').toLowerCase();\n  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(domain) && !/^[a-z0-9]+$/.test(domain)) throw new Error('invalid module_scope domain');\n  return `${domain}-${trimmedRole}`;\n}\nfunction identityRepoPath(agentId) {\n  return `agents/identities/${agentId}.json`;\n}\nfunction parseHrRequest(body) {\n  if (!body || typeof body !== 'object') return { ok: false, error: 'invalid_hr_request' };\n  if (body.target_agent !== '@Helga' || body.intent !== 'hr_request') return { ok: false, error: 'invalid_hr_request' };\n  const payload = body.payload;\n  if (!payload || typeof payload !== 'object') return { ok: false, error: 'invalid_hr_request' };\n  if (typeof payload.module_scope !== 'string' || !payload.module_scope.trim()) return { ok: false, error: 'invalid_hr_request' };\n  if (typeof payload.role !== 'string' || !payload.role.trim()) return { ok: false, error: 'invalid_hr_request' };\n  let agentId;\n  try { agentId = deriveAgentId(payload.module_scope, payload.role); } catch { return { ok: false, error: 'invalid_hr_request' }; }\n  return {\n    ok: true,\n    value: {\n      action: body.action,\n      target_agent: body.target_agent,\n      intent: body.intent,\n      payload: {\n        message: typeof payload.message === 'string' ? payload.message : '',\n        context: typeof payload.context === 'string' ? payload.context : '',\n        module_scope: payload.module_scope.trim(),\n        role: payload.role.trim().toLowerCase(),\n      },\n      agent_id: agentId,\n      path: identityRepoPath(agentId),\n    },\n  };\n}\nconst cfg = $('Config').first().json;\nconst body = $input.first().json.body ?? $input.first().json;\nconst parsed = parseHrRequest(body);\nif (!parsed.ok) {\n  return [{ json: { ok: false, error: parsed.error, httpStatus: 400 } }];\n}\nreturn [{ json: { ok: true, ...parsed.value, githubRepo: cfg.githubRepo, relay: cfg.relay, helgaPredictionUrl: cfg.helgaPredictionUrl } }];"
+      },
+      "id": "code-parse",
+      "name": "Parse HR Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [120, 160]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "ok-true",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-parse-ok",
+      "name": "IF Parse OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [340, 160]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, error: $json.error } }}",
+        "options": {
+          "responseCode": "={{ $json.httpStatus || 400 }}"
+        }
+      },
+      "id": "respond-400",
+      "name": "Respond Invalid",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [560, 320]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.github.com/repos/{{ $json.githubRepo }}/contents/{{ $json.path }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/vnd.github+json" },
+            { "name": "X-GitHub-Api-Version", "value": "2022-11-28" }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "http-gh-get",
+      "name": "GitHub GET Identity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [560, 40],
+      "credentials": {
+        "githubApi": {
+          "id": "PLACEHOLDER_GITHUB",
+          "name": "GitHub AAE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const prev = $('Parse HR Request').first().json;\nconst res = $input.first().json;\nconst status = res.statusCode ?? res.status;\nif (status === 404) {\n  return [{ json: { ...prev, exists: false, already_exists: false } }];\n}\nif (status >= 200 && status < 300) {\n  const content = res.body?.content ?? res.content;\n  const parsed = JSON.parse(Buffer.from(content, 'base64').toString('utf8'));\n  return [{\n    json: {\n      ok: true,\n      already_exists: true,\n      exists: true,\n      agent_id: parsed.agent_id,\n      path: prev.path,\n      npub: parsed.nostr?.npub,\n      display_name: parsed.nostr?.display_name,\n      httpStatus: 200,\n    },\n  }];\n}\nreturn [{ json: { ok: false, error: 'github_get_failed', httpStatus: 502 } }];"
+      },
+      "id": "code-gh-get",
+      "name": "Interpret GitHub GET",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 40]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "exists",
+              "leftValue": "={{ $json.already_exists }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-exists",
+      "name": "IF Already Exists",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1000, 40]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, already_exists: true, agent_id: $json.agent_id, path: $json.path, npub: $json.npub, display_name: $json.display_name } }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "respond-exists",
+      "name": "Respond Already Exists",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1220, -80]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "get-failed",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": false,
+              "operator": { "type": "boolean", "operation": "false", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-get-err",
+      "name": "IF GitHub GET Error",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1220, 120]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, error: $json.error } }}",
+        "options": { "responseCode": "={{ $json.httpStatus || 502 }}" }
+      },
+      "id": "respond-get-err",
+      "name": "Respond GET Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1440, 240]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Parse HR Request').item.json.helgaPredictionUrl }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"question\": {{ JSON.stringify($('Parse HR Request').item.json.payload.message) }},\n  \"overrideConfig\": {\n    \"vars\": {\n      \"module_scope\": {{ JSON.stringify($('Parse HR Request').item.json.payload.module_scope) }},\n      \"role\": {{ JSON.stringify($('Parse HR Request').item.json.payload.role) }},\n      \"context\": {{ JSON.stringify($('Parse HR Request').item.json.payload.context) }}\n    }\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "id": "http-helga",
+      "name": "Call Helga Flowise",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 40]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function validateHelgaIdentity(obj) {\n  const details = [];\n  if (!obj || typeof obj !== 'object') return { ok: false, error: 'invalid_identity', details: ['body'] };\n  for (const key of ['role_title', 'department', 'system_prompt']) {\n    if (typeof obj[key] !== 'string' || !obj[key].trim()) details.push(key);\n  }\n  if (!Array.isArray(obj.required_tools)) details.push('required_tools');\n  if (!Array.isArray(obj.guardrails)) details.push('guardrails');\n  if (details.length) return { ok: false, error: 'invalid_identity', details };\n  return {\n    ok: true,\n    value: {\n      role_title: obj.role_title.trim(),\n      department: obj.department.trim(),\n      system_prompt: obj.system_prompt,\n      required_tools: obj.required_tools,\n      guardrails: obj.guardrails,\n    },\n  };\n}\nconst prev = $('Parse HR Request').first().json;\nconst res = $input.first().json;\nconst status = res.statusCode ?? res.status;\nif (!status || status < 200 || status >= 300) {\n  return [{ json: { ok: false, error: 'helga_unavailable', httpStatus: 502 } }];\n}\nlet raw = res.body ?? res;\nif (typeof raw === 'string') {\n  try { raw = JSON.parse(raw); } catch { return [{ json: { ok: false, error: 'helga_unavailable', httpStatus: 502 } }]; }\n}\nlet candidate = raw;\nif (typeof raw.text === 'string') {\n  const t = raw.text.trim();\n  try { candidate = JSON.parse(t); } catch {\n    const m = t.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n    if (m) { try { candidate = JSON.parse(m[1]); } catch { /* keep */ } }\n    else { try { candidate = JSON.parse(t); } catch { return [{ json: { ok: false, error: 'helga_unavailable', httpStatus: 502 } }]; }\n  }\n} else if (raw.json && typeof raw.json === 'object') {\n  candidate = raw.json;\n}\nconst v = validateHelgaIdentity(candidate);\nif (!v.ok) {\n  return [{ json: { ok: false, error: v.error, details: v.details, httpStatus: 422 } }];\n}\nreturn [{ json: { ok: true, helga: v.value, agent_id: prev.agent_id, path: prev.path, payload: prev.payload, githubRepo: prev.githubRepo, relay: prev.relay } }];"
+      },
+      "id": "code-validate-helga",
+      "name": "Validate Helga Identity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1660, 40]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "helga-ok",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-helga-ok",
+      "name": "IF Helga OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1880, 40]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.details ? { ok: false, error: $json.error, details: $json.details } : { ok: false, error: $json.error } }}",
+        "options": { "responseCode": "={{ $json.httpStatus || 502 }}" }
+      },
+      "id": "respond-helga-err",
+      "name": "Respond Helga Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2100, 200]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "try {\n  const { faker } = require('@faker-js/faker/locale/de');\n  const item = $input.first().json;\n  const first = faker.person.firstName();\n  const display_name = `${first} (${item.helga.role_title})`;\n  return [{ json: { ...item, display_name, first_name: first } }];\n} catch (e) {\n  return [{ json: { ok: false, error: 'faker_unavailable', httpStatus: 500, details: String(e) } }];\n}"
+      },
+      "id": "code-faker",
+      "name": "Faker Display Name",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2100, 40]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "faker-ok",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "faker_unavailable",
+              "operator": { "type": "string", "operation": "notEquals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-faker-ok",
+      "name": "IF Faker OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2320, 40]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, error: $json.error } }}",
+        "options": { "responseCode": 500 }
+      },
+      "id": "respond-faker-err",
+      "name": "Respond Faker Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2540, 200]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first().json;\ntry {\n  const nostr = require('nostr-tools');\n  const generateSecretKey = nostr.generateSecretKey || nostr.pure?.generateSecretKey;\n  const getPublicKey = nostr.getPublicKey || nostr.pure?.getPublicKey;\n  const finalizeEvent = nostr.finalizeEvent || nostr.pure?.finalizeEvent;\n  const nip19 = nostr.nip19;\n  const sk = generateSecretKey();\n  const pk = getPublicKey(sk);\n  const nsec = nip19.nsecEncode(sk);\n  const npub = nip19.npubEncode(pk);\n  const display_name = item.display_name;\n  const about = `${item.helga.department} · ${item.helga.role_title}`;\n  const event = finalizeEvent({\n    kind: 0,\n    created_at: Math.floor(Date.now() / 1000),\n    tags: [],\n    content: JSON.stringify({ name: display_name, about }),\n  }, sk);\n  const relay = item.relay || 'wss://nostr.neberg.de';\n  const ok = await new Promise((resolve, reject) => {\n    const ws = new WebSocket(relay);\n    const t = setTimeout(() => { try { ws.close(); } catch (_) {} reject(new Error('nostr publish timeout')); }, 10000);\n    ws.addEventListener('open', () => { ws.send(JSON.stringify(['EVENT', event])); });\n    ws.addEventListener('message', (msg) => {\n      try {\n        const data = JSON.parse(typeof msg.data === 'string' ? msg.data : msg.data.toString());\n        if (data[0] === 'OK' && data[1] === event.id) {\n          clearTimeout(t);\n          try { ws.close(); } catch (_) {}\n          resolve(data[2] === true);\n        }\n      } catch (e) { /* ignore non-json */ }\n    });\n    ws.addEventListener('error', () => { clearTimeout(t); reject(new Error('nostr ws error')); });\n  });\n  if (!ok) {\n    return [{ json: { ok: false, error: 'nostr_profile_failed', httpStatus: 502 } }];\n  }\n  return [{ json: { ...item, npub, nsec, ok: true } }];\n} catch (e) {\n  return [{ json: { ok: false, error: 'nostr_profile_failed', httpStatus: 502, details: String(e) } }];\n}"
+      },
+      "id": "code-nostr",
+      "name": "Nostr Keygen Publish",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2540, 40]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "nostr-ok",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-nostr-ok",
+      "name": "IF Nostr OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2760, 40]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, error: $json.error } }}",
+        "options": { "responseCode": 502 }
+      },
+      "id": "respond-nostr-err",
+      "name": "Respond Nostr Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2980, 200]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const RELAY_DEFAULT = 'wss://nostr.neberg.de';\nfunction buildPublicIdentity({ helga, agentId, npub, displayName, relay }) {\n  return {\n    agent_id: agentId,\n    role_title: helga.role_title,\n    department: helga.department,\n    system_prompt: helga.system_prompt,\n    required_tools: helga.required_tools,\n    guardrails: helga.guardrails,\n    nostr: {\n      npub,\n      display_name: displayName,\n      relay: relay || RELAY_DEFAULT,\n    },\n  };\n}\nconst item = $input.first().json;\nconst staticData = $getWorkflowStaticData('global');\nstaticData.employeeNsecs = staticData.employeeNsecs || {};\nstaticData.employeeNsecs[item.agent_id] = item.nsec;\nconst identity = buildPublicIdentity({\n  helga: item.helga,\n  agentId: item.agent_id,\n  npub: item.npub,\n  displayName: item.display_name,\n  relay: item.relay,\n});\nconst fileContent = JSON.stringify(identity, null, 2);\nconst contentBase64 = Buffer.from(fileContent, 'utf8').toString('base64');\nreturn [{\n  json: {\n    ok: true,\n    agent_id: item.agent_id,\n    path: item.path,\n    githubRepo: item.githubRepo,\n    npub: item.npub,\n    display_name: item.display_name,\n    contentBase64,\n    nsec_stored: true,\n  },\n}];"
+      },
+      "id": "code-store-build",
+      "name": "Store nsec Build JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2980, 40]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.github.com/repos/{{ $json.githubRepo }}/contents/{{ $json.path }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/vnd.github+json" },
+            { "name": "X-GitHub-Api-Version", "value": "2022-11-28" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": {{ JSON.stringify('hr: add identity ' + $json.agent_id) }},\n  \"content\": {{ JSON.stringify($json.contentBase64) }}\n}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "http-gh-put",
+      "name": "GitHub PUT Identity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3200, 40],
+      "credentials": {
+        "githubApi": {
+          "id": "PLACEHOLDER_GITHUB",
+          "name": "GitHub AAE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const prev = $('Store nsec Build JSON').first().json;\nconst res = $input.first().json;\nconst status = res.statusCode ?? res.status;\nif (!status || status < 200 || status >= 300) {\n  return [{\n    json: {\n      ok: false,\n      error: 'github_commit_failed',\n      httpStatus: 502,\n      npub: prev.npub,\n      orphan_nostr_key: true,\n    },\n  }];\n}\nconst body = res.body ?? res;\nconst commitSha = body.commit?.sha || body.content?.sha || null;\nreturn [{\n  json: {\n    ok: true,\n    already_exists: false,\n    agent_id: prev.agent_id,\n    path: prev.path,\n    commit_sha: commitSha,\n    npub: prev.npub,\n    display_name: prev.display_name,\n    httpStatus: 200,\n  },\n}];"
+      },
+      "id": "code-put-result",
+      "name": "Interpret GitHub PUT",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3420, 40]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "put-ok",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-put-ok",
+      "name": "IF PUT OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [3640, 40]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, already_exists: false, agent_id: $json.agent_id, path: $json.path, commit_sha: $json.commit_sha, npub: $json.npub, display_name: $json.display_name } }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "respond-created",
+      "name": "Respond Created",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [3860, -40]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, error: $json.error, npub: $json.npub, orphan_nostr_key: $json.orphan_nostr_key } }}",
+        "options": { "responseCode": 502 }
+      },
+      "id": "respond-put-err",
+      "name": "Respond PUT Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [3860, 160]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Config", "type": "main", "index": 0 }]]
+    },
+    "Config": {
+      "main": [[{ "node": "Parse HR Request", "type": "main", "index": 0 }]]
+    },
+    "Parse HR Request": {
+      "main": [[{ "node": "IF Parse OK", "type": "main", "index": 0 }]]
+    },
+    "IF Parse OK": {
+      "main": [
+        [{ "node": "GitHub GET Identity", "type": "main", "index": 0 }],
+        [{ "node": "Respond Invalid", "type": "main", "index": 0 }]
+      ]
+    },
+    "GitHub GET Identity": {
+      "main": [[{ "node": "Interpret GitHub GET", "type": "main", "index": 0 }]]
+    },
+    "Interpret GitHub GET": {
+      "main": [[{ "node": "IF Already Exists", "type": "main", "index": 0 }]]
+    },
+    "IF Already Exists": {
+      "main": [
+        [{ "node": "Respond Already Exists", "type": "main", "index": 0 }],
+        [{ "node": "IF GitHub GET Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "IF GitHub GET Error": {
+      "main": [
+        [{ "node": "Respond GET Error", "type": "main", "index": 0 }],
+        [{ "node": "Call Helga Flowise", "type": "main", "index": 0 }]
+      ]
+    },
+    "Call Helga Flowise": {
+      "main": [[{ "node": "Validate Helga Identity", "type": "main", "index": 0 }]]
+    },
+    "Validate Helga Identity": {
+      "main": [[{ "node": "IF Helga OK", "type": "main", "index": 0 }]]
+    },
+    "IF Helga OK": {
+      "main": [
+        [{ "node": "Faker Display Name", "type": "main", "index": 0 }],
+        [{ "node": "Respond Helga Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Faker Display Name": {
+      "main": [[{ "node": "IF Faker OK", "type": "main", "index": 0 }]]
+    },
+    "IF Faker OK": {
+      "main": [
+        [{ "node": "Nostr Keygen Publish", "type": "main", "index": 0 }],
+        [{ "node": "Respond Faker Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Nostr Keygen Publish": {
+      "main": [[{ "node": "IF Nostr OK", "type": "main", "index": 0 }]]
+    },
+    "IF Nostr OK": {
+      "main": [
+        [{ "node": "Store nsec Build JSON", "type": "main", "index": 0 }],
+        [{ "node": "Respond Nostr Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Store nsec Build JSON": {
+      "main": [[{ "node": "GitHub PUT Identity", "type": "main", "index": 0 }]]
+    },
+    "GitHub PUT Identity": {
+      "main": [[{ "node": "Interpret GitHub PUT", "type": "main", "index": 0 }]]
+    },
+    "Interpret GitHub PUT": {
+      "main": [[{ "node": "IF PUT OK", "type": "main", "index": 0 }]]
+    },
+    "IF PUT OK": {
+      "main": [
+        [{ "node": "Respond Created", "type": "main", "index": 0 }],
+        [{ "node": "Respond PUT Error", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
