@@ -21,26 +21,33 @@ export function deriveAgentId(moduleScope, role) {
 
 export function parseHrRequest(body) {
   if (!body || typeof body !== 'object') {
-    return { ok: false, error: 'invalid_hr_request' };
+    return { ok: false, error: 'invalid_hr_request', details: ['body'] };
   }
-  if (body.target_agent !== '@Helga' || body.intent !== 'hr_request') {
-    return { ok: false, error: 'invalid_hr_request' };
+  if (body.target_agent !== '@Helga') {
+    return { ok: false, error: 'invalid_hr_request', details: ['target_agent'] };
+  }
+  if (body.intent !== 'hr_request') {
+    return { ok: false, error: 'invalid_hr_request', details: ['intent'] };
   }
   const payload = body.payload;
   if (!payload || typeof payload !== 'object') {
-    return { ok: false, error: 'invalid_hr_request' };
+    return { ok: false, error: 'invalid_hr_request', details: ['payload'] };
   }
   if (typeof payload.module_scope !== 'string' || !payload.module_scope.trim()) {
-    return { ok: false, error: 'invalid_hr_request' };
+    return { ok: false, error: 'invalid_hr_request', details: ['payload.module_scope'] };
   }
   if (typeof payload.role !== 'string' || !payload.role.trim()) {
-    return { ok: false, error: 'invalid_hr_request' };
+    return { ok: false, error: 'invalid_hr_request', details: ['payload.role'] };
   }
   let agentId;
   try {
     agentId = deriveAgentId(payload.module_scope, payload.role);
-  } catch {
-    return { ok: false, error: 'invalid_hr_request' };
+  } catch (e) {
+    return {
+      ok: false,
+      error: 'invalid_hr_request',
+      details: ['derive_agent_id', e instanceof Error ? e.message : String(e)],
+    };
   }
   return {
     ok: true,

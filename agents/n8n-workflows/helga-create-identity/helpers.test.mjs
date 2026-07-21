@@ -46,6 +46,7 @@ describe('parseHrRequest', () => {
     });
     assert.equal(r.ok, false);
     assert.equal(r.error, 'invalid_hr_request');
+    assert.deepEqual(r.details, ['target_agent']);
   });
   it('rejects missing role', () => {
     const r = parseHrRequest({
@@ -55,6 +56,19 @@ describe('parseHrRequest', () => {
       payload: { module_scope: 'Module.Finanzen', message: '', context: '' },
     });
     assert.equal(r.ok, false);
+    assert.deepEqual(r.details, ['payload.role']);
+  });
+  it('rejects invalid role format with derive details', () => {
+    const r = parseHrRequest({
+      action: 'route_message',
+      target_agent: '@Helga',
+      intent: 'hr_request',
+      payload: { module_scope: 'Module.Finanzen', role: 'Team Leiter', message: '', context: '' },
+    });
+    assert.equal(r.ok, false);
+    assert.equal(r.error, 'invalid_hr_request');
+    assert.equal(r.details[0], 'derive_agent_id');
+    assert.equal(r.details[1], 'role must be kebab-case');
   });
 });
 
