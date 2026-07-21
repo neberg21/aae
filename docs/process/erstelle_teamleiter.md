@@ -8,3 +8,13 @@ Hier ist das dynamische Template, das die Grundlage für jeden Teamleiter-System
 [Template Domain Supervisor|../../agents/identities/template_domain-supervisor.md]
 [Helga, HR|../../agents/identities/helga.md]
 [Leo, Orchestrator (CEO)|../../agents/identities/leo.md]
+
+## Runtime (n8n)
+
+Neue Identitäten werden per Webhook-Workflow angelegt:
+
+- Workflow: [`agents/n8n-workflows/helga-create-identity.json`](../../agents/n8n-workflows/helga-create-identity.json)
+- Design: [`docs/superpowers/specs/2026-07-21-helga-create-identity-n8n-design.md`](../superpowers/specs/2026-07-21-helga-create-identity-n8n-design.md)
+
+`agent_id` = `{domain}-{role}` (z. B. `finanzen-teamleiter`). Nostr-Profilname: `{Vorname} ({role_title})`.
+
