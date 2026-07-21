@@ -1,9 +1,11 @@
-function makeMainRealmNostrTemplate(anchorFn, kind, createdAt, content) {
-  const makeTemplate = anchorFn.constructor.constructor(
-    'return function (kind, created_at, tags, content) { return { kind: kind, created_at: created_at, tags: tags, content: content }; }',
-  )();
-  const tags = anchorFn.constructor.constructor('return []')();
-  return makeTemplate(kind, createdAt, tags, content);
+function makeMainRealmNostrTemplate(mainRealmAnchor, kind, createdAt, content) {
+  const MainObject = Object.getPrototypeOf(mainRealmAnchor).constructor;
+  const template = new MainObject();
+  template.kind = kind;
+  template.created_at = createdAt;
+  template.tags = [];
+  template.content = content;
+  return template;
 }
 
 async function publishEvent(relay, event) {
@@ -62,8 +64,9 @@ try {
   const content = JSON.stringify({ name: display_name, about });
   const created_at = Math.floor(Date.now() / 1000);
   // Object literals from the n8n Code sandbox fail nostr-tools validateEvent
-  // (cross-realm instanceof Object). Build the template in nostr-tools' realm.
-  const template = makeMainRealmNostrTemplate(generateSecretKey, 0, created_at, content);
+  // (cross-realm instanceof Object). Build the template in nostr-tools' realm
+  // without new Function (n8n disallows code generation from strings).
+  const template = makeMainRealmNostrTemplate(nostr, 0, created_at, content);
   const event = finalizeEvent(template, sk);
   const relay = item.relay || 'wss://nostr.neberg.de';
   const ok = await publishEvent(relay, event);

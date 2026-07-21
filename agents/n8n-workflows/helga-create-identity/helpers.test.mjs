@@ -207,19 +207,30 @@ describe('parseGithubFileJson', () => {
 });
 
 describe('makeMainRealmNostrTemplate', () => {
-  it('lets finalizeEvent succeed inside a vm sandbox (n8n Code realm)', () => {
-    let nostr;
+  it('lets finalizeEvent succeed inside a vm sandbox without eval (n8n Code realm)', () => {
     try {
-      nostr = require('nostr-tools');
+      require('nostr-tools');
     } catch {
       assert.fail('nostr-tools must be installed to run this test (npm install in this folder)');
     }
-    const { generateSecretKey, finalizeEvent } = nostr;
-    const sandbox = { require, console, Math, Date, JSON, makeMainRealmNostrTemplate };
-    const ctx = vm.createContext(sandbox);
+    // Mirror the paste script: helper is defined inside the sandbox (uses sandbox Object).
+    const sandbox = { require, console, Math, Date, JSON, Object };
+    const ctx = vm.createContext(sandbox, {
+      codeGeneration: { strings: false, wasm: false },
+    });
     const result = vm.runInContext(
       `
-      const { generateSecretKey, finalizeEvent } = require('nostr-tools');
+      function makeMainRealmNostrTemplate(mainRealmAnchor, kind, createdAt, content) {
+        const MainObject = Object.getPrototypeOf(mainRealmAnchor).constructor;
+        const template = new MainObject();
+        template.kind = kind;
+        template.created_at = createdAt;
+        template.tags = [];
+        template.content = content;
+        return template;
+      }
+      const nostr = require('nostr-tools');
+      const { generateSecretKey, finalizeEvent } = nostr;
       const sk = generateSecretKey();
       const content = JSON.stringify({ name: 'Judith (Teamleiter Finanzen)', about: 'Operations · Teamleiter Finanzen' });
       const created_at = Math.floor(Date.now() / 1000);
@@ -229,13 +240,20 @@ describe('makeMainRealmNostrTemplate', () => {
       } catch (e) {
         brokenMsg = String(e.message || e);
       }
-      const template = makeMainRealmNostrTemplate(generateSecretKey, 0, created_at, content);
+      let evalBlocked = false;
+      try {
+        Function('return 1');
+      } catch (e) {
+        evalBlocked = e instanceof EvalError || /Code generation from strings disallowed/i.test(String(e));
+      }
+      const template = makeMainRealmNostrTemplate(nostr, 0, created_at, content);
       const event = finalizeEvent(template, sk);
-      ({ brokenMsg, id: event.id, kind: event.kind });
+      ({ brokenMsg, evalBlocked, id: event.id, kind: event.kind });
       `,
       ctx,
     );
     assert.equal(result.brokenMsg, "can't serialize event with wrong or missing properties");
+    assert.equal(result.evalBlocked, true);
     assert.equal(typeof result.id, 'string');
     assert.equal(result.id.length, 64);
     assert.equal(result.kind, 0);

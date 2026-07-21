@@ -196,21 +196,25 @@ export function identityRepoPath(agentId) {
 }
 
 /**
- * Build a kind-0 EventTemplate in the same JS realm as `anchorFn` (e.g. nostr-tools
- * generateSecretKey). n8n Code nodes run in a VM where object literals fail
- * nostr-tools validateEvent (`instanceof Object` is cross-realm false), which
- * surfaces as: can't serialize event with wrong or missing properties.
+ * Build an EventTemplate in the same JS realm as `mainRealmAnchor` (e.g. the
+ * object returned by require('nostr-tools')). n8n Code nodes run in a VM where
+ * object literals fail nostr-tools validateEvent (`instanceof Object` is
+ * cross-realm false). Must not use new Function / eval — n8n disallows that.
  */
-export function makeMainRealmNostrTemplate(anchorFn, kind, createdAt, content) {
-  if (typeof anchorFn !== 'function') throw new Error('anchorFn required');
+export function makeMainRealmNostrTemplate(mainRealmAnchor, kind, createdAt, content) {
+  if (mainRealmAnchor == null || typeof mainRealmAnchor !== 'object') {
+    throw new Error('mainRealmAnchor object required');
+  }
   if (typeof kind !== 'number') throw new Error('kind must be number');
   if (typeof createdAt !== 'number') throw new Error('createdAt must be number');
   if (typeof content !== 'string') throw new Error('content must be string');
-  const makeTemplate = anchorFn.constructor.constructor(
-    'return function (kind, created_at, tags, content) { return { kind: kind, created_at: created_at, tags: tags, content: content }; }',
-  )();
-  const tags = anchorFn.constructor.constructor('return []')();
-  return makeTemplate(kind, createdAt, tags, content);
+  const MainObject = Object.getPrototypeOf(mainRealmAnchor).constructor;
+  const template = new MainObject();
+  template.kind = kind;
+  template.created_at = createdAt;
+  template.tags = [];
+  template.content = content;
+  return template;
 }
 
 export function parseGithubFileJson(base64Content) {
