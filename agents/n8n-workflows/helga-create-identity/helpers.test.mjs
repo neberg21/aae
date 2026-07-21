@@ -10,7 +10,8 @@ import {
   buildPublicIdentity,
   identityRepoPath,
   parseGithubFileJson,
-  makeMainRealmNostrTemplate,
+  makeNostrEventTemplate,
+  toRelayEvent,
 } from './helpers.mjs';
 
 const require = createRequire(import.meta.url);
@@ -206,37 +207,37 @@ describe('parseGithubFileJson', () => {
   });
 });
 
-describe('makeMainRealmNostrTemplate', () => {
-  it('lets finalizeEvent succeed inside a vm sandbox without eval (n8n Code realm)', () => {
+describe('makeNostrEventTemplate', () => {
+  it('lets finalizeEvent succeed under n8n secure Code shims', () => {
     try {
       require('nostr-tools');
     } catch {
       assert.fail('nostr-tools must be installed to run this test (npm install in this folder)');
     }
-    // Mirror the paste script: helper is defined inside the sandbox (uses sandbox Object).
-    const sandbox = { require, console, Math, Date, JSON, Object };
+    // Mirror n8n createVmExecutableCode secure shims + no eval.
+    const prelude = [
+      'Object.getPrototypeOf = () => ({})',
+      'Reflect.getPrototypeOf = () => ({})',
+      'Object.setPrototypeOf = () => false',
+      'Reflect.setPrototypeOf = () => false',
+      'Object.defineProperty = () => ({})',
+      'Object.defineProperties = () => ({})',
+    ].join(';');
+    const sandbox = { require, console, Math, Date, JSON, Object, Array, makeNostrEventTemplate, toRelayEvent };
     const ctx = vm.createContext(sandbox, {
       codeGeneration: { strings: false, wasm: false },
     });
     const result = vm.runInContext(
       `
-      function makeMainRealmNostrTemplate(mainRealmAnchor, kind, createdAt, content) {
-        const MainObject = Object.getPrototypeOf(mainRealmAnchor).constructor;
-        const template = new MainObject();
-        template.kind = kind;
-        template.created_at = createdAt;
-        template.tags = [];
-        template.content = content;
-        return template;
-      }
+      ${prelude};
       const nostr = require('nostr-tools');
-      const { generateSecretKey, finalizeEvent } = nostr;
-      const sk = generateSecretKey();
+      const sk = nostr.generateSecretKey();
+      const pk = nostr.getPublicKey(sk);
       const content = JSON.stringify({ name: 'Judith (Teamleiter Finanzen)', about: 'Operations · Teamleiter Finanzen' });
       const created_at = Math.floor(Date.now() / 1000);
       let brokenMsg = null;
       try {
-        finalizeEvent({ kind: 0, created_at, tags: [], content }, sk);
+        nostr.finalizeEvent({ kind: 0, created_at, tags: [], content }, sk);
       } catch (e) {
         brokenMsg = String(e.message || e);
       }
@@ -246,9 +247,17 @@ describe('makeMainRealmNostrTemplate', () => {
       } catch (e) {
         evalBlocked = e instanceof EvalError || /Code generation from strings disallowed/i.test(String(e));
       }
-      const template = makeMainRealmNostrTemplate(nostr, 0, created_at, content);
-      const event = finalizeEvent(template, sk);
-      ({ brokenMsg, evalBlocked, id: event.id, kind: event.kind });
+      const template = makeNostrEventTemplate(nostr.nip19, pk, 0, created_at, content);
+      const signed = nostr.finalizeEvent(template, sk);
+      const event = toRelayEvent(signed);
+      ({
+        brokenMsg,
+        evalBlocked,
+        id: event.id,
+        kind: event.kind,
+        hasType: Object.prototype.hasOwnProperty.call(event, 'type'),
+        sigLen: event.sig.length,
+      });
       `,
       ctx,
     );
@@ -257,5 +266,7 @@ describe('makeMainRealmNostrTemplate', () => {
     assert.equal(typeof result.id, 'string');
     assert.equal(result.id.length, 64);
     assert.equal(result.kind, 0);
+    assert.equal(result.hasType, false);
+    assert.equal(result.sigLen, 128);
   });
 });

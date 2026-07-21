@@ -196,25 +196,38 @@ export function identityRepoPath(agentId) {
 }
 
 /**
- * Build an EventTemplate in the same JS realm as `mainRealmAnchor` (e.g. the
- * object returned by require('nostr-tools')). n8n Code nodes run in a VM where
- * object literals fail nostr-tools validateEvent (`instanceof Object` is
- * cross-realm false). Must not use new Function / eval — n8n disallows that.
+ * Build an EventTemplate that survives n8n's secure Code sandbox.
+ * Sandbox object literals fail nostr-tools validateEvent (cross-realm
+ * `instanceof Object`). n8n also shims Object.getPrototypeOf → {}, so we cannot
+ * recover the main-realm Object constructor. nip19.decode() returns an object
+ * allocated inside nostr-tools (main realm).
  */
-export function makeMainRealmNostrTemplate(mainRealmAnchor, kind, createdAt, content) {
-  if (mainRealmAnchor == null || typeof mainRealmAnchor !== 'object') {
-    throw new Error('mainRealmAnchor object required');
+export function makeNostrEventTemplate(nip19, pubkey, kind, createdAt, content) {
+  if (!nip19 || typeof nip19.npubEncode !== 'function' || typeof nip19.decode !== 'function') {
+    throw new Error('nip19 required');
   }
   if (typeof kind !== 'number') throw new Error('kind must be number');
   if (typeof createdAt !== 'number') throw new Error('createdAt must be number');
   if (typeof content !== 'string') throw new Error('content must be string');
-  const MainObject = Object.getPrototypeOf(mainRealmAnchor).constructor;
-  const template = new MainObject();
+  const template = nip19.decode(nip19.npubEncode(pubkey));
   template.kind = kind;
   template.created_at = createdAt;
   template.tags = [];
   template.content = content;
   return template;
+}
+
+/** Strip nip19 decode leftovers before publishing to a relay. */
+export function toRelayEvent(signed) {
+  return {
+    id: signed.id,
+    pubkey: signed.pubkey,
+    created_at: signed.created_at,
+    kind: signed.kind,
+    tags: signed.tags,
+    content: signed.content,
+    sig: signed.sig,
+  };
 }
 
 export function parseGithubFileJson(base64Content) {
