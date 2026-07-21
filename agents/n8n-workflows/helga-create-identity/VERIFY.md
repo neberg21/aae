@@ -7,7 +7,11 @@ Operator checklist after image rebuild + workflow import on `https://n8n.neberg.
 3. Activate workflow; note Production webhook URL
 
 ```cmd
-curl -s -X POST https://n8n.neberg.de/webhook/helga-create-identity -H "Content-Type: application/json" -d "{\"action\":\"route_message\",\"target_agent\":\"@Helga\",\"intent\":\"hr_request\",\"payload\":{\"message\":\"Create Teamleiter Finanzen\",\"context\":\"\",\"module_scope\":\"Module.Finanzen\",\"role\":\"teamleiter\"}}"
+curl.exe -s -X POST https://n8n.neberg.de/webhook/helga-create-identity -H "Content-Type: application/json" -d "{\"action\":\"route_message\",\"target_agent\":\"@Helga\",\"intent\":\"hr_request\",\"payload\":{\"message\":\"Create Teamleiter Finanzen\",\"context\":\"\",\"module_scope\":\"Module.Finanzen\",\"role\":\"teamleiter\"}}"
+```
+
+```cmd
+curl.exe -s -X POST https://convenient-nonie-neberg-ad5744ad.koyeb.app/webhook/helga-create-identity -H "Content-Type: application/json" -d "{\"action\":\"route_message\",\"target_agent\":\"@Helga\",\"intent\":\"hr_request\",\"payload\":{\"message\":\"Create Teamleiter Finanzen\",\"context\":\"\",\"module_scope\":\"Module.Finanzen\",\"role\":\"teamleiter\"}}"
 ```
 
 Expect: `ok:true`, `already_exists:false`, `agent_id":"finanzen-teamleiter"`, `npub` present; GitHub file without `nsec`.
