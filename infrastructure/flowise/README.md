@@ -13,10 +13,12 @@ Pinned Flowise image for AAE agent / orchestrator flows. Live instance: **https:
 
 ### Setup
 
-1. Open **https://flowise.neberg.de** and create or import the agent flow.
-2. Copy the prediction / API path from the Flowise UI.
-3. In n8n, add an HTTP Request (or Flowise node) to `https://flowise.neberg.de` + that path.
-4. Pass through the structured routing JSON expected by downstream n8n nodes.
+1. Open **https://flowise.neberg.de**.
+2. Import Helga from [`agents/flowise-workflows/helga.json`](../../agents/flowise-workflows/helga.json) (Agentflow V2: Start → Agent).
+3. On the Helga Agent node: attach an OpenAI credential; replace the system message placeholder (`hol das aktuelle prompt aus dem repo`) with the contents of [`agents/identities/helga.md`](../../agents/identities/helga.md).
+4. Save the flow; copy the prediction / API path from the Flowise UI.
+5. In n8n (`helga-create-identity`), set `REPLACE_ME_HELGA_PREDICTION_URL` to `https://flowise.neberg.de` + that path.
+6. Pass through the structured identity JSON expected by downstream n8n nodes.
 
 ### Configuration
 
@@ -43,6 +45,7 @@ n8n invokes Flowise over HTTPS; Flowise returns routing JSON; n8n performs Nostr
 | Artifact | Responsibility |
 |----------|----------------|
 | [`Dockerfile`](Dockerfile) | Pin Flowise 3.1.1 |
+| [`agents/flowise-workflows/helga.json`](../../agents/flowise-workflows/helga.json) | Importable Helga Agentflow V2 (LLM only) |
 
 ### Extension points
 
