@@ -20,7 +20,7 @@ public static class ModuleDiscovery
         return Discover(moduleAssemblies);
     }
 
-    public static IReadOnlyList<IModule> Discover(IEnumerable<Assembly> assemblies)
+    private static IReadOnlyList<IModule> Discover(IEnumerable<Assembly> assemblies)
     {
         var moduleTypes = assemblies
             .Distinct()

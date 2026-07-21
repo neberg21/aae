@@ -13,7 +13,7 @@ public static class DependencyInjection
         foreach (var module in modules)
         {
             module.RegisterServices(services);
-            RegisterModuleOpenApi(services, module);
+            services.RegisterModuleOpenApi(module);
         }
 
         var moduleCollection = new ModuleCollection(modules);
@@ -72,7 +72,7 @@ public static class DependencyInjection
             $"Module names must be non-empty and unique. {string.Join("; ", details)}.");
     }
 
-    private static void RegisterModuleOpenApi(IServiceCollection services, IModule module)
+    private static void RegisterModuleOpenApi(this IServiceCollection services, IModule module)
     {
         var name = module.Name;
         var pathPrefix = $"api/{name}";
