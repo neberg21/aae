@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Scalar.AspNetCore;
 
 namespace Core;
@@ -13,10 +12,7 @@ public static class CoreHostExtensions
     /// </summary>
     public static WebApplication UseCoreHost(this WebApplication app)
     {
-        if (app.Environment.IsDevelopment())
-        {
-            app.MapOpenApi();
-        }
+        app.MapOpenApi();
 
         var modules = app.Services.GetRequiredService<IModuleCollection>();
         var api = app.MapGroup("/api");
@@ -24,12 +20,13 @@ public static class CoreHostExtensions
         {
             var moduleApi = api.MapGroup($"/{module.Name}");
             module.MapEndpoints(moduleApi);
+            var moduleName = module.Name;
             app.MapScalarApiReference(
-                $"/scalar/{module.Name}",
+                $"/scalar/{moduleName}",
                 options =>
                 {
-                    options.Title = $"Scalar API Reference for {module.Name}";
-                    options.OpenApiRoutePattern = $"/openapi/{module.Name}.json";
+                    options.Title = $"Scalar API Reference for {moduleName}";
+                    options.AddDocument(moduleName);
                 });
         }
 
