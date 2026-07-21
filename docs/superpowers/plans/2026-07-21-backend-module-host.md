@@ -18,7 +18,7 @@
 - Specialists may add `ProjectReference` on `Service` (+ `Service.slnx` entry); must not edit discovery in `Core` or bootstrap shape in `Program.cs`
 - Remove manual `AddModule<T>` path; discovery is the only registration mechanism
 - Unit test projects named `{Project}.Unit` under `backend/tests/` (e.g. `Core.Unit`, `Service.Unit`)
-- Test method names: `methodName_scenario_expectedOutcome`
+- Test method names: `MethodName_Scenario_ExpectedOutcome`
 - Test framework: xUnit; mocking: NSubstitute (prefer substitutes over hand-rolled fakes when the SUT takes interfaces)
 - C#: no primary constructors; create objects in locals before passing into methods/ctors
 - Windows host: use CMD for shell steps; no PowerShell/bash scripts
@@ -179,7 +179,7 @@ namespace Core.Unit;
 public sealed class ModuleDiscoveryTests
 {
     [Fact]
-    public void DiscoverTypes_concreteAndAbstractTypes_activatesOnlyConcrete()
+    public void DiscoverTypes_ConcreteAndAbstractTypes_ActivatesOnlyConcrete()
     {
         Type[] types = [typeof(ValidTestModule), typeof(AbstractTestModule)];
 
@@ -190,7 +190,7 @@ public sealed class ModuleDiscoveryTests
     }
 
     [Fact]
-    public void DiscoverTypes_validModule_registersModuleServices()
+    public void DiscoverTypes_ValidModule_RegistersModuleServices()
     {
         IReadOnlyList<IModule> modules = ModuleDiscovery.DiscoverTypes([typeof(ValidTestModule)]);
         ServiceCollection services = new();
@@ -207,7 +207,7 @@ public sealed class ModuleDiscoveryTests
     }
 
     [Fact]
-    public void DiscoverTypes_typeWithoutParameterlessCtor_throwsInvalidOperationException()
+    public void DiscoverTypes_TypeWithoutParameterlessCtor_ThrowsInvalidOperationException()
     {
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
             () => ModuleDiscovery.DiscoverTypes([typeof(BrokenTestModule)]));
@@ -219,7 +219,7 @@ public sealed class ModuleDiscoveryTests
 public sealed class ModuleCollectionTests
 {
     [Fact]
-    public void GetEnumerator_substitutedModules_yieldsAllModules()
+    public void GetEnumerator_SubstitutedModules_YieldsAllModules()
     {
         IModule first = Substitute.For<IModule>();
         IModule second = Substitute.For<IModule>();
@@ -568,7 +568,7 @@ public sealed class DemoPingTests : IClassFixture<WebApplicationFactory<Program>
     }
 
     [Fact]
-    public async Task GetAsync_demoPingPath_returnsPong()
+    public async Task GetAsync_DemoPingPath_ReturnsPong()
     {
         HttpClient client = _factory.CreateClient();
 
@@ -886,4 +886,4 @@ del %TEMP%\commitmsg.txt
 | Living docs rename | Task 3 |
 | Integration verification | Task 2 steps 4–5 |
 
-No placeholders left. Method names consistent: `DiscoverTypes` / `Discover` / `DiscoverLoadedModules` / `AddCore` / `MapModules`. Unit tests call `DiscoverTypes` so `BrokenTestModule` does not poison assembly-wide discovery. Test projects are `{Project}.Unit`; test methods use `methodName_scenario_expectedOutcome`; mocking uses NSubstitute.
+No placeholders left. Method names consistent: `DiscoverTypes` / `Discover` / `DiscoverLoadedModules` / `AddCore` / `MapModules`. Unit tests call `DiscoverTypes` so `BrokenTestModule` does not poison assembly-wide discovery. Test projects are `{Project}.Unit`; test methods use `MethodName_Scenario_ExpectedOutcome`; mocking uses NSubstitute.

@@ -98,7 +98,7 @@ Historical plan/spec files under `docs/superpowers/` may keep old wording as arc
 - With `Module.Demo` referenced: host discovers the module and `GET /demo/ping` succeeds.
 - Optional: host without any module `ProjectReference` still builds and runs.
 - Unit test projects: `{Project}.Unit` (xUnit + NSubstitute).
-- Test method names: `methodName_scenario_expectedOutcome`.
+- Test method names: `MethodName_Scenario_ExpectedOutcome`.
 
 ## Non-goals
 
