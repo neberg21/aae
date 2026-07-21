@@ -15,6 +15,6 @@ public sealed class DemoModule : IModule
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/api/demo/ping", () => "pong");
+        endpoints.MapGet("/ping", () => "pong");
     }
 }

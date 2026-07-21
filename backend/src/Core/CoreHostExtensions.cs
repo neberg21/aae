@@ -17,12 +17,12 @@ public static class CoreHostExtensions
             app.MapOpenApi();
         }
 
-        app.MapControllers();
-
         var modules = app.Services.GetRequiredService<IModuleCollection>();
+        var api = app.MapGroup("/api");
         foreach (var module in modules)
         {
-            module.MapEndpoints(app);
+            var moduleApi = api.MapGroup($"/{module.Name}");
+            module.MapEndpoints(moduleApi);
         }
 
         return app;
