@@ -71,13 +71,47 @@ public static class ModuleDiscovery
 
     private static void EnsureReferencedModuleAssembliesLoaded()
     {
-        var entryAssembly = Assembly.GetEntryAssembly();
-        if (entryAssembly is null)
+        LoadModuleAssembliesFromReferences(Assembly.GetEntryAssembly());
+        LoadModuleAssembliesFromReferences(typeof(ModuleDiscovery).Assembly);
+
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            LoadModuleAssembliesFromReferences(assembly);
+        }
+
+        var baseDirectory = AppContext.BaseDirectory;
+        if (string.IsNullOrEmpty(baseDirectory) || !Directory.Exists(baseDirectory))
         {
             return;
         }
 
-        foreach (var referenced in entryAssembly.GetReferencedAssemblies())
+        foreach (var path in Directory.GetFiles(baseDirectory, "Module.*.dll"))
+        {
+            var assemblyName = AssemblyName.GetAssemblyName(path);
+            var name = assemblyName.Name;
+            if (name is null || !name.StartsWith("Module.", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (AppDomain.CurrentDomain.GetAssemblies().Any(loaded =>
+                    string.Equals(loaded.GetName().Name, name, StringComparison.Ordinal)))
+            {
+                continue;
+            }
+
+            Assembly.LoadFrom(path);
+        }
+    }
+
+    private static void LoadModuleAssembliesFromReferences(Assembly? assembly)
+    {
+        if (assembly is null)
+        {
+            return;
+        }
+
+        foreach (var referenced in assembly.GetReferencedAssemblies())
         {
             var name = referenced.Name;
             if (name is null || !name.StartsWith("Module.", StringComparison.Ordinal))

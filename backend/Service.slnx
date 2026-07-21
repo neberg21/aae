@@ -1,9 +1,11 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Core/Core.csproj" />
+    <Project Path="src/Module.Demo/Module.Demo.csproj" />
     <Project Path="src/Service/Service.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Core.Unit/Core.Unit.csproj" />
+    <Project Path="tests/Service.Unit/Service.Unit.csproj" />
   </Folder>
 </Solution>
