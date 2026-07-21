@@ -246,7 +246,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "function validateHelgaIdentity(obj) {\n  const details = [];\n  if (!obj || typeof obj !== 'object') return { ok: false, error: 'invalid_identity', details: ['body'] };\n  for (const key of ['role_title', 'department', 'system_prompt']) {\n    if (typeof obj[key] !== 'string' || !obj[key].trim()) details.push(key);\n  }\n  if (!Array.isArray(obj.required_tools)) details.push('required_tools');\n  if (!Array.isArray(obj.guardrails)) details.push('guardrails');\n  if (details.length) return { ok: false, error: 'invalid_identity', details };\n  return {\n    ok: true,\n    value: {\n      role_title: obj.role_title.trim(),\n      department: obj.department.trim(),\n      system_prompt: obj.system_prompt,\n      required_tools: obj.required_tools,\n      guardrails: obj.guardrails,\n    },\n  };\n}\nconst prev = $('Parse HR Request').first().json;\nconst res = $input.first().json;\nconst status = res.statusCode ?? res.status;\nif (!status || status < 200 || status >= 300) {\n  return [{ json: { ok: false, error: 'helga_unavailable', httpStatus: 502 } }];\n}\nlet raw = res.body ?? res;\nif (typeof raw === 'string') {\n  try { raw = JSON.parse(raw); } catch { return [{ json: { ok: false, error: 'helga_unavailable', httpStatus: 502 } }]; }\n}\nlet candidate = raw;\nif (typeof raw.text === 'string') {\n  const t = raw.text.trim();\n  try { candidate = JSON.parse(t); } catch {\n    const m = t.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n    if (m) { try { candidate = JSON.parse(m[1]); } catch { /* keep */ } }\n    else { try { candidate = JSON.parse(t); } catch { return [{ json: { ok: false, error: 'helga_unavailable', httpStatus: 502 } }]; }\n  }\n} else if (raw.json && typeof raw.json === 'object') {\n  candidate = raw.json;\n}\nconst v = validateHelgaIdentity(candidate);\nif (!v.ok) {\n  return [{ json: { ok: false, error: v.error, details: v.details, httpStatus: 422 } }];\n}\nreturn [{ json: { ok: true, helga: v.value, agent_id: prev.agent_id, path: prev.path, payload: prev.payload, githubRepo: prev.githubRepo, relay: prev.relay } }];"
+        "jsCode": "// PASTE SCRIPT FROM: agents/n8n-workflows/helga-create-identity/validate-helga-identity.js"
       },
       "id": "code-validate-helga",
       "name": "Validate Helga Identity",
@@ -279,7 +279,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ $json.details ? { ok: false, error: $json.error, details: $json.details } : { ok: false, error: $json.error } }}",
+        "responseBody": "={{ $json.details ? { ok: false, error: $json.error, details: $json.details } : { ok: false, error: $json.error, details: $json.details  } }}",
         "options": { "responseCode": "={{ $json.httpStatus || 502 }}" }
       },
       "id": "respond-helga-err",
