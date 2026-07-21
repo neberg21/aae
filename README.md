@@ -51,10 +51,8 @@ Identity definitions live under [`agents/identities/`](agents/identities/).
 
 ## Architecture principles
 
-Target pattern (blueprint ahead of full runtime modules):
-
 - **Static container / dynamic module integration** — agents add feature modules without rewriting core bootstrap.
-- Backend modules: `AAE.Modules.[Name]` (target); specialists must not modify core host bootstrap such as `Program.cs`.
+- Backend modules: `Module.[Name]` under `backend/src/` (e.g. `Module.Demo`); specialists may add a `ProjectReference` on `Service` but must not modify `Program.cs` or `Core` discovery.
 - Frontend modules: `frontend/src/modules/[name]` (target); global shell stays thin and registry-driven.
 - Orchestration and sync: n8n as event bus; Flowise for LLM/agent flows; workflow definitions versioned in-repo where possible.
 
@@ -98,4 +96,4 @@ Custom image and setup notes: [`infrastructure/n8n/`](infrastructure/n8n/) (see 
 
 ## Status
 
-Early scaffold: frontend and backend hosts exist; agent identities and architecture docs are richer than the running application surface. Treat module paths above as the intended pattern until those folders land in code.
+Early scaffold: frontend and backend hosts exist with backend `Module.*` auto-discovery (`Module.Demo` proof). Frontend module registry paths remain a target pattern until those folders land. Agent identities and architecture docs remain richer than the full runtime surface.

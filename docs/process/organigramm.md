@@ -9,6 +9,6 @@
    │  fordert Spezialisten an,    │
    │  prüft Code-Qualität)        │
    │                              │
-   ├──► [ D&D Backend Spezialist ] (Arbeitet nur in AAE.Modules.Dnd)
+   ├──► [ D&D Backend Spezialist ] (Arbeitet nur in Module.Dnd)
    │
    └──► [ D&D Frontend Spezialist ] (Arbeitet nur in React /modules/dnd)

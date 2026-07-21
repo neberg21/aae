@@ -18,7 +18,7 @@ Wenn der Leo, der Orchestrator oder ein menschlicher Nutzer (über den Team-Chat
 
 **Regeln für die Agenten-Erstellung (Guardrails)**
 
-1. **Isolation:** Jeder Agent darf nur in seinem spezifischen Modul-Verzeichnis arbeiten (z.B. Backend-Agenten nur in `AAE.Modules.[Name]`). Agenten dürfen niemals die Kern-Bootstrapping-Logik (wie die `Program.cs`) modifizieren.
+1. **Isolation:** Jeder Agent darf nur in seinem spezifischen Modul-Verzeichnis arbeiten (z.B. Backend-Agenten nur in `Module.[Name]`). Agenten dürfen niemals die Kern-Bootstrapping-Logik (wie die `Program.cs`) modifizieren.
 2. **Klarheit:** Der System-Prompt des Kinder-Agenten muss präzise, aufgabenbezogen und fehlerresistent sein.
 3. **Zusammenarbeit:** Jeder Agent muss wissen, dass er seine Arbeitsergebnisse an den Orchestrator zurückmelden muss.
 

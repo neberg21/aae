@@ -360,7 +360,7 @@
       </div>
       <div class="tb-cell">
         <p class="tb-label">Projekt</p>
-        <p class="tb-value">AAE.WebApplication</p>
+        <p class="tb-value">backend / Service</p>
       </div>
       <div class="tb-cell">
         <p class="tb-label">Revision</p>
@@ -518,49 +518,35 @@
       <h3>3.1 &nbsp;Backend Architecture (.NET Directory &amp; Code)</h3>
       <div class="panel">
         <span class="panel-tab">Verzeichnis · .NET</span>
-        <pre><code>AAE.WebApplication/
-├── AAE.Core/                  <span class="tok-cm"># Kern-Abstraktionen und Interfaces</span>
-│   ├── Modules/
-│   │   └── IModuleSettings.cs
-│   └── Models/
-├── AAE.Modules.Dnd/           <span class="tok-cm"># Gekapselte D&amp;D Logik (Controller &amp; Services)</span>
-├── AAE.Modules.Therapy/       <span class="tok-cm"># Gekapselte Psychotherapie Logik</span>
-└── AAE.Web/                   <span class="tok-cm"># Main Entrypoint, Host &amp; Startup Konfiguration</span>
-    ├── Program.cs
-    └── appsettings.json</code></pre>
+        <pre><code>backend/
+├── Service.slnx
+└── src/
+    ├── Core/                  <span class="tok-cm"># IModule contract + discovery</span>
+    ├── Module.Demo/           <span class="tok-cm"># Proof / example feature module</span>
+    ├── Module.Dnd/            <span class="tok-cm"># Example domain module (when added)</span>
+    └── Service/               <span class="tok-cm"># Host entrypoint (Program.cs)</span>
+        ├── Program.cs
+        └── appsettings.json</code></pre>
       </div>
 
       <h4>Entwurf der Program.cs</h4>
       <div class="panel">
         <span class="panel-tab">C# · Program.cs</span>
-        <pre><code><span class="tok-kw">using</span> Microsoft.AspNetCore.Builder;
-<span class="tok-kw">using</span> Microsoft.Extensions.DependencyInjection;
-<span class="tok-kw">using</span> Microsoft.Extensions.Hosting;
+        <pre><code><span class="tok-kw">using</span> Core;
 
 <span class="tok-kw">var</span> builder = WebApplication.CreateBuilder(args);
 
-<span class="tok-cm">// 1. Core Services registrieren</span>
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-
-<span class="tok-cm">// 2. Module programmatisch registrieren</span>
-<span class="tok-cm">// Ermöglicht es Agenten, neue Controller hinzuzufügen, ohne den Kern-Build zu modifizieren.</span>
-builder.Services.AddScoped&lt;<span class="tok-type">AAE.Core.Modules.IModuleSettings</span>, <span class="tok-type">AAE.Modules.Dnd.DndSettings</span>&gt;();
-builder.Services.AddScoped&lt;<span class="tok-type">AAE.Core.Modules.IModuleSettings</span>, <span class="tok-type">AAE.Modules.Therapy.TherapySettings</span>&gt;();
+builder.Services.AddCore(); <span class="tok-cm">// discovers Module.*; registers per-module OpenAPI docs</span>
 
 <span class="tok-kw">var</span> app = builder.Build();
 
 <span class="tok-kw">if</span> (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
+    app.MapOpenApi(); <span class="tok-cm">// /openapi/{moduleName}.json</span>
 }
 
 app.UseHttpsRedirection();
-app.UseRouting();
-app.UseAuthorization();
-
-<span class="tok-cm">// Globales Routing - .NET scannt geladene Assemblies automatisch nach [ApiController]</span>
-app.MapControllers();
+app.MapModules(); <span class="tok-cm">// MapControllers + each IModule.MapEndpoints under /api/{name}</span>
 
 app.Run();</code></pre>
       </div>
@@ -618,15 +604,14 @@ app.Run();</code></pre>
 <span class="tok-kw">FROM</span> mcr.microsoft.com/dotnet/sdk:10.0-alpine <span class="tok-kw">AS</span> backend-build
 <span class="tok-kw">WORKDIR</span> /app/backend
 
-<span class="tok-kw">COPY</span> AAE.WebApplication/*.sln ./
-<span class="tok-kw">COPY</span> AAE.WebApplication/AAE.Core/*.csproj ./AAE.Core/
-<span class="tok-kw">COPY</span> AAE.WebApplication/AAE.Web/*.csproj ./AAE.Web/
-<span class="tok-kw">COPY</span> AAE.WebApplication/AAE.Modules.Dnd/*.csproj ./AAE.Modules.Dnd/
-<span class="tok-kw">COPY</span> AAE.WebApplication/AAE.Modules.Therapy/*.csproj ./AAE.Modules.Therapy/
-<span class="tok-kw">RUN</span> dotnet restore
+<span class="tok-kw">COPY</span> Service.slnx ./
+<span class="tok-kw">COPY</span> src/Core/*.csproj ./src/Core/
+<span class="tok-kw">COPY</span> src/Service/*.csproj ./src/Service/
+<span class="tok-kw">COPY</span> src/Module.Demo/*.csproj ./src/Module.Demo/
+<span class="tok-kw">RUN</span> dotnet restore Service.slnx
 
-<span class="tok-kw">COPY</span> AAE.WebApplication/ ./
-<span class="tok-kw">RUN</span> dotnet publish AAE.Web/AAE.Web.csproj -c Release -o /app/publish --no-restore
+<span class="tok-kw">COPY</span> . ./
+<span class="tok-kw">RUN</span> dotnet publish src/Service/Service.csproj -c Release -o /app/publish --no-restore
 
 <span class="tok-cm"># ==========================================
 # STAGE 3: Finaler Runtime Aggregations-Container
@@ -642,7 +627,7 @@ app.Run();</code></pre>
 <span class="tok-cm"># Integriert die statischen Frontend-Assets direkt in das wwwroot von .NET</span>
 <span class="tok-kw">COPY</span> --from=frontend-build /app/frontend/dist ./wwwroot
 
-<span class="tok-kw">ENTRYPOINT</span> [<span class="tok-str">"dotnet"</span>, <span class="tok-str">"AAE.Web.dll"</span>]</code></pre>
+<span class="tok-kw">ENTRYPOINT</span> [<span class="tok-str">"dotnet"</span>, <span class="tok-str">"Service.dll"</span>]</code></pre>
       </div>
     </section>
 
