@@ -1,5 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import { createRequire } from 'node:module';
 import {
   parseHrRequest,
   deriveAgentId,
@@ -8,7 +10,10 @@ import {
   buildPublicIdentity,
   identityRepoPath,
   parseGithubFileJson,
+  makeMainRealmNostrTemplate,
 } from './helpers.mjs';
+
+const require = createRequire(import.meta.url);
 
 const validIdentity = {
   agent_id: 'teamleiter-finanzen',
@@ -198,5 +203,41 @@ describe('parseGithubFileJson', () => {
     const obj = { agent_id: 'finanzen-teamleiter', nostr: { npub: 'npub1x', display_name: 'A (B)' } };
     const b64 = Buffer.from(JSON.stringify(obj), 'utf8').toString('base64');
     assert.deepEqual(parseGithubFileJson(b64), obj);
+  });
+});
+
+describe('makeMainRealmNostrTemplate', () => {
+  it('lets finalizeEvent succeed inside a vm sandbox (n8n Code realm)', () => {
+    let nostr;
+    try {
+      nostr = require('nostr-tools');
+    } catch {
+      assert.fail('nostr-tools must be installed to run this test (npm install in this folder)');
+    }
+    const { generateSecretKey, finalizeEvent } = nostr;
+    const sandbox = { require, console, Math, Date, JSON, makeMainRealmNostrTemplate };
+    const ctx = vm.createContext(sandbox);
+    const result = vm.runInContext(
+      `
+      const { generateSecretKey, finalizeEvent } = require('nostr-tools');
+      const sk = generateSecretKey();
+      const content = JSON.stringify({ name: 'Judith (Teamleiter Finanzen)', about: 'Operations · Teamleiter Finanzen' });
+      const created_at = Math.floor(Date.now() / 1000);
+      let brokenMsg = null;
+      try {
+        finalizeEvent({ kind: 0, created_at, tags: [], content }, sk);
+      } catch (e) {
+        brokenMsg = String(e.message || e);
+      }
+      const template = makeMainRealmNostrTemplate(generateSecretKey, 0, created_at, content);
+      const event = finalizeEvent(template, sk);
+      ({ brokenMsg, id: event.id, kind: event.kind });
+      `,
+      ctx,
+    );
+    assert.equal(result.brokenMsg, "can't serialize event with wrong or missing properties");
+    assert.equal(typeof result.id, 'string');
+    assert.equal(result.id.length, 64);
+    assert.equal(result.kind, 0);
   });
 });
