@@ -46,8 +46,8 @@ Identity definitions live under [`agents/identities/`](agents/identities/).
 | [`frontend/`](frontend/) | React + TypeScript + Vite UI scaffold |
 | [`backend/`](backend/) | ASP.NET Core (`net10.0`) API host (`Service.slnx`) |
 | [`agents/`](agents/) | Agent identities and workflow JSON (n8n / Flowise) |
-| [`infrastructure/`](infrastructure/) | Docker and service packaging (n8n, placeholders for flowise/nostr/webapp) |
-| [`docs/`](docs/) | Architecture blueprint and process notes |
+| [`infrastructure/`](infrastructure/) | Docker packaging for n8n, Flowise, Nostr relay, webapp |
+| [`docs/`](docs/) | Architecture blueprint, deployed hosts, and process notes |
 
 ## Architecture principles
 
@@ -78,20 +78,30 @@ dotnet run --project backend\src\Service\Service.csproj
 
 Solution file: [`backend/Service.slnx`](backend/Service.slnx).
 
-### n8n
+### n8n / Flowise / Nostr
 
-Custom image and setup notes: [`infrastructure/n8n/`](infrastructure/n8n/) (see its README). Example workflow JSON: [`agents/n8n-workflows/`](agents/n8n-workflows/).
+Live hosts (use these in workflows and scripts):
+
+| Service | URL |
+|---------|-----|
+| Nostr relay | `https://nostr.neberg.de` · `wss://nostr.neberg.de` |
+| n8n | `https://n8n.neberg.de` |
+| Flowise | `https://flowise.neberg.de` |
+
+Details: [`docs/deployed-services.md`](docs/deployed-services.md). Packaging: [`infrastructure/`](infrastructure/). Example n8n workflow JSON: [`agents/n8n-workflows/`](agents/n8n-workflows/).
 
 ## Further reading
 
 | Doc | Notes |
 |-----|--------|
+| [`docs/deployed-services.md`](docs/deployed-services.md) | Canonical `*.neberg.de` hosts for workflows and docs |
 | [`docs/aae-architectutre.html`](docs/aae-architectutre.html) | Full architecture blueprint (German UI) |
 | [`docs/process/human-in-the-loop.md`](docs/process/human-in-the-loop.md) | Approval / HITL flow (German) |
 | [`docs/process/organigramm.md`](docs/process/organigramm.md) | Agent hierarchy sketch (German) |
 | [`docs/process/erstelle_teamleiter.md`](docs/process/erstelle_teamleiter.md) | How domain supervisors get their prompts (German) |
 | [`agents/identities/leo.md`](agents/identities/leo.md) | Orchestrator system prompt |
 | [`agents/identities/helga.md`](agents/identities/helga.md) | HR identity system prompt |
+| [`infrastructure/README.md`](infrastructure/README.md) | Docker packaging overview |
 | [`infrastructure/n8n/README.md`](infrastructure/n8n/README.md) | n8n + Nostr community node setup (German) |
 
 ## Status
