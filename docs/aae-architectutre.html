@@ -467,7 +467,7 @@
 
       <h3>2.2 &nbsp;Cognitive Layer &amp; Team Erstellung (Flowise)</h3>
       <p>
-        Flowise verwaltet Prompt-Chains, das Gedächtnis und Tool-Bindings. Um eine Fragmentierung durch unzählige isolierte Flows zu verhindern, nutzt das System ein Supervisor-Muster. Ein universeller Master-Agenten-Flow fungiert als <strong>Orchestrator (Orchestra Tor)</strong> und primärer Laufzeit-Container. Dieser analysiert die Absicht des Nutzers, zerlegt Aufgaben und ruft dynamisch spezialisierte Kinder-Agenten auf, indem System-Prompts, Identitäten und Werkzeuge via Payload in den Master-Flow injiziert werden.
+        Flowise verwaltet Prompt-Chains, das Gedächtnis und Tool-Bindings. Um eine Fragmentierung durch unzählige isolierte Flows zu verhindern, nutzt das System ein Supervisor-Muster. Ein universeller Master-Agenten-Flow fungiert als <strong>Orchestrator (Leo)</strong> und primärer Laufzeit-Container. Dieser analysiert die Absicht des Nutzers, zerlegt Aufgaben und ruft dynamisch spezialisierte Kinder-Agenten auf, indem System-Prompts, Identitäten und Werkzeuge via Payload in den Master-Flow injiziert werden.
       </p>
       <p>
         Die HR-Agentin <strong>Helga</strong> hat hierbei einen strikt limitierten Aktionsradius: Sie baut keine Infrastruktur und verknüpft keine Nodes. Helga fungiert als reine <em>Identitäts-Schmiede</em>. Wird ein neues Teammitglied benötigt, generiert sie den optimalen System-Prompt, definiert API-Werkzeuge, setzt Leitplanken und speichert diese "Software-Seele" als JSON in einer Datenbank ab, aus der der Orchestrator schöpft.
@@ -476,7 +476,7 @@
       <div class="panel">
         <span class="panel-tab">Schema · Agenten-Hierarchie</span>
         <pre><code>               ┌────────────────────────────────────────┐
-               │           ORCHESTRATOR-AGENT           │
+               │       LEO (ORCHESTRATOR-AGENT)         │
                │  (Universeller Master-Agenten-Flow)    │
                └─────────┬───────────────────┬──────────┘
                          │ (Task)            │ (Task)
