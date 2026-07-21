@@ -31,17 +31,19 @@ Polling DM path runs about every 2 minutes (NIP-04). Dedupe in the Code node avo
 | Flowise calls | `https://flowise.neberg.de` + flow path |
 | Nostr relay | `wss://nostr.neberg.de` |
 
-Image installs `n8n-nodes-nostrobots@1.2.1`, `@noble/hashes@1.3.1`, `@noble/secp256k1@2.1.0`, `@faker-js/faker@9.3.0`, and `nostr-tools@2.10.4` under `/home/node/.n8n/nodes`.
+Image installs `n8n-nodes-nostrobots@1.2.1`, `@noble/hashes@1.3.1`, `@noble/secp256k1@2.1.0`, `@faker-js/faker@9.3.0`, and `nostr-tools@2.10.4` under `/home/node/.n8n/nodes`. The image sets `NODE_PATH=/home/node/.n8n/nodes/node_modules` so the JS task runner can `require()` those packages (community-node path alone is not enough).
 
 ### Helga create-identity workflow
 
 Import [`agents/n8n-workflows/helga-create-identity.json`](../../agents/n8n-workflows/helga-create-identity.json).
 
-Host env (required for Code nodes):
+Host env (required for Code nodes). Allowlist only packages the Code nodes `require()` directly — the task runner calls `require()` on every allowlisted name at startup:
 
 ```text
-NODE_FUNCTION_ALLOW_EXTERNAL=faker,@faker-js/faker,@noble/secp256k1,@noble/hashes,nostr-tools
+NODE_FUNCTION_ALLOW_EXTERNAL=@faker-js/faker,@faker-js/faker/locale/de,nostr-tools
 ```
+
+Do **not** allowlist `@noble/hashes` (root import throws and the runner exits), `faker` (wrong package name), or `@noble/secp256k1` (transitive via `nostr-tools`).
 
 Design: [`docs/superpowers/specs/2026-07-21-helga-create-identity-n8n-design.md`](../../docs/superpowers/specs/2026-07-21-helga-create-identity-n8n-design.md).
 
@@ -53,6 +55,8 @@ Helpers (unit-tested logic mirrored in Code nodes): [`agents/n8n-workflows/helga
 - Expecting realtime DMs from the poll path (it is schedule-based)
 - Committing real credentials into workflow JSON
 - Forgetting `NODE_FUNCTION_ALLOW_EXTERNAL` for Helga HR (symptoms: `faker_unavailable`)
+- Allowlisting `@noble/hashes` (task runner crash: `root module cannot be imported`)
+- Installing Code deps only under `~/.n8n/nodes` without `NODE_PATH` (symptoms: `Allowlisted module … is not installed`)
 - Committing employee `nsec` into `agents/identities/*.json`
 
 ## Implementation Details
