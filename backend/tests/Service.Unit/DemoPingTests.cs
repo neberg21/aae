@@ -36,4 +36,17 @@ public sealed class DemoPingTests : IClassFixture<WebApplicationFactory<Program>
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("/api/demo/ping", body, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public async Task GetAsync_ScalarDemo_ReferencesOpenApiDemoDocument()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/scalar/demo");
+        var body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("/openapi/demo.json", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("/demo/openapi.json", body, StringComparison.OrdinalIgnoreCase);
+    }
 }

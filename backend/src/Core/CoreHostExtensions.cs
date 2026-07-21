@@ -29,7 +29,7 @@ public static class CoreHostExtensions
                 options =>
                 {
                     options.Title = $"Scalar API Reference for {module.Name}";
-                    options.OpenApiRoutePattern = $"/{module.Name}/openapi.json";
+                    options.OpenApiRoutePattern = $"/openapi/{module.Name}.json";
                 });
         }
 
