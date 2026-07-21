@@ -201,8 +201,10 @@
   <div class="card">
     <div class="field">
       <label for="relays">DM-Inbox &amp; Profil-Relays (eine URL pro Zeile)</label>
-      <textarea id="relays">wss://nostr.neberg.de</textarea>
+      <textarea id="relays">wss://economic-nicoline-neberg-cbee2179.koyeb.app</textarea>
 <!--
+wss://nostr.neberg.de -> wss://economic-nicoline-neberg-cbee2179.koyeb.app
+
 wss://inbox.nostr.wine
 wss://auth.nostr1.com
 wss://relay.damus.io
@@ -211,8 +213,10 @@ wss://relay.nostr.band
       <div class="hint">Hier werden sowohl deine Erreichbarkeit (Kind 10050) als auch dein Name (Kind 0) hingeschrieben.</div>
     </div>
 
+    <button class="primary" id="testRelayBtn" style="margin-bottom:10px;background:#334155;">Relay-Verbindung testen</button>
     <button class="primary" id="publishBtn">Daten signieren &amp; veröffentlichen</button>
     <div class="error-msg" id="errorMsg"></div>
+    <pre id="diagLog" style="display:none;margin-top:12px;"></pre>
   </div>
 
   <!-- Karte 4: Statusausgabe -->
@@ -243,12 +247,86 @@ wss://relay.nostr.band
   const profAbout = document.getElementById('profAbout');
 
   const relaysInput = document.getElementById('relays');
+  const testRelayBtn = document.getElementById('testRelayBtn');
   const publishBtn = document.getElementById('publishBtn');
   const errorMsg = document.getElementById('errorMsg');
+  const diagLog = document.getElementById('diagLog');
   const resultBox = document.getElementById('resultBox');
   const pubkeyLine = document.getElementById('pubkeyLine');
   const statusList = document.getElementById('statusList');
   const eventJson = document.getElementById('eventJson');
+
+  function statusId(prefix, url) {
+    // btoa can produce +/= which break getElementById in some cases — use hex
+    return prefix + '-' + Array.from(new TextEncoder().encode(url))
+      .map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function appendDiag(line) {
+    diagLog.style.display = 'block';
+    diagLog.textContent += line + '\n';
+  }
+
+  function clearDiag() {
+    diagLog.textContent = '';
+    diagLog.style.display = 'none';
+  }
+
+  /** Probe one relay: open WS, wait for open or error (does not publish). */
+  function probeRelay(url, timeoutMs = 8000) {
+    return new Promise((resolve) => {
+      let settled = false;
+      let ws;
+      const finish = (ok, detail) => {
+        if (settled) return;
+        settled = true;
+        try { ws && ws.close(); } catch (_) {}
+        resolve({ url, ok, detail });
+      };
+      try {
+        ws = new WebSocket(url);
+      } catch (e) {
+        finish(false, 'WebSocket ctor: ' + (e.message || String(e)));
+        return;
+      }
+      const timer = setTimeout(() => finish(false, 'timeout after ' + timeoutMs + 'ms (no open)'), timeoutMs);
+      ws.onopen = () => {
+        clearTimeout(timer);
+        finish(true, 'WebSocket OPEN');
+      };
+      ws.onerror = () => {
+        clearTimeout(timer);
+        finish(false, 'WebSocket error (often firewall/TLS/proxy; traffic may never reach the relay)');
+      };
+      ws.onclose = (ev) => {
+        clearTimeout(timer);
+        if (!settled) {
+          finish(false, 'closed before open code=' + ev.code + ' reason=' + (ev.reason || '(none)'));
+        }
+      };
+    });
+  }
+
+  testRelayBtn.addEventListener('click', async () => {
+    errorMsg.style.display = 'none';
+    clearDiag();
+    const relayUrls = relaysInput.value
+      .split('\n')
+      .map(r => r.trim())
+      .filter(r => r.length > 0);
+    if (relayUrls.length === 0) {
+      showError('Bitte mindestens ein Relay angeben.');
+      return;
+    }
+    testRelayBtn.disabled = true;
+    appendDiag('Probing ' + relayUrls.length + ' relay(s) from this browser…');
+    appendDiag('If the relay container shows no new logs, the connection never left your network.');
+    for (const url of relayUrls) {
+      const result = await probeRelay(url);
+      appendDiag((result.ok ? 'OK  ' : 'FAIL') + '  ' + result.url + '  —  ' + result.detail);
+    }
+    testRelayBtn.disabled = false;
+  });
 
   // nsec Sichtbarkeit umschalten
   toggleVis.addEventListener('click', () => {
@@ -370,20 +448,24 @@ wss://relay.nostr.band
         relayUrls.forEach(url => {
           const row = document.createElement('div');
           row.className = 'status-row';
-          row.innerHTML = `<span>[Kind 0] ${url}</span><span class="status-pending" id="p-${btoa(url)}">wird gesendet…</span>`;
+          const sid = statusId('p', url);
+          row.innerHTML = `<span>[Kind 0] ${url}</span><span class="status-pending" id="${sid}">wird gesendet…</span>`;
           statusList.appendChild(row);
         });
 
         const profilePubs = pool.publish(relayUrls, signedProfile);
         profilePubs.forEach((p, i) => {
           const url = relayUrls[i];
-          const cell = document.getElementById('p-' + btoa(url));
+          const cell = document.getElementById(statusId('p', url));
           p.then(() => {
             cell.textContent = '✓ Profil live';
             cell.className = 'status-ok';
           }).catch(err => {
-            cell.textContent = '✗ Fehler';
+            const msg = err?.message || String(err);
+            cell.textContent = '✗ ' + msg;
             cell.className = 'status-fail';
+            cell.title = msg;
+            appendDiag('[Kind 0] FAIL ' + url + ' — ' + msg);
           });
         });
       }
@@ -403,21 +485,28 @@ wss://relay.nostr.band
       relayUrls.forEach(url => {
         const row = document.createElement('div');
         row.className = 'status-row';
-        row.innerHTML = `<span>[Kind 10050] ${url}</span><span class="status-pending" id="i-${btoa(url)}">wird gesendet…</span>`;
+        const sid = statusId('i', url);
+        row.innerHTML = `<span>[Kind 10050] ${url}</span><span class="status-pending" id="${sid}">wird gesendet…</span>`;
         statusList.appendChild(row);
       });
+
+      clearDiag();
+      appendDiag('Publishing from this browser. Empty relay logs ⇒ packet never reached nostr-rs-relay.');
 
       const inboxPubs = pool.publish(relayUrls, signedInbox);
       inboxPubs.forEach((p, i) => {
         const url = relayUrls[i];
-        const cell = document.getElementById('i-' + btoa(url));
+        const cell = document.getElementById(statusId('i', url));
         p.then(() => {
           cell.textContent = '✓ Inbox hinterlegt';
           cell.className = 'status-ok';
+          appendDiag('[Kind 10050] OK ' + url);
         }).catch(err => {
-          cell.textContent = '✗ Fehler';
+          const msg = err?.message || String(err);
+          cell.textContent = '✗ ' + msg;
           cell.className = 'status-fail';
-          cell.title = err?.message || String(err);
+          cell.title = msg;
+          appendDiag('[Kind 10050] FAIL ' + url + ' — ' + msg);
         });
       });
 
