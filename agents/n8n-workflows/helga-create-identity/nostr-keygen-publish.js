@@ -71,9 +71,9 @@ try {
   const relay = item.relay || 'wss://nostr.neberg.de';
   const ok = await publishEvent(relay, event);
   if (!ok) {
-    return [{ json: { ok: false, error: 'nostr_profile_failed', httpStatus: 502 } }];
+    return { json: { ok: false, error: 'nostr_profile_failed', httpStatus: 502 } };
   }
   return [{ json: { ...item, npub, nsec, ok: true } }];
 } catch (e) {
-  return [{ json: { ok: false, error: 'nostr_profile_failed', httpStatus: 502, details: String(e) } }];
+  return { json: { ok: false, error: 'nostr_profile_failed', httpStatus: 502, details: String(e) } };
 }
