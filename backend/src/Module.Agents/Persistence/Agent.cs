@@ -8,5 +8,8 @@ public record Agent
     public required string JobDescription { get; set; }
     public required string SystemPrompt { get; set; }
     public required string PrivateKeyHex { get; set; }
+    public required string Department { get; set; }
+    public required string? ManagerId { get; set; }
+    public required string[] Guardrails { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

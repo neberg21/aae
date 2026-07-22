@@ -43,7 +43,10 @@ public class CreateIdentityService
             PrivateKeyHex = keyPair.PrivateKeyHex,
             JobTitle = request.JobTitle,
             JobDescription = request.JobDescription,
-            SystemPrompt = request.SystemPrompt
+            SystemPrompt = request.SystemPrompt,
+            Department = request.Department,
+            ManagerId = request.ManagerId,
+            Guardrails = request.Guardrails
         };
 
         _dbContext.Agents.Add(agent);
