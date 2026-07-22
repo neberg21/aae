@@ -41,6 +41,7 @@ public class SeedCoreAgents : BackgroundService
         var keyPair = NostrKeyPair.GenerateKeyPair();
         return new Agent
         {
+            AgentId = "leo",
             Name = "leo",
             PrivateKeyHex = keyPair.PrivateKeyHex,
             PublicKeyHex = keyPair.PublicKeyHex,
@@ -106,6 +107,7 @@ public class SeedCoreAgents : BackgroundService
 
         return new Agent
         {
+            AgentId = "helga",
             Name = "helga",
             PrivateKeyHex = keyPair.PrivateKeyHex,
             PublicKeyHex = keyPair.PublicKeyHex,

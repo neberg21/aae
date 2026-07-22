@@ -71,13 +71,78 @@ export function parseLeoDelegations(agentOutput, threadId) {
       senderAgentId: 'leo',
       targetAgentId: d.targetAgentId,
       content: `${d.message ?? ''}${intent}${scope}`.trim(),
+      intent: d.intent ?? null,
+      message: d.message ?? '',
+      moduleScope: d.moduleScope ?? null,
     });
   }
   return { ok: true, items };
 }
 
+export function buildHelgaHrRequestContent({ agentId, moduleScope, message }) {
+  return JSON.stringify({
+    intent: 'hr_request',
+    agentId,
+    role: 'supervisor',
+    moduleScope: moduleScope ?? null,
+    message: message ?? '',
+  });
+}
+
+export function buildParkDelegationBody({
+  threadId,
+  senderAgentId,
+  targetAgentId,
+  content,
+}) {
+  return {
+    threadId,
+    senderAgentId,
+    targetAgentId,
+    content,
+  };
+}
+
+export function planLeoItemAction(item, exists) {
+  const isHelga = String(item.targetAgentId).toLowerCase() === 'helga';
+  if (isHelga || exists) {
+    return {
+      action: 'route',
+      routeBody: {
+        threadId: item.threadId,
+        senderAgentId: item.senderAgentId,
+        targetAgentId: item.targetAgentId,
+        content: item.content,
+      },
+    };
+  }
+
+  const parkBody = buildParkDelegationBody({
+    threadId: item.threadId,
+    senderAgentId: item.senderAgentId,
+    targetAgentId: item.targetAgentId,
+    content: item.content,
+  });
+  const hrContent = buildHelgaHrRequestContent({
+    agentId: item.targetAgentId,
+    moduleScope: item.moduleScope,
+    message: item.message,
+  });
+  return {
+    action: 'park_and_hire',
+    parkBody,
+    helgaRouteBody: {
+      threadId: item.threadId,
+      senderAgentId: item.senderAgentId,
+      targetAgentId: 'helga',
+      content: hrContent,
+    },
+  };
+}
+
 export function mapHelgaIdentityToCreateRequest(identity, jobDescription) {
   return {
+    agentId: identity.agentId ?? '',
     jobTitle: identity.roleTitle ?? identity.jobTitle ?? '',
     jobDescription: jobDescription ?? identity.jobDescription ?? '',
     department: identity.department ?? '',
@@ -115,6 +180,13 @@ export function parseHelgaDecision(agentOutput, threadId, jobDescription) {
         ok: false,
         error: 'invalid_manager',
         userMessage: 'Helga used forbidden teamleiter naming.',
+      };
+    }
+    if (!obj.identity.agentId || !assertNoTeamleiter(obj.identity.agentId)) {
+      return {
+        ok: false,
+        error: 'invalid_agent_id',
+        userMessage: 'Helga produced an invalid agentId.',
       };
     }
     return {

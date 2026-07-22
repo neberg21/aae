@@ -23,7 +23,10 @@
 ```
 
 Expect before model: `GET /api/agents/search?department=Core&name=leo` then `GET /api/agents/{agentId}`.
-Expect: one or more POSTs to `https://ai.neberg.de/api/agents/route-chat-message` (camelCase).
+Expect after model: for each `supervisor-*` target, `GET /api/agents/search?agentId=...`.
+- If found → `POST .../route-chat-message` to that supervisor.
+- If missing → `POST .../park-delegation`, then `POST .../route-chat-message` to `helga` with HR JSON content (`intent`, `agentId`, `role`, `moduleScope`, `message`).
+After Helga `create-identity` with that `agentId`, expect parked content routed to the new supervisor.
 
 ### Helga clarify / create
 
@@ -34,6 +37,8 @@ Expect: one or more POSTs to `https://ai.neberg.de/api/agents/route-chat-message
   "threadId": "smoke-helga",
   "chatHistory": [],
   "delegationRequest": {
+    "intent": "hr_request",
+    "agentId": "supervisor-finance",
     "message": "Need a Finance supervisor",
     "moduleScope": "Module.Finance",
     "role": "supervisor"
@@ -42,7 +47,7 @@ Expect: one or more POSTs to `https://ai.neberg.de/api/agents/route-chat-message
 ```
 
 Expect before model: `GET /api/agents/search?department=Core&name=helga` then `GET /api/agents/{agentId}`.
-Expect: either `route-chat-message` to User OR `create-identity` with `tools` / `guardrails` / `managerId`.
+Expect: either `route-chat-message` to User OR `create-identity` with `agentId` / `tools` / `guardrails` / `managerId`.
 
 ### Supervisor
 

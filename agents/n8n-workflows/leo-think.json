@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## AAE Leo Think\nAttach OpenAI credential after import.\nWebhook: POST /webhook/leo-think\nLoad systemPrompt: GET /api/agents/search?department=Core&name=leo then GET /api/agents/{agentId}\nCallbacks: https://ai.neberg.de/api/agents/route-chat-message",
+        "content": "## AAE Leo Think\nAttach OpenAI credential after import.\nWebhook: POST /webhook/leo-think\nLoad systemPrompt: GET /api/agents/search?department=Core&name=leo then GET /api/agents/{agentId}\nAfter parse: for supervisor-* search?agentId= → route OR park-delegation + Helga HR\nCallbacks: route-chat-message, park-delegation",
         "height": 280,
         "width": 400
       },
@@ -11,7 +11,10 @@
       "name": "Setup",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [0, 0]
+      "position": [
+        0,
+        0
+      ]
     },
     {
       "parameters": {
@@ -24,7 +27,10 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [280, 300],
+      "position": [
+        280,
+        300
+      ],
       "webhookId": "aae-leo-think"
     },
     {
@@ -36,7 +42,10 @@
       "name": "Normalize Input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [500, 300]
+      "position": [
+        500,
+        300
+      ]
     },
     {
       "parameters": {
@@ -48,7 +57,10 @@
       "name": "Search Agent",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [720, 300]
+      "position": [
+        720,
+        300
+      ]
     },
     {
       "parameters": {
@@ -59,7 +71,10 @@
       "name": "Resolve Identity",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [940, 300]
+      "position": [
+        940,
+        300
+      ]
     },
     {
       "parameters": {
@@ -71,7 +86,10 @@
       "name": "Get System Prompt",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1160, 300]
+      "position": [
+        1160,
+        300
+      ]
     },
     {
       "parameters": {
@@ -82,7 +100,10 @@
       "name": "Prepare Agent Input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1380, 300]
+      "position": [
+        1380,
+        300
+      ]
     },
     {
       "parameters": {
@@ -96,7 +117,10 @@
       "name": "AI Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
-      "position": [1600, 300]
+      "position": [
+        1600,
+        300
+      ]
     },
     {
       "parameters": {
@@ -111,18 +135,24 @@
       "name": "OpenAI Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
-      "position": [1600, 520]
+      "position": [
+        1600,
+        520
+      ]
     },
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "function parseJsonMaybe(text) {\n  if (text == null) return null;\n  if (typeof text === 'object') return text;\n  const raw = String(text).trim();\n  const fenced = raw.match(/```(?:json)?\\s*([\\s\\S]*?)```/i);\n  const candidate = fenced ? fenced[1].trim() : raw;\n  try { return JSON.parse(candidate); } catch { return null; }\n}\nfunction assertNoTeamleiter(id) {\n  return !String(id).toLowerCase().includes('teamleiter');\n}\nfunction parseLeoDelegations(agentOutput, threadId) {\n  const obj = parseJsonMaybe(agentOutput);\n  if (!obj || !Array.isArray(obj.delegations) || obj.delegations.length === 0) {\n    return { ok: false, error: 'invalid_leo_output', userMessage: 'Leo could not produce valid delegations.' };\n  }\n  const itemsOut = [];\n  for (const d of obj.delegations) {\n    if (!d?.targetAgentId || !assertNoTeamleiter(d.targetAgentId)) {\n      return { ok: false, error: 'invalid_target', userMessage: 'Leo produced an invalid targetAgentId.' };\n    }\n    const scope = d.moduleScope ? ` [scope=${d.moduleScope}]` : '';\n    const intent = d.intent ? ` (${d.intent})` : '';\n    itemsOut.push({\n      threadId,\n      senderAgentId: 'leo',\n      targetAgentId: d.targetAgentId,\n      content: `${d.message ?? ''}${intent}${scope}`.trim(),\n    });\n  }\n  return { ok: true, items: itemsOut };\n}\nfunction buildFailureRoute({ threadId, senderAgentId, content }) {\n  return { threadId, senderAgentId, targetAgentId: 'User', content };\n}\nconst prev = $('Normalize Input').first().json;\nconst agentItem = items[0].json;\nconst agentText = agentItem.output ?? agentItem.text ?? agentItem;\nconst parsed = parseLeoDelegations(agentText, prev.threadId);\nif (!parsed.ok) {\n  return [{ json: { ok: false, routeBody: buildFailureRoute({ threadId: prev.threadId, senderAgentId: 'leo', content: parsed.userMessage }) } }];\n}\nreturn [{ json: { ok: true, items: parsed.items } }];"
+        "jsCode": "function parseJsonMaybe(text) {\n  if (text == null) return null;\n  if (typeof text === 'object') return text;\n  const raw = String(text).trim();\n  const fenced = raw.match(/```(?:json)?\\s*([\\s\\S]*?)```/i);\n  const candidate = fenced ? fenced[1].trim() : raw;\n  try { return JSON.parse(candidate); } catch { return null; }\n}\nfunction assertNoTeamleiter(id) {\n  return !String(id).toLowerCase().includes('teamleiter');\n}\nfunction parseLeoDelegations(agentOutput, threadId) {\n  const obj = parseJsonMaybe(agentOutput);\n  if (!obj || !Array.isArray(obj.delegations) || obj.delegations.length === 0) {\n    return { ok: false, error: 'invalid_leo_output', userMessage: 'Leo could not produce valid delegations.' };\n  }\n  const itemsOut = [];\n  for (const d of obj.delegations) {\n    if (!d?.targetAgentId || !assertNoTeamleiter(d.targetAgentId)) {\n      return { ok: false, error: 'invalid_target', userMessage: 'Leo produced an invalid targetAgentId.' };\n    }\n    const scope = d.moduleScope ? ` [scope=${d.moduleScope}]` : '';\n    const intent = d.intent ? ` (${d.intent})` : '';\n    itemsOut.push({\n      threadId,\n      senderAgentId: 'leo',\n      targetAgentId: d.targetAgentId,\n      content: `${d.message ?? ''}${intent}${scope}`.trim(),\n      intent: d.intent ?? null,\n      message: d.message ?? '',\n      moduleScope: d.moduleScope ?? null,\n    });\n  }\n  return { ok: true, items: itemsOut };\n}\nfunction buildFailureRoute({ threadId, senderAgentId, content }) {\n  return { threadId, senderAgentId, targetAgentId: 'User', content };\n}\nconst prev = $('Normalize Input').first().json;\nconst agentItem = items[0].json;\nconst agentText = agentItem.output ?? agentItem.text ?? agentItem;\nconst parsed = parseLeoDelegations(agentText, prev.threadId);\nif (!parsed.ok) {\n  return [{ json: { ok: false, routeBody: buildFailureRoute({ threadId: prev.threadId, senderAgentId: 'leo', content: parsed.userMessage }) } }];\n}\nreturn [{ json: { ok: true, items: parsed.items } }];"
       },
       "id": "leo-code-parse",
       "name": "Parse Delegations",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1840, 300]
+      "position": [
+        1840,
+        300
+      ]
     },
     {
       "parameters": {
@@ -152,7 +182,10 @@
       "name": "OK?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [2060, 300]
+      "position": [
+        2060,
+        300
+      ]
     },
     {
       "parameters": {
@@ -163,7 +196,10 @@
       "name": "Split Items",
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
-      "position": [2300, 200]
+      "position": [
+        2300,
+        200
+      ]
     },
     {
       "parameters": {
@@ -171,14 +207,17 @@
         "url": "https://ai.neberg.de/api/agents/route-chat-message",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ threadId: $json.threadId, senderAgentId: $json.senderAgentId, targetAgentId: $json.targetAgentId, content: $json.content }) }}",
+        "jsonBody": "={{ JSON.stringify($json.routeBody ?? { threadId: $json.threadId, senderAgentId: $json.senderAgentId, targetAgentId: $json.targetAgentId, content: $json.content }) }}",
         "options": {}
       },
       "id": "leo-http-ok",
       "name": "Route Chat Message",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2540, 200]
+      "position": [
+        3400,
+        40
+      ]
     },
     {
       "parameters": {
@@ -193,45 +232,339 @@
       "name": "Route Failure To User",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2300, 420]
+      "position": [
+        2300,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "leo-is-supervisor",
+              "leftValue": "={{ String($json.targetAgentId).startsWith('supervisor-') }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "leo-if-supervisor",
+      "name": "Is Supervisor?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2520,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://ai.neberg.de/api/agents/search?agentId={{ $json.targetAgentId }}",
+        "options": {}
+      },
+      "id": "leo-http-search-target",
+      "name": "Search Target",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2740,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function buildHelgaHrRequestContent({ agentId, moduleScope, message }) {\n  return JSON.stringify({\n    intent: 'hr_request',\n    agentId,\n    role: 'supervisor',\n    moduleScope: moduleScope ?? null,\n    message: message ?? '',\n  });\n}\nfunction buildParkDelegationBody({ threadId, senderAgentId, targetAgentId, content }) {\n  return { threadId, senderAgentId, targetAgentId, content };\n}\nfunction planLeoItemAction(item, exists) {\n  const isHelga = String(item.targetAgentId).toLowerCase() === 'helga';\n  if (isHelga || exists) {\n    return {\n      action: 'route',\n      routeBody: {\n        threadId: item.threadId,\n        senderAgentId: item.senderAgentId,\n        targetAgentId: item.targetAgentId,\n        content: item.content,\n      },\n    };\n  }\n  const parkBody = buildParkDelegationBody({\n    threadId: item.threadId,\n    senderAgentId: item.senderAgentId,\n    targetAgentId: item.targetAgentId,\n    content: item.content,\n  });\n  const hrContent = buildHelgaHrRequestContent({\n    agentId: item.targetAgentId,\n    moduleScope: item.moduleScope,\n    message: item.message,\n  });\n  return {\n    action: 'park_and_hire',\n    parkBody,\n    helgaRouteBody: {\n      threadId: item.threadId,\n      senderAgentId: item.senderAgentId,\n      targetAgentId: 'helga',\n      content: hrContent,\n    },\n  };\n}\nconst search = items[0].json;\nconst page = search.body ?? search;\nconst list = page.items ?? page.Items ?? [];\nconst exists = Array.isArray(list) && list.length > 0;\nconst item = $('Split Items').item.json;\nconst planned = planLeoItemAction(item, exists);\nreturn [{ json: planned }];"
+      },
+      "id": "leo-code-plan",
+      "name": "Plan Action",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2960,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "leo-needs-park",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "park_and_hire",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "leo-if-park",
+      "name": "Needs Park?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3180,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ai.neberg.de/api/agents/park-delegation",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.parkBody) }}",
+        "options": {}
+      },
+      "id": "leo-http-park",
+      "name": "Park Delegation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3400,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ai.neberg.de/api/agents/route-chat-message",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($(\"Plan Action\").item.json.helgaRouteBody) }}",
+        "options": {}
+      },
+      "id": "leo-http-helga-hr",
+      "name": "Route Helga HR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3620,
+        280
+      ]
     }
   ],
   "connections": {
     "Webhook": {
-      "main": [[{ "node": "Normalize Input", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Normalize Input": {
-      "main": [[{ "node": "Search Agent", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Search Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Search Agent": {
-      "main": [[{ "node": "Resolve Identity", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Resolve Identity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Resolve Identity": {
-      "main": [[{ "node": "Get System Prompt", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Get System Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Get System Prompt": {
-      "main": [[{ "node": "Prepare Agent Input", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Prepare Agent Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Prepare Agent Input": {
-      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "OpenAI Chat Model": {
-      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
     },
     "AI Agent": {
-      "main": [[{ "node": "Parse Delegations", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Parse Delegations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Parse Delegations": {
-      "main": [[{ "node": "OK?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "OK?": {
       "main": [
-        [{ "node": "Split Items", "type": "main", "index": 0 }],
-        [{ "node": "Route Failure To User", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Split Items",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Failure To User",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Split Items": {
-      "main": [[{ "node": "Route Chat Message", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Is Supervisor?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Supervisor?": {
+      "main": [
+        [
+          {
+            "node": "Search Target",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Chat Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Target": {
+      "main": [
+        [
+          {
+            "node": "Plan Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan Action": {
+      "main": [
+        [
+          {
+            "node": "Needs Park?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Park?": {
+      "main": [
+        [
+          {
+            "node": "Park Delegation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Chat Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Park Delegation": {
+      "main": [
+        [
+          {
+            "node": "Route Helga HR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
