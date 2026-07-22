@@ -1,8 +1,0 @@
-{
-  "name": "helga-flowise-workflow",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "test": "node --test helga.test.mjs"
-  }
-}
