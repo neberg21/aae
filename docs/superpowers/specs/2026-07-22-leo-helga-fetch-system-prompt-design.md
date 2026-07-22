@@ -15,7 +15,7 @@ Keep Leo and Helga chat/think runtime behavior unchanged. Only the source of the
 | Scope | `leo-think.json` and `helga-think.json` only — do not modify supervisor/specialist workflows |
 | User chat flow | Unchanged (webhook → normalize → AI → parse → callbacks) |
 | System prompt source | Backend identity, not sticky/hardcoded Agent `systemMessage` |
-| Lookup | `GET /api/agents/search?department=Core&name=leo\|helga` then `GET /api/agents/{identityId}` |
+| Lookup | `GET /api/agents/search?department=Core&name=leo\|helga` then `GET /api/agents/{agentId}` |
 | AI Agent binding | `systemMessage` = response `systemPrompt`; user `text` stays the existing Code-built prompt |
 | Error path | If search returns no items or get-by-id fails, treat as workflow failure (existing failure → User route where present) |
 
@@ -24,8 +24,8 @@ Keep Leo and Helga chat/think runtime behavior unchanged. Only the source of the
 ```text
 Webhook → Normalize Input (unchanged user prompt)
   → Search Agent   GET https://ai.neberg.de/api/agents/search?department=Core&name={leo|helga}
-  → Resolve Id     Code: items[0].identityId
-  → Get Prompt     GET https://ai.neberg.de/api/agents/{identityId}
+  → Resolve Id     Code: items[0].agentId
+  → Get Prompt     GET https://ai.neberg.de/api/agents/{agentId}
   → AI Agent       systemMessage = {{ systemPrompt }}; text = {{ prompt }}
   → Parse → …      unchanged
 ```
@@ -42,7 +42,7 @@ Response (page wrapper):
 {
   "items": [
     {
-      "identityId": "…",
+      "agentId": "…",
       "name": "leo",
       "department": "Core",
       "jobTitle": "CEO"
@@ -59,7 +59,7 @@ Name and department matching are case-insensitive on the backend.
 
 ### Get by id
 
-`GET /api/agents/{identityId}`
+`GET /api/agents/{agentId}`
 
 Response includes `systemPrompt` (plus identity metadata). Workflow uses `systemPrompt` for the LangChain Agent `systemMessage`.
 

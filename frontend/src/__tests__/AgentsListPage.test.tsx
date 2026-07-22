@@ -45,7 +45,7 @@ describe('AgentsListPage', () => {
     searchAgentsMock.mockResolvedValue({
       items: [
         {
-          identityId: 'leo',
+          agentId: 'leo',
           name: 'Leo',
           department: 'Ops',
           jobTitle: 'Orchestrator',

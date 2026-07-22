@@ -63,7 +63,7 @@ export default function AgentDetailPage() {
             <dt>Job title</dt>
             <dd>{agent.jobTitle}</dd>
             <dt>Id</dt>
-            <dd>{agent.identityId}</dd>
+            <dd>{agent.agentId}</dd>
             <dt>System prompt</dt>
             <dd>
               <pre className="agents-system-prompt">{agent.systemPrompt}</pre>

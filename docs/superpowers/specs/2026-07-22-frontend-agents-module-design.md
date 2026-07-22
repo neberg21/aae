@@ -69,14 +69,14 @@ frontend/src/
 
 - Form fields: Name, Department, Job title + Search (submit via button or Enter).
 - All filters empty on submit → clear results; show empty-state copy (“Enter at least one filter”); do not fetch.
-- At least one filter set → call `searchAgents`; render results (IdentityId, Name, Department, JobTitle).
+- At least one filter set → call `searchAgents`; render results (AgentId, Name, Department, JobTitle).
 - Each result links to `/module/agents/:id`.
 - UI states: idle empty, loading, results, zero matches, error (inline).
 
 ### `AgentDetailPage`
 
-- Reads `:id` from the route (the list item’s `identityId` / agent id); loads via `getAgent(id)`.
-- Displays Name, Department, JobTitle, IdentityId, SystemPrompt as returned by the API (no client-side remapping).
+- Reads `:id` from the route (the list item’s `agentId` / agent id); loads via `getAgent(id)`.
+- Displays Name, Department, JobTitle, AgentId, SystemPrompt as returned by the API (no client-side remapping).
 - Back link to `/module/agents`.
 - UI states: loading, not found (404), error (inline), success.
 
@@ -85,9 +85,9 @@ frontend/src/
 | Method | Path | Notes |
 |--------|------|--------|
 | GET | `/api/agents/search` | Query: `name`, `department`, `jobTitle` (optional, exact match) → `GetAgentsResponse` / `PageDto<AgentDto>` |
-| GET | `/api/agents/{identityId}` | → `GetAgentByIdResponse` (includes `systemPrompt`) |
+| GET | `/api/agents/{agentId}` | → `GetAgentByIdResponse` (includes `systemPrompt`) |
 
-`AgentDto`: `identityId`, `name`, `department`, `jobTitle` (JSON camelCase).
+`AgentDto`: `agentId`, `name`, `department`, `jobTitle` (JSON camelCase).
 
 ## Testing
 

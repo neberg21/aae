@@ -97,13 +97,13 @@ export default function AgentsListPage() {
           </thead>
           <tbody>
             {items.map((agent) => (
-              <tr key={agent.identityId}>
+              <tr key={agent.agentId}>
                 <td>
-                  <Link to={`/module/agents/${agent.identityId}`}>{agent.name}</Link>
+                  <Link to={`/module/agents/${agent.agentId}`}>{agent.name}</Link>
                 </td>
                 <td>{agent.department}</td>
                 <td>{agent.jobTitle}</td>
-                <td>{agent.identityId}</td>
+                <td>{agent.agentId}</td>
               </tr>
             ))}
           </tbody>

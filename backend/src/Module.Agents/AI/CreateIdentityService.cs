@@ -26,7 +26,7 @@ public class CreateIdentityService
         var agent = await CreateAgent(profile, keyPair, request);
         var res = new CreateIdentityResponse
         {
-            IdentityId = agent.Id,
+            AgentId = agent.Id,
             Name = profile.Name
         };
 

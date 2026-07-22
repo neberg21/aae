@@ -39,7 +39,7 @@ public class AgentsModule : IModule
 
         endpoints.MapGet("", GetIdentities)
             .Produces<GetAgentsResponse>();
-        endpoints.MapGet("{identityId}", GetIdentity)
+        endpoints.MapGet("{agentId}", GetIdentity)
             .Produces<GetAgentByIdResponse>();
         endpoints.MapGet("search", SearchIdentities)
             .Produces<GetAgentsResponse>();
@@ -63,9 +63,9 @@ public class AgentsModule : IModule
         return Results.Ok(page);
     }
 
-    private IResult GetIdentity(string identityId, AppDbContext dbContext)
+    private IResult GetIdentity(string agentId, AppDbContext dbContext)
     {
-        var agent = dbContext.Agents.FirstOrDefault(a => a.Id == identityId);
+        var agent = dbContext.Agents.FirstOrDefault(a => a.Id == agentId);
         return agent is null
             ? Results.NotFound()
             : Results.Ok(new GetAgentByIdResponse(
@@ -77,14 +77,14 @@ public class AgentsModule : IModule
     }
 
     private IResult SearchIdentities(
-        [FromQuery] string? identityId,
+        [FromQuery] string? agentId,
         [FromQuery] string? name,
         [FromQuery] string? department,
         [FromQuery] string? jobTitle,
         SearchIdentityService searchIdentityService)
     {
         var items = searchIdentityService.SearchIdentities(
-            identityId, name, department, jobTitle);
+            agentId, name, department, jobTitle);
         var page = GetAgentsResponse(items);
 
         return Results.Ok(page);

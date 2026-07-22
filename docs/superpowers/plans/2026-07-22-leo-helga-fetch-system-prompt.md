@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make Leo and Helga n8n think-workflows load `systemPrompt` from `GET /api/agents/search` + `GET /api/agents/{identityId}` instead of hardcoded Agent `systemMessage` strings, and update docs.
+**Goal:** Make Leo and Helga n8n think-workflows load `systemPrompt` from `GET /api/agents/search` + `GET /api/agents/{agentId}` instead of hardcoded Agent `systemMessage` strings, and update docs.
 
-**Architecture:** After Normalize Input, each workflow runs Search → Resolve identityId → Get agent → AI Agent. User prompt, parse, and outbound callbacks stay unchanged. Supervisor and specialist workflows are out of scope.
+**Architecture:** After Normalize Input, each workflow runs Search → Resolve agentId → Get agent → AI Agent. User prompt, parse, and outbound callbacks stay unchanged. Supervisor and specialist workflows are out of scope.
 
 **Tech Stack:** n8n workflow JSON, Node `validate-workflow.mjs`, Markdown docs
 
@@ -40,7 +40,7 @@
 - Test: `node agents\n8n-workflows\validate-workflow.mjs agents\n8n-workflows\leo-think.json leo-think`
 
 **Interfaces:**
-- Consumes: Normalize Output fields `prompt`, `threadId`, …; search page `items[].identityId`; get-by-id `systemPrompt`
+- Consumes: Normalize Output fields `prompt`, `threadId`, …; search page `items[].agentId`; get-by-id `systemPrompt`
 - Produces: AI Agent with `options.systemMessage` = `={{ $json.systemPrompt }}` and `text` = `={{ $('Normalize Input').item.json.prompt }}` (or merged item that still carries `prompt`)
 
 - [ ] **Step 1: Update Setup sticky note**
@@ -51,7 +51,7 @@ Set content to mention:
 ## AAE Leo Think
 Attach OpenAI credential after import.
 Webhook: POST /webhook/leo-think
-Load systemPrompt: GET /api/agents/search?department=Core&name=leo then GET /api/agents/{identityId}
+Load systemPrompt: GET /api/agents/search?department=Core&name=leo then GET /api/agents/{agentId}
 Callbacks: https://ai.neberg.de/api/agents/route-chat-message
 ```
 
@@ -83,12 +83,12 @@ if (!Array.isArray(list) || list.length === 0) {
   throw new Error('leo_identity_not_found');
 }
 const first = list[0];
-const identityId = first.identityId ?? first.IdentityId;
-if (!identityId) {
+const agentId = first.agentId ?? first.AgentId;
+if (!agentId) {
   throw new Error('leo_identity_id_missing');
 }
 const prev = $('Normalize Input').first().json;
-return [{ json: { ...prev, identityId } }];
+return [{ json: { ...prev, agentId } }];
 ```
 
 - [ ] **Step 4: Insert Get System Prompt HTTP node**
@@ -98,7 +98,7 @@ return [{ json: { ...prev, identityId } }];
 - type: `n8n-nodes-base.httpRequest`
 - typeVersion: `4.2`
 - method: `GET`
-- url: `=https://ai.neberg.de/api/agents/{{ $json.identityId }}`
+- url: `=https://ai.neberg.de/api/agents/{{ $json.agentId }}`
 - position: roughly `[980, 300]`
 
 - [ ] **Step 5: Merge prompt + systemPrompt into AI Agent inputs**
@@ -113,7 +113,7 @@ if (!systemPrompt) {
   throw new Error('leo_system_prompt_missing');
 }
 const prev = $('Normalize Input').first().json;
-return [{ json: { ...prev, identityId: prev.identityId ?? $('Resolve Identity').first().json.identityId, systemPrompt } }];
+return [{ json: { ...prev, agentId: prev.agentId ?? $('Resolve Identity').first().json.agentId, systemPrompt } }];
 ```
 
 Or rely on expressions that reach back to `Normalize Input` and the get response. Prefer an explicit Prepare node so AI Agent sees one item with both `prompt` and `systemPrompt`.
@@ -188,7 +188,7 @@ git commit -m "feat: load Leo systemPrompt from agent search and get APIs"
 ## AAE Helga Think
 Attach OpenAI credential after import.
 Webhook: POST /webhook/helga-think
-Load systemPrompt: GET /api/agents/search?department=Core&name=helga then GET /api/agents/{identityId}
+Load systemPrompt: GET /api/agents/search?department=Core&name=helga then GET /api/agents/{agentId}
 Paths: clarify → route-chat-message (User); ready → create-identity
 ```
 
@@ -260,8 +260,8 @@ Add rows:
 
 | HTTP Method & Route | Sender | Description |
 | --- | --- | --- |
-| **GET** `/api/agents/search?name=&department=&jobTitle=` | n8n (Leo/Helga) | Find identities; Leo/Helga use `department=Core&name=leo\|helga` and take `items[0].identityId`. |
-| **GET** `/api/agents/{identityId}` | n8n (Leo/Helga) | Returns identity including `systemPrompt` for the AI Agent `systemMessage`. |
+| **GET** `/api/agents/search?name=&department=&jobTitle=` | n8n (Leo/Helga) | Find identities; Leo/Helga use `department=Core&name=leo\|helga` and take `items[0].agentId`. |
+| **GET** `/api/agents/{agentId}` | n8n (Leo/Helga) | Returns identity including `systemPrompt` for the AI Agent `systemMessage`. |
 
 In sections A (Leo) and B (Helga), add one bullet:
 
@@ -272,7 +272,7 @@ In sections A (Leo) and B (Helga), add one bullet:
 Under Leo smoke, add:
 
 ```text
-Expect before model: GET /api/agents/search?department=Core&name=leo then GET /api/agents/{identityId}.
+Expect before model: GET /api/agents/search?department=Core&name=leo then GET /api/agents/{agentId}.
 ```
 
 Under Helga, same with `name=helga`.
@@ -286,7 +286,7 @@ In `docs/superpowers/specs/2026-07-22-aae-n8n-think-workflows-design.md`:
 | Purpose | Method + URL | Notes |
 |---------|--------------|-------|
 | Search identity | `GET https://ai.neberg.de/api/agents/search?department=Core&name=leo\|helga` | Page of `AgentDto` |
-| Get identity | `GET https://ai.neberg.de/api/agents/{identityId}` | Includes `systemPrompt` |
+| Get identity | `GET https://ai.neberg.de/api/agents/{agentId}` | Includes `systemPrompt` |
 
 2. Change Common node skeleton to:
 
@@ -304,7 +304,7 @@ Webhook → Normalize → Search → Resolve Id → Get Prompt → Prepare → A
 Extend the think-workflow callbacks bullet:
 
 ```text
-**Think workflow callbacks / identity reads:** hardcoded base `https://ai.neberg.de` in imported JSON (for example `POST /api/agents/route-chat-message`, `POST /api/agents/create-identity`, and for Leo/Helga `GET /api/agents/search` + `GET /api/agents/{identityId}` for `systemPrompt`).
+**Think workflow callbacks / identity reads:** hardcoded base `https://ai.neberg.de` in imported JSON (for example `POST /api/agents/route-chat-message`, `POST /api/agents/create-identity`, and for Leo/Helga `GET /api/agents/search` + `GET /api/agents/{agentId}` for `systemPrompt`).
 ```
 
 - [ ] **Step 5: Commit**
@@ -320,4 +320,4 @@ git commit -m "docs: document Leo/Helga systemPrompt fetch via agent APIs"
 
 1. Spec coverage: search+get+bind+docs+VERIFY+scope lock — Tasks 1–3
 2. No placeholders
-3. Property names: `identityId`, `systemPrompt`, `items` match backend DTOs
+3. Property names: `agentId`, `systemPrompt`, `items` match backend DTOs

@@ -35,7 +35,7 @@ describe('AgentDetailPage', () => {
 
   it('loads and shows agent fields', async () => {
     getAgentMock.mockResolvedValue({
-      identityId: 'leo',
+      agentId: 'leo',
       name: 'Leo',
       department: 'Ops',
       jobTitle: 'Orchestrator',

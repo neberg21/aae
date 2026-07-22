@@ -55,9 +55,9 @@
 - Modify: `frontend/package-lock.json` (via npm)
 
 **Interfaces:**
-- Consumes: existing backend JSON camelCase (`identityId`, `name`, `department`, `jobTitle`, `systemPrompt`, `items`, …)
+- Consumes: existing backend JSON camelCase (`agentId`, `name`, `department`, `jobTitle`, `systemPrompt`, `items`, …)
 - Produces:
-  - `export type AgentDto = { identityId: string; name: string; department: string; jobTitle: string }`
+  - `export type AgentDto = { agentId: string; name: string; department: string; jobTitle: string }`
   - `export type AgentDetail = AgentDto & { systemPrompt: string }`
   - `export type AgentsPage = { items: AgentDto[]; totalCount: number; pageSize: number; pageNumber: number; totalPages: number }`
   - `export type AgentSearchFilters = { name?: string; department?: string; jobTitle?: string }`
@@ -111,7 +111,7 @@ describe('agents api', () => {
 
   it('getAgent returns detail on success', async () => {
     const body = {
-      identityId: 'leo',
+      agentId: 'leo',
       name: 'Leo',
       department: 'Ops',
       jobTitle: 'Orchestrator',
@@ -164,7 +164,7 @@ Create `frontend/src/modules/agents/types.ts`:
 
 ```ts
 export type AgentDto = {
-  identityId: string
+  agentId: string
   name: string
   department: string
   jobTitle: string
@@ -310,7 +310,7 @@ describe('AgentsListPage', () => {
     searchAgentsMock.mockResolvedValue({
       items: [
         {
-          identityId: 'leo',
+          agentId: 'leo',
           name: 'Leo',
           department: 'Ops',
           jobTitle: 'Orchestrator',
@@ -455,13 +455,13 @@ export default function AgentsListPage() {
           </thead>
           <tbody>
             {items.map((agent) => (
-              <tr key={agent.identityId}>
+              <tr key={agent.agentId}>
                 <td>
-                  <Link to={`/module/agents/${agent.identityId}`}>{agent.name}</Link>
+                  <Link to={`/module/agents/${agent.agentId}`}>{agent.name}</Link>
                 </td>
                 <td>{agent.department}</td>
                 <td>{agent.jobTitle}</td>
-                <td>{agent.identityId}</td>
+                <td>{agent.agentId}</td>
               </tr>
             ))}
           </tbody>
@@ -578,7 +578,7 @@ describe('AgentDetailPage', () => {
 
   it('loads and shows agent fields', async () => {
     getAgentMock.mockResolvedValue({
-      identityId: 'leo',
+      agentId: 'leo',
       name: 'Leo',
       department: 'Ops',
       jobTitle: 'Orchestrator',
@@ -691,7 +691,7 @@ export default function AgentDetailPage() {
             <dt>Job title</dt>
             <dd>{agent.jobTitle}</dd>
             <dt>Id</dt>
-            <dd>{agent.identityId}</dd>
+            <dd>{agent.agentId}</dd>
             <dt>System prompt</dt>
             <dd>
               <pre className="agents-system-prompt">{agent.systemPrompt}</pre>

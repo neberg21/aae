@@ -1,5 +1,5 @@
 export type AgentDto = {
-  identityId: string
+  agentId: string
   name: string
   department: string
   jobTitle: string

@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## AAE Leo Think\nAttach OpenAI credential after import.\nWebhook: POST /webhook/leo-think\nLoad systemPrompt: GET /api/agents/search?department=Core&name=leo then GET /api/agents/{identityId}\nCallbacks: https://ai.neberg.de/api/agents/route-chat-message",
+        "content": "## AAE Leo Think\nAttach OpenAI credential after import.\nWebhook: POST /webhook/leo-think\nLoad systemPrompt: GET /api/agents/search?department=Core&name=leo then GET /api/agents/{agentId}\nCallbacks: https://ai.neberg.de/api/agents/route-chat-message",
         "height": 280,
         "width": 400
       },
@@ -53,7 +53,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const search = items[0].json;\nconst page = search.body ?? search;\nconst list = page.items ?? page.Items ?? [];\nif (!Array.isArray(list) || list.length === 0) {\n  throw new Error('leo_identity_not_found');\n}\nconst first = list[0];\nconst identityId = first.identityId ?? first.IdentityId;\nif (!identityId) {\n  throw new Error('leo_identity_id_missing');\n}\nconst prev = $('Normalize Input').first().json;\nreturn [{ json: { ...prev, identityId } }];"
+        "jsCode": "const search = items[0].json;\nconst page = search.body ?? search;\nconst list = page.items ?? page.Items ?? [];\nif (!Array.isArray(list) || list.length === 0) {\n  throw new Error('leo_identity_not_found');\n}\nconst first = list[0];\nconst agentId = first.agentId ?? first.AgentId;\nif (!agentId) {\n  throw new Error('leo_identity_id_missing');\n}\nconst prev = $('Normalize Input').first().json;\nreturn [{ json: { ...prev, agentId } }];"
       },
       "id": "leo-code-resolve-id",
       "name": "Resolve Identity",
@@ -64,7 +64,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "=https://ai.neberg.de/api/agents/{{ $json.identityId }}",
+        "url": "=https://ai.neberg.de/api/agents/{{ $json.agentId }}",
         "options": {}
       },
       "id": "leo-http-get-prompt",

@@ -29,7 +29,7 @@ describe('agents api', () => {
 
   it('getAgent returns detail on success', async () => {
     const body = {
-      identityId: 'leo',
+      agentId: 'leo',
       name: 'Leo',
       department: 'Ops',
       jobTitle: 'Orchestrator',
