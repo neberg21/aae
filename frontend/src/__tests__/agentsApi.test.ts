@@ -84,7 +84,7 @@ describe('agents api', () => {
     await expect(getAgent('missing')).rejects.toBeInstanceOf(ApiError)
   })
 
-  it('sendLeoMessage posts to the leo webhook with session and history', async () => {
+  it('sendLeoMessage posts to the leo webhook with thread id and history', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       headers: {
@@ -99,7 +99,7 @@ describe('agents api', () => {
     const reply = await sendLeoMessage(
       'Hi Leo',
       [{ role: 'assistant', content: 'How can I help?' }],
-      'session-123',
+      'thread-123',
     )
 
     expect(reply).toBe('Hello from Leo')
@@ -112,7 +112,7 @@ describe('agents api', () => {
       },
       body: JSON.stringify({
         agentId: 'leo',
-        sessionId: 'session-123',
+        threadId: 'thread-123',
         message: 'Hi Leo',
         input: 'Hi Leo',
         text: 'Hi Leo',

@@ -16,7 +16,7 @@ export default function ModuleNavigation() {
         Agents
       </NavLink>
       <NavLink
-        to="/module/agents/threads"
+        to="/module/agents/leo"
         className={({ isActive }) =>
           isActive
             ? `${baseLinkClass} bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-200`
@@ -24,6 +24,16 @@ export default function ModuleNavigation() {
         }
       >
         Leo chat
+      </NavLink>
+      <NavLink
+        to="/module/agents/threads"
+        className={({ isActive }) =>
+          isActive
+            ? `${baseLinkClass} bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-200`
+            : `${baseLinkClass} text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800`
+        }
+      >
+        Threads
       </NavLink>
     </nav>
   )

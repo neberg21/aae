@@ -44,7 +44,7 @@ Put new tests under `src/__tests__/` as `*.test.tsx` or `*.spec.tsx` files.
 
 ## Leo chat
 
-The agents module now includes a chat page for `Leo` at `/module/agents/threads`.
+The agents module now includes a chat page for `Leo` at `/module/agents/leo`.
 
 - By default the frontend calls `/webhook/leo-think`.
 - In local development Vite proxies `/webhook/*` to `https://n8n.neberg.de`.

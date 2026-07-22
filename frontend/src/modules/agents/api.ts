@@ -97,7 +97,7 @@ export async function getAgent(id: string): Promise<AgentDetail> {
 export async function sendLeoMessage(
   message: string,
   history: ChatMessage[] = [],
-  sessionId?: string,
+  threadId?: string,
 ): Promise<string> {
   const trimmedMessage = message.trim()
   if (!trimmedMessage) {
@@ -113,7 +113,7 @@ export async function sendLeoMessage(
     },
     body: JSON.stringify({
       agentId: 'leo',
-      sessionId,
+      threadId,
       message: trimmedMessage,
       input: trimmedMessage,
       text: trimmedMessage,
