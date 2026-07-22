@@ -1,0 +1,211 @@
+{
+  "name": "AAE Supervisor Think",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## AAE Supervisor Think\nAttach OpenAI + GitHub credentials after import.\nSet OWNER/REPO in GitHub tool URLs.\nWebhook: POST /webhook/supervisor-think\nOutcomes: waiting | delegate | done(await-request-approval)",
+        "height": 280,
+        "width": 400
+      },
+      "id": "sup-sticky-1",
+      "name": "Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "supervisor-think",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "sup-webhook-1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [280, 340],
+      "webhookId": "aae-supervisor-think"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function normalizeWebhookBody(body) {\n  const b = body ?? {};\n  return {\n    threadId: b.threadId ?? b.ThreadId ?? '',\n    chatHistory: b.chatHistory ?? b.History ?? b.history ?? [],\n    taskContext: b.taskContext ?? b.TaskContext ?? null,\n    subordinatesList: b.subordinatesList ?? b.SubordinatesList ?? [],\n    senderAgentId: b.senderAgentId ?? b.SenderAgentId ?? 'supervisor',\n  };\n}\nconst raw = items[0].json.body ?? items[0].json;\nconst n = normalizeWebhookBody(raw);\nconst prompt = [\n  'You are an AAE supervisor (Scrum Master). Output ONLY JSON after optional GitHub tool use.',\n  'Use GitHub tools to document milestones. Never use teamleiter naming.',\n  'Schema: {\"outcome\":\"waiting|delegate|done\",\"statusMessage\":string|null,\"delegations\":[{\"targetAgentId\":\"specialist-...\",\"content\":\"...\"}],\"approval\":{\"content\":\"...\",\"artifacts\":[]}||null}',\n  `TaskContext: ${JSON.stringify(n.taskContext)}`,\n  `Subordinates: ${JSON.stringify(n.subordinatesList)}`,\n  `History: ${JSON.stringify(n.chatHistory)}`,\n].join('\\n');\nreturn [{ json: { ...n, prompt } }];"
+      },
+      "id": "sup-code-normalize",
+      "name": "Normalize Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 340]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {
+          "systemMessage": "You are an AAE supervisor. Plan, delegate to specialists, track milestones via GitHub tools, and finish with waiting|delegate|done JSON. Never use teamleiter naming."
+        }
+      },
+      "id": "sup-agent-1",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [760, 340]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o"
+        },
+        "options": {}
+      },
+      "id": "sup-openai-1",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [760, 600]
+    },
+    {
+      "parameters": {
+        "name": "create_github_issue",
+        "description": "Create a GitHub issue to document a milestone or task state.",
+        "method": "POST",
+        "url": "https://api.github.com/repos/OWNER/REPO/issues",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: $fromAI('title', 'Issue title', 'string'), body: $fromAI('body', 'Issue body', 'string') }) }}",
+        "placeholderDefinitions": {
+          "values": [
+            { "name": "title", "description": "Issue title", "type": "string" },
+            { "name": "body", "description": "Issue body markdown", "type": "string" }
+          ]
+        }
+      },
+      "id": "sup-tool-create-issue",
+      "name": "create_github_issue",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [520, 600]
+    },
+    {
+      "parameters": {
+        "name": "update_issue_status",
+        "description": "Update a GitHub issue state (open/closed) as a state-machine transition.",
+        "method": "PATCH",
+        "url": "=https://api.github.com/repos/OWNER/REPO/issues/{{ $fromAI('issueNumber', 'Issue number', 'number') }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ state: $fromAI('state', 'open or closed', 'string') }) }}",
+        "placeholderDefinitions": {
+          "values": [
+            { "name": "issueNumber", "description": "GitHub issue number", "type": "number" },
+            { "name": "state", "description": "open or closed", "type": "string" }
+          ]
+        }
+      },
+      "id": "sup-tool-update-issue",
+      "name": "update_issue_status",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [700, 720]
+    },
+    {
+      "parameters": {
+        "name": "add_issue_comment",
+        "description": "Add a comment to a GitHub issue documenting progress.",
+        "method": "POST",
+        "url": "=https://api.github.com/repos/OWNER/REPO/issues/{{ $fromAI('issueNumber', 'Issue number', 'number') }}/comments",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ body: $fromAI('body', 'Comment body', 'string') }) }}",
+        "placeholderDefinitions": {
+          "values": [
+            { "name": "issueNumber", "description": "GitHub issue number", "type": "number" },
+            { "name": "body", "description": "Comment markdown", "type": "string" }
+          ]
+        }
+      },
+      "id": "sup-tool-comment",
+      "name": "add_issue_comment",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [900, 720]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const BACKEND_BASE = 'https://ai.neberg.de';\nfunction parseJsonMaybe(text) {\n  if (text == null) return null;\n  if (typeof text === 'object') return text;\n  const raw = String(text).trim();\n  const fenced = raw.match(/```(?:json)?\\s*([\\s\\S]*?)```/i);\n  const candidate = fenced ? fenced[1].trim() : raw;\n  try { return JSON.parse(candidate); } catch { return null; }\n}\nfunction assertNoTeamleiter(id) {\n  return !String(id).toLowerCase().includes('teamleiter');\n}\nfunction parseSupervisorDecision(agentOutput, threadId, senderAgentId) {\n  const obj = parseJsonMaybe(agentOutput);\n  if (!obj || !obj.outcome) {\n    return { ok: false, error: 'invalid_supervisor_output', userMessage: 'Supervisor returned invalid JSON.' };\n  }\n  const routeUrl = `${BACKEND_BASE}/api/agents/route-chat-message`;\n  if (obj.outcome === 'waiting') {\n    return {\n      ok: true,\n      outcome: 'waiting',\n      httpCalls: [{\n        url: routeUrl,\n        body: {\n          threadId,\n          senderAgentId,\n          targetAgentId: null,\n          content: String(obj.statusMessage ?? 'Waiting on subordinates.'),\n        },\n      }],\n    };\n  }\n  if (obj.outcome === 'delegate') {\n    const delegations = Array.isArray(obj.delegations) ? obj.delegations : [];\n    if (delegations.length === 0) {\n      return { ok: false, error: 'empty_delegations', userMessage: 'Supervisor chose delegate with no targets.' };\n    }\n    const httpCalls = [];\n    for (const d of delegations) {\n      if (!d?.targetAgentId || !assertNoTeamleiter(d.targetAgentId)) {\n        return { ok: false, error: 'invalid_target', userMessage: 'Supervisor produced invalid targetAgentId.' };\n      }\n      httpCalls.push({\n        url: routeUrl,\n        body: {\n          threadId,\n          senderAgentId,\n          targetAgentId: d.targetAgentId,\n          content: String(d.content ?? ''),\n        },\n      });\n    }\n    return { ok: true, outcome: 'delegate', httpCalls };\n  }\n  if (obj.outcome === 'done') {\n    return {\n      ok: true,\n      outcome: 'done',\n      httpCalls: [{\n        url: `${BACKEND_BASE}/api/await-request-approval`,\n        body: {\n          threadId,\n          senderAgentId,\n          content: String(obj.approval?.content ?? 'Ready for approval.'),\n          artifacts: obj.approval?.artifacts ?? [],\n        },\n      }],\n    };\n  }\n  return { ok: false, error: 'unknown_outcome', userMessage: `Unknown supervisor outcome: ${obj.outcome}` };\n}\nfunction buildFailureRoute({ threadId, senderAgentId, content }) {\n  return { threadId, senderAgentId, targetAgentId: 'User', content };\n}\nconst prev = $('Normalize Input').first().json;\nconst agentItem = items[0].json;\nconst agentText = agentItem.output ?? agentItem.text ?? agentItem;\nconst parsed = parseSupervisorDecision(agentText, prev.threadId, prev.senderAgentId);\nif (!parsed.ok) {\n  return [{\n    json: {\n      ok: false,\n      outcome: 'fail',\n      httpCalls: [{\n        url: `${BACKEND_BASE}/api/agents/route-chat-message`,\n        body: buildFailureRoute({ threadId: prev.threadId, senderAgentId: prev.senderAgentId, content: parsed.userMessage }),\n      }],\n    },\n  }];\n}\nreturn [{ json: { ok: true, ...parsed } }];"
+      },
+      "id": "sup-code-parse",
+      "name": "Parse Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 340]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "httpCalls",
+        "options": {}
+      },
+      "id": "sup-split-1",
+      "name": "Split HTTP Calls",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [1280, 340]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.url }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "sup-http-1",
+      "name": "Callback Backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1520, 340]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Normalize Input", "type": "main", "index": 0 }]]
+    },
+    "Normalize Input": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "create_github_issue": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "update_issue_status": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "add_issue_comment": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "AI Agent": {
+      "main": [[{ "node": "Parse Decision", "type": "main", "index": 0 }]]
+    },
+    "Parse Decision": {
+      "main": [[{ "node": "Split HTTP Calls", "type": "main", "index": 0 }]]
+    },
+    "Split HTTP Calls": {
+      "main": [[{ "node": "Callback Backend", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
