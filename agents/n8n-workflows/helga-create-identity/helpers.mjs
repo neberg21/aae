@@ -230,6 +230,51 @@ export function toRelayEvent(signed) {
   };
 }
 
+/**
+ * Publish a signed event over WebSocket (NIP-01 EVENT / OK).
+ * Pass the `ws` package constructor — n8n Code nodes have no global WebSocket.
+ */
+export function publishEvent(WebSocketCtor, relay, event) {
+  if (typeof WebSocketCtor !== 'function') {
+    throw new Error('WebSocket constructor required (require("ws") in n8n Code node)');
+  }
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocketCtor(relay);
+    const t = setTimeout(() => {
+      try {
+        ws.close();
+      } catch (_) {
+        /* ignore */
+      }
+      reject(new Error('nostr publish timeout'));
+    }, 10000);
+    ws.on('open', () => {
+      ws.send(JSON.stringify(['EVENT', event]));
+    });
+    ws.on('message', (data) => {
+      try {
+        const raw = typeof data === 'string' ? data : data.toString();
+        const parsed = JSON.parse(raw);
+        if (parsed[0] === 'OK' && parsed[1] === event.id) {
+          clearTimeout(t);
+          try {
+            ws.close();
+          } catch (_) {
+            /* ignore */
+          }
+          resolve(parsed[2] === true);
+        }
+      } catch (_) {
+        /* ignore non-json */
+      }
+    });
+    ws.on('error', () => {
+      clearTimeout(t);
+      reject(new Error('nostr ws error'));
+    });
+  });
+}
+
 export function parseGithubFileJson(base64Content) {
   const json = Buffer.from(base64Content, 'base64').toString('utf8');
   return JSON.parse(json);

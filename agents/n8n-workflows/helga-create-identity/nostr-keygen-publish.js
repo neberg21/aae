@@ -23,9 +23,12 @@ function toRelayEvent(signed) {
   };
 }
 
-async function publishEvent(relay, event) {
+function publishEvent(WebSocketCtor, relay, event) {
+  if (typeof WebSocketCtor !== 'function') {
+    throw new Error('WebSocket constructor required (require("ws") in n8n Code node)');
+  }
   return new Promise((resolve, reject) => {
-    const ws = new WebSocket(relay);
+    const ws = new WebSocketCtor(relay);
     const t = setTimeout(() => {
       try {
         ws.close();
@@ -34,26 +37,27 @@ async function publishEvent(relay, event) {
       }
       reject(new Error('nostr publish timeout'));
     }, 10000);
-    ws.addEventListener('open', () => {
+    ws.on('open', () => {
       ws.send(JSON.stringify(['EVENT', event]));
     });
-    ws.addEventListener('message', (msg) => {
+    ws.on('message', (data) => {
       try {
-        const data = JSON.parse(typeof msg.data === 'string' ? msg.data : msg.data.toString());
-        if (data[0] === 'OK' && data[1] === event.id) {
+        const raw = typeof data === 'string' ? data : data.toString();
+        const parsed = JSON.parse(raw);
+        if (parsed[0] === 'OK' && parsed[1] === event.id) {
           clearTimeout(t);
           try {
             ws.close();
           } catch (_) {
             /* ignore */
           }
-          resolve(data[2] === true);
+          resolve(parsed[2] === true);
         }
       } catch (_) {
         /* ignore non-json */
       }
     });
-    ws.addEventListener('error', () => {
+    ws.on('error', () => {
       clearTimeout(t);
       reject(new Error('nostr ws error'));
     });
@@ -62,6 +66,7 @@ async function publishEvent(relay, event) {
 
 const item = $input.first().json;
 try {
+  const WebSocket = require('ws');
   const nostr = require('nostr-tools');
   const generateSecretKey = nostr.generateSecretKey || nostr.pure?.generateSecretKey;
   const getPublicKey = nostr.getPublicKey || nostr.pure?.getPublicKey;
@@ -82,7 +87,7 @@ try {
   const signed = finalizeEvent(template, sk);
   const event = toRelayEvent(signed);
   const relay = item.relay || 'wss://nostr.neberg.de';
-  const ok = await publishEvent(relay, event);
+  const ok = await publishEvent(WebSocket, relay, event);
   if (!ok) {
     return { json: { ok: false, error: 'nostr_profile_failed', httpStatus: 502 } };
   }

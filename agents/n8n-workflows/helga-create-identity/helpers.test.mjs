@@ -12,6 +12,7 @@ import {
   parseGithubFileJson,
   makeNostrEventTemplate,
   toRelayEvent,
+  publishEvent,
 } from './helpers.mjs';
 
 const require = createRequire(import.meta.url);
@@ -204,6 +205,34 @@ describe('parseGithubFileJson', () => {
     const obj = { agent_id: 'finanzen-teamleiter', nostr: { npub: 'npub1x', display_name: 'A (B)' } };
     const b64 = Buffer.from(JSON.stringify(obj), 'utf8').toString('base64');
     assert.deepEqual(parseGithubFileJson(b64), obj);
+  });
+});
+
+describe('publishEvent', () => {
+  it('rejects when WebSocket ctor is missing (n8n has no global WebSocket)', async () => {
+    assert.throws(() => publishEvent(undefined, 'wss://example.invalid', { id: 'abc' }), /WebSocket/);
+  });
+
+  it('sends EVENT and resolves true on OK', async () => {
+    const handlers = {};
+    const sent = [];
+    function FakeWs() {
+      this.on = (ev, fn) => {
+        handlers[ev] = fn;
+        return this;
+      };
+      this.send = (payload) => {
+        sent.push(payload);
+      };
+      this.close = () => {};
+      queueMicrotask(() => {
+        handlers.open?.();
+        handlers.message?.(JSON.stringify(['OK', 'evt1', true]));
+      });
+    }
+    const ok = await publishEvent(FakeWs, 'wss://example.invalid', { id: 'evt1' });
+    assert.equal(ok, true);
+    assert.equal(sent[0], JSON.stringify(['EVENT', { id: 'evt1' }]));
   });
 });
 

@@ -31,7 +31,7 @@ Polling DM path runs about every 2 minutes (NIP-04). Dedupe in the Code node avo
 | Flowise calls | `https://flowise.neberg.de` + flow path |
 | Nostr relay | `wss://nostr.neberg.de` |
 
-Image installs `n8n-nodes-nostrobots@1.2.1`, `@noble/hashes@1.3.1`, `@noble/secp256k1@2.1.0`, `@faker-js/faker@9.3.0`, and `nostr-tools@2.10.4` under `/home/node/.n8n/nodes`. The image sets `NODE_PATH=/home/node/.n8n/nodes/node_modules` so the JS task runner can `require()` those packages (community-node path alone is not enough).
+Image installs `n8n-nodes-nostrobots@1.2.1`, `@noble/hashes@1.3.1`, `@noble/secp256k1@2.1.0`, `@faker-js/faker@9.3.0`, `nostr-tools@2.10.4`, and `ws@8.18.0` under `/home/node/.n8n/nodes`. The image sets `NODE_PATH=/home/node/.n8n/nodes/node_modules` so the JS task runner can `require()` those packages (community-node path alone is not enough).
 
 ### Helga create-identity workflow
 
@@ -40,7 +40,7 @@ Import [`agents/n8n-workflows/helga-create-identity.json`](../../agents/n8n-work
 Host env (required for Code nodes). Allowlist only packages the Code nodes `require()` directly — the task runner calls `require()` on every allowlisted name at startup:
 
 ```text
-NODE_FUNCTION_ALLOW_EXTERNAL=@faker-js/faker,@faker-js/faker/locale/de,nostr-tools
+NODE_FUNCTION_ALLOW_EXTERNAL=@faker-js/faker,@faker-js/faker/locale/de,nostr-tools,ws
 ```
 
 Do **not** allowlist `@noble/hashes` (root import throws and the runner exits), `faker` (wrong package name), or `@noble/secp256k1` (transitive via `nostr-tools`).

@@ -2,7 +2,7 @@
 
 Operator checklist after image rebuild + workflow import on `https://n8n.neberg.de`.
 
-1. Set `NODE_FUNCTION_ALLOW_EXTERNAL=@faker-js/faker,@faker-js/faker/locale/de,nostr-tools` (do not include `@noble/hashes` — it crashes the JS task runner). Image must set `NODE_PATH=/home/node/.n8n/nodes/node_modules`.
+1. Set `NODE_FUNCTION_ALLOW_EXTERNAL=@faker-js/faker,@faker-js/faker/locale/de,nostr-tools,ws` (do not include `@noble/hashes` — it crashes the JS task runner). Image must set `NODE_PATH=/home/node/.n8n/nodes/node_modules` and include `ws` (Code nodes have no global `WebSocket`).
 2. Attach GitHub credential; set Config `githubRepo`; replace `REPLACE_ME_HELGA_PREDICTION_URL` (REPLACE_ME_HELGA_PREDICTION_URL=https://odd-klarrisa-neberg-9ef6beed.koyeb.app/api/v1/prediction/ba408c71-d62f-460b-a96a-3879a3a299b6)
 3. Activate workflow; note Production webhook URL
 
