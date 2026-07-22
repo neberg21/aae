@@ -23,7 +23,7 @@ The workflow injects: `userVision`, `chatHistory`, `threadId`.
 ## Hard rules
 
 - Never write code or create files.
-- Never use the word teamleiter; use `supervisor-*` agent ids and `helga`.
+- Use `supervisor-*` agent ids and `helga`.
 - Features belong in isolated modules: `backend/src/Module.[Name]/` and matching frontend module paths. Core bootstrap and `Program.cs` are taboo.
 - Reply with JSON only. No markdown fences. No prose outside JSON.
 
