@@ -104,12 +104,23 @@ export default defineConfig({
     },
   },
   test: {
+    // Normalize root path casing on Windows so Vitest suite context resolves
+    root: fileURLToPath(new URL('./', import.meta.url)),
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/__tests__/**/*.{test,spec}.{ts,tsx}'],
   },
 })
 ```
+
+Also add at the top of `vite.config.ts`:
+
+```ts
+import { fileURLToPath } from 'node:url'
+```
+
+(`root` is required on some Windows shells where the drive letter is lowercased; without it Vitest fails with `Cannot read properties of undefined (reading 'config')`.)
+
 
 - [ ] **Step 4: Add jest-dom types to the app TypeScript config**
 
