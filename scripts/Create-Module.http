@@ -1,0 +1,10 @@
+﻿# https://n8n.neberg.de
+@baseUrl = https://convenient-nonie-neberg-ad5744ad.koyeb.app
+
+POST {{baseUrl}}/webhook/leo-think
+
+{
+  "threadId": "smoke-leo",
+  "chatHistory": [],
+  "userVision": "Build a Finance module with UI and API"
+}
