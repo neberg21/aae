@@ -1,10 +1,18 @@
 ﻿# https://n8n.neberg.de
-@baseUrl = https://convenient-nonie-neberg-ad5744ad.koyeb.app
+@n8nUrl = https://convenient-nonie-neberg-ad5744ad.koyeb.app
+# https://ai.neberg.de
+@aiUrl = https://normal-coreen-neberg-a84da4bd.koyeb.app
 
-POST {{baseUrl}}/webhook/leo-think
+### Create a new module
+POST {{n8nUrl}}/webhook/leo-think
 
 {
   "threadId": "smoke-leo",
   "chatHistory": [],
   "userVision": "Build a Finance module with UI and API"
 }
+
+
+### Get agents
+
+GET {{aiUrl}}/api/agents
