@@ -9,7 +9,7 @@ public class ProfileGenerator
         _nostrEventService = nostrEventService;
     }
 
-    public async Task<NostrProfile> CreateProfileAsync(NostKeyPair keyPair, string desiredName)
+    public async Task<NostrProfile> CreateProfileAsync(NostrKeyPair keyPair, string desiredName)
     {
         var metadataEvent = await _nostrEventService.PublishProfile(keyPair, desiredName);
 

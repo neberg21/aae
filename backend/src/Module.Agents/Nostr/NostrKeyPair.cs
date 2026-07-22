@@ -3,9 +3,9 @@ using NBitcoin.Secp256k1;
 
 namespace Module.Agents.Nostr;
 
-public class NostKeyPair
+public class NostrKeyPair
 {
-    private NostKeyPair(ECPrivKey privateKey, ECXOnlyPubKey publicKey, string privateKeyHex, string publicKeyHex)
+    private NostrKeyPair(ECPrivKey privateKey, ECXOnlyPubKey publicKey, string privateKeyHex, string publicKeyHex)
     {
         PrivateKey = privateKey;
         PublicKey = publicKey;
@@ -18,11 +18,28 @@ public class NostKeyPair
     public string PrivateKeyHex { get; }
     public string PublicKeyHex { get; }
 
-    public static NostKeyPair GenerateKeyPair()
+    public static NostrKeyPair GenerateKeyPair()
     {
         var privateKeyBytes = new byte[32];
         RandomNumberGenerator.Fill(privateKeyBytes);
 
+        return GenerateKeyPairFromPrivateKey(privateKeyBytes);
+    }
+
+    public void Deconstruct(out ECPrivKey privateKey, out string pubKeyHex)
+    {
+        privateKey = PrivateKey;
+        pubKeyHex = PublicKeyHex;
+    }
+
+    public static NostrKeyPair ParseKeyPair(string privateKeyHex)
+    {
+        var privateKeyBytes = Convert.FromHexString(privateKeyHex);
+        return GenerateKeyPairFromPrivateKey(privateKeyBytes);
+    }
+
+    private static NostrKeyPair GenerateKeyPairFromPrivateKey(byte[] privateKeyBytes)
+    {
         // 2. Private Key Objekt erstellen
         if (!ECPrivKey.TryCreate(privateKeyBytes, out var privateKey))
         {
@@ -36,12 +53,6 @@ public class NostKeyPair
         var privKeyHex = Convert.ToHexString(privateKeyBytes).ToLower();
         var pubKeyHex = Convert.ToHexString(pubKey.ToBytes()).ToLower();
 
-        return new NostKeyPair(privateKey, pubKey, privKeyHex, pubKeyHex);
-    }
-
-    public void Deconstruct(out ECPrivKey privateKey, out string pubKeyHex)
-    {
-        privateKey = PrivateKey;
-        pubKeyHex = PublicKeyHex;
+        return new NostrKeyPair(privateKey, pubKey, privKeyHex, pubKeyHex);
     }
 }

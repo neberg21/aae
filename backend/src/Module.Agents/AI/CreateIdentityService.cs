@@ -20,7 +20,7 @@ public class CreateIdentityService
 
     public async Task<CreateIdentityResponse> CreateIdentity(CreateIdentityRequest request)
     {
-        var keyPair = NostKeyPair.GenerateKeyPair();
+        var keyPair = NostrKeyPair.GenerateKeyPair();
         var firstName = _faker.Person.FirstName;
         var profile = await _profileGenerator.CreateProfileAsync(keyPair, firstName);
         var res = new CreateIdentityResponse
@@ -34,7 +34,7 @@ public class CreateIdentityService
         return res;
     }
 
-    private async Task CreateAgent(NostrProfile profile, NostKeyPair keyPair, CreateIdentityRequest request)
+    private async Task CreateAgent(NostrProfile profile, NostrKeyPair keyPair, CreateIdentityRequest request)
     {
         var agent = new Agent
         {

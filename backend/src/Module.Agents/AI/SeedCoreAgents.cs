@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Module.Agents.Nostr;
 using Module.Agents.Persistence;
 
@@ -7,29 +8,37 @@ namespace Module.Agents.AI;
 public class SeedCoreAgents : BackgroundService
 {
     private readonly AppDbContext _dbContext;
+    private readonly IServiceProvider _serviceProvider;
 
-    public SeedCoreAgents(AppDbContext dbContext)
+    public SeedCoreAgents(AppDbContext dbContext, IServiceProvider serviceProvider)
     {
         _dbContext = dbContext;
+        _serviceProvider = serviceProvider;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var leo = CreateLeo();
-        var helga = CreateHelga();
-
         if (_dbContext.Agents.Any())
             return;
 
-        _dbContext.Agents.Add(leo);
-        _dbContext.Agents.Add(helga);
-        await _dbContext.SaveChangesAsync();
+        var serviceProvider = _serviceProvider.CreateScope().ServiceProvider;
+        var nostrEventService = serviceProvider.GetRequiredService<NostrEventService>();
+        var leo = CreateLeo();
+        var helga = CreateHelga();
+
+        foreach (var agent in new[] { leo, helga })
+        {
+            _dbContext.Agents.Add(agent);
+
+            var keyPair = NostrKeyPair.ParseKeyPair(agent.PrivateKeyHex);
+            await _dbContext.SaveChangesAsync();
+            await nostrEventService.PublishProfile(keyPair, agent.Name);
+        }
     }
 
     private Agent CreateLeo()
     {
-        var keyPair = NostKeyPair.GenerateKeyPair();
-
+        var keyPair = NostrKeyPair.GenerateKeyPair();
         return new Agent
         {
             Name = "leo",
@@ -93,7 +102,7 @@ public class SeedCoreAgents : BackgroundService
 
     private Agent CreateHelga()
     {
-        var keyPair = NostKeyPair.GenerateKeyPair();
+        var keyPair = NostrKeyPair.GenerateKeyPair();
 
         return new Agent
         {

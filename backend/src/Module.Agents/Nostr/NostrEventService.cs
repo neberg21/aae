@@ -6,7 +6,7 @@ namespace Module.Agents.Nostr;
 
 public class NostrEventService
 {
-    public async Task<NostrEvent> PublishProfile(NostKeyPair keyPair, string name)
+    public async Task<NostrEvent> PublishProfile(NostrKeyPair keyPair, string name)
     {
         var (privateKey, pubKeyHex) = keyPair;
 
