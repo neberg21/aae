@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, getAgent, getAgents, searchAgents, sendLeoMessage } from '../modules/agents/api'
+import {
+  ApiError,
+  getAgent,
+  getAgents,
+  getThread,
+  getThreads,
+  searchAgents,
+  sendLeoMessage,
+} from '../modules/agents/api'
 
 describe('agents api', () => {
   afterEach(() => {
@@ -82,6 +90,57 @@ describe('agents api', () => {
       status: 404,
     })
     await expect(getAgent('missing')).rejects.toBeInstanceOf(ApiError)
+  })
+
+  it('getThreads calls the threads list endpoint', async () => {
+    const body = {
+      items: [
+        {
+          threadId: 'thread-1',
+          createdAt: '2026-07-22T14:01:17.8984086Z',
+          updatedAt: '2026-07-22T14:01:17.8984086Z',
+          messageCount: 1,
+        },
+      ],
+      totalCount: 1,
+      pageSize: 1,
+      pageNumber: 1,
+      totalPages: 1,
+    }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => body,
+      }),
+    )
+
+    await expect(getThreads()).resolves.toEqual(body)
+    expect(fetch).toHaveBeenCalledWith('/api/agents/threads')
+  })
+
+  it('getThread calls the thread detail endpoint with encoding', async () => {
+    const body = {
+      threadId: 'thread/1',
+      messages: [
+        {
+          sender: 'leo',
+          receiver: 'helga',
+          content: 'Hello',
+          createdAt: '2026-07-22T14:01:17.8984086Z',
+        },
+      ],
+    }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => body,
+      }),
+    )
+
+    await expect(getThread('thread/1')).resolves.toEqual(body)
+    expect(fetch).toHaveBeenCalledWith('/api/agents/threads/thread%2F1')
   })
 
   it('sendLeoMessage posts to the leo webhook with thread id and history', async () => {

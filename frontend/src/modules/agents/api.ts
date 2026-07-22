@@ -1,4 +1,11 @@
-import type { AgentDetail, AgentSearchFilters, AgentsPage, ChatMessage } from './types'
+import type {
+  AgentDetail,
+  AgentSearchFilters,
+  AgentsPage,
+  ChatMessage,
+  ThreadDetail,
+  ThreadsPage,
+} from './types'
 
 const n8nUrl = 'https://convenient-nonie-neberg-ad5744ad.koyeb.app/webhook'
 const leoWebhookUrl = `${n8nUrl}/leo-think`
@@ -93,6 +100,16 @@ export async function searchAgents(filters: AgentSearchFilters): Promise<AgentsP
 export async function getAgent(id: string): Promise<AgentDetail> {
   const response = await fetch(`/api/agents/${encodeURIComponent(id)}`)
   return readJson<AgentDetail>(response)
+}
+
+export async function getThreads(): Promise<ThreadsPage> {
+  const response = await fetch('/api/agents/threads')
+  return readJson<ThreadsPage>(response)
+}
+
+export async function getThread(threadId: string): Promise<ThreadDetail> {
+  const response = await fetch(`/api/agents/threads/${encodeURIComponent(threadId)}`)
+  return readJson<ThreadDetail>(response)
 }
 
 export async function sendLeoMessage(

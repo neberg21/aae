@@ -13,6 +13,8 @@ vi.mock('../modules/agents/api', () => ({
   }),
   searchAgents: vi.fn(),
   getAgent: vi.fn(),
+  getThreads: vi.fn(),
+  getThread: vi.fn(),
   sendLeoMessage: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number

@@ -30,3 +30,30 @@ export type ChatMessage = {
   content: string
 }
 
+export type ThreadSummary = {
+  threadId: string
+  createdAt: string
+  updatedAt: string
+  messageCount: number
+}
+
+export type ThreadsPage = {
+  items: ThreadSummary[]
+  totalCount: number
+  pageSize: number
+  pageNumber: number
+  totalPages: number
+}
+
+export type ThreadMessage = {
+  sender: string
+  receiver: string
+  content: string
+  createdAt: string
+}
+
+export type ThreadDetail = {
+  threadId: string
+  messages: ThreadMessage[]
+}
+
