@@ -23,7 +23,8 @@ public class AgentsModule : IModule
 
         services.AddScoped<CreateIdentityService>();
         services.AddScoped<Faker>(_ => new Faker("de"));
-        services.AddScoped<RouteChatServiceMessage>();
+        services.AddHttpClient<RouteChatMessageService>();
+        services.AddScoped<RouteChatMessageService>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -44,9 +45,9 @@ public class AgentsModule : IModule
 
     private static async Task<IResult> RouteChatMessage(
         [FromBody] RouteChatMessageRequest request,
-        RouteChatServiceMessage routeChatMessageServiceMessage)
+        RouteChatMessageService routeChatMessageService)
     {
-        var res = await routeChatMessageServiceMessage.RouteChatMessage(request);
+        var res = await routeChatMessageService.RouteChatMessage(request);
         return Results.Ok(res);
     }
 

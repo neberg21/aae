@@ -5,13 +5,13 @@ using Module.Agents.Persistence;
 
 namespace Module.Agents.AI;
 
-public class RouteChatServiceMessage
+public class RouteChatMessageService
 {
     private readonly AppDbContext _db;
     private readonly HttpClient _httpClient;
     private readonly IHubContext<ChatHub> _signalRHub; // Für Echtzeit-Updates ans React Frontend
 
-    public RouteChatServiceMessage(AppDbContext db, HttpClient httpClient, IHubContext<ChatHub> signalRHub)
+    public RouteChatMessageService(AppDbContext db, HttpClient httpClient, IHubContext<ChatHub> signalRHub)
     {
         _db = db;
         _httpClient = httpClient;
