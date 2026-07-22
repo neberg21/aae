@@ -133,7 +133,7 @@ export default function AgentsListPage() {
               <tr key={agent.agentId} className="odd:bg-white even:bg-gray-50 dark:odd:bg-transparent dark:even:bg-gray-800/30">
                 <td className="border-b border-gray-200 px-3 py-2 align-top dark:border-gray-700">
                   <Link
-                    to={`/module/agents/list/${agent.agentId}`}
+                    to={`/module/agents/byId/${agent.agentId}`}
                     className="text-violet-700 underline-offset-2 hover:underline dark:text-violet-300"
                   >
                     {agent.name}

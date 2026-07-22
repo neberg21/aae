@@ -54,7 +54,7 @@ describe('AgentsListPage', () => {
 
     expect(await screen.findByRole('link', { name: /default agent/i })).toHaveAttribute(
       'href',
-      '/module/agents/list/default',
+      '/module/agents/byId/default',
     )
   })
 
@@ -116,7 +116,7 @@ describe('AgentsListPage', () => {
     })
 
     const link = await screen.findByRole('link', { name: /leo/i })
-    expect(link).toHaveAttribute('href', '/module/agents/list/leo')
+    expect(link).toHaveAttribute('href', '/module/agents/byId/leo')
     expect(screen.getByText('Ops')).toBeInTheDocument()
     expect(screen.getByText('Orchestrator')).toBeInTheDocument()
   })

@@ -8,5 +8,5 @@ export const agentsRoutes: RouteObject[] = [
   { path: '/module/agents', element: <Navigate to="/module/agents/list" replace /> },
   { path: '/module/agents/list', element: <AgentsListPage /> },
   { path: '/module/agents/threads', element: <ThreadsPage /> },
-  { path: '/module/agents/list/:id', element: <AgentDetailPage /> },
+  { path: '/module/agents/byId/:id', element: <AgentDetailPage /> },
 ]

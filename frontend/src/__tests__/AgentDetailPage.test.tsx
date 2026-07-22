@@ -16,9 +16,9 @@ const getAgentMock = vi.mocked(getAgent)
 
 function renderAt(id: string) {
   return render(
-    <MemoryRouter initialEntries={[`/module/agents/list/${id}`]}>
+    <MemoryRouter initialEntries={[`/module/agents/byId/${id}`]}>
       <Routes>
-        <Route path="/module/agents/list/:id" element={<AgentDetailPage />} />
+        <Route path="/module/agents/byId/:id" element={<AgentDetailPage />} />
       </Routes>
     </MemoryRouter>,
   )
