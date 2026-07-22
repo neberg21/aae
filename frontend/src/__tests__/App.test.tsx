@@ -1,18 +1,34 @@
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
-import App from '../App'
+import { cleanup, render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { AppRoutes } from '../App'
 
-describe('App', () => {
-  it('increments the counter when the button is clicked', async () => {
-    const user = userEvent.setup()
-    render(<App />)
+vi.mock('../modules/agents/api', () => ({
+  searchAgents: vi.fn(),
+  getAgent: vi.fn(),
+  ApiError: class ApiError extends Error {
+    status: number
+    constructor(status: number, message: string) {
+      super(message)
+      this.name = 'ApiError'
+      this.status = status
+    }
+  },
+}))
 
-    const button = screen.getByRole('button', { name: /count is 0/i })
-    await user.click(button)
+describe('AppRoutes', () => {
+  afterEach(() => {
+    cleanup()
+  })
 
-    expect(
-      screen.getByRole('button', { name: /count is 1/i }),
-    ).toBeInTheDocument()
+  it('redirects / to /module/agents', async () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Agents' })).toBeInTheDocument()
+    expect(screen.getByText(/enter at least one filter/i)).toBeInTheDocument()
   })
 })
