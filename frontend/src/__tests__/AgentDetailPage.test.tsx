@@ -53,6 +53,10 @@ describe('AgentDetailPage', () => {
     expect(screen.getByText('Orchestrator')).toBeInTheDocument()
     expect(screen.getByText('leo')).toBeInTheDocument()
     expect(screen.getByText('You are Leo.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /open chat with leo/i })).toHaveAttribute(
+      'href',
+      '/module/agents/threads',
+    )
     expect(screen.getByRole('link', { name: /back to agents/i })).toHaveAttribute(
       'href',
       '/module/agents/list',

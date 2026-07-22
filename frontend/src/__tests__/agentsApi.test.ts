@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, getAgent, getAgents, searchAgents } from '../modules/agents/api'
+import { ApiError, getAgent, getAgents, searchAgents, sendLeoMessage } from '../modules/agents/api'
 
 describe('agents api', () => {
   afterEach(() => {
@@ -82,5 +82,63 @@ describe('agents api', () => {
       status: 404,
     })
     await expect(getAgent('missing')).rejects.toBeInstanceOf(ApiError)
+  })
+
+  it('sendLeoMessage posts to the leo webhook with session and history', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: {
+        get: () => 'application/json',
+      },
+      json: async () => ({
+        reply: 'Hello from Leo',
+      }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const reply = await sendLeoMessage(
+      'Hi Leo',
+      [{ role: 'assistant', content: 'How can I help?' }],
+      'session-123',
+    )
+
+    expect(reply).toBe('Hello from Leo')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith('/webhook/leo-think', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/plain;q=0.9, */*;q=0.8',
+      },
+      body: JSON.stringify({
+        agentId: 'leo',
+        sessionId: 'session-123',
+        message: 'Hi Leo',
+        input: 'Hi Leo',
+        text: 'Hi Leo',
+        prompt: 'Hi Leo',
+        chatInput: 'Hi Leo',
+        history: [{ role: 'assistant', content: 'How can I help?' }],
+        messages: [
+          { role: 'assistant', content: 'How can I help?' },
+          { role: 'user', content: 'Hi Leo' },
+        ],
+      }),
+    })
+  })
+
+  it('sendLeoMessage falls back to plain text responses', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        headers: {
+          get: () => 'text/plain',
+        },
+        text: async () => 'Plain text from Leo',
+      }),
+    )
+
+    await expect(sendLeoMessage('Hi again')).resolves.toBe('Plain text from Leo')
   })
 })

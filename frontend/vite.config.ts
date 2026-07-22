@@ -9,7 +9,8 @@ export default defineConfig({
   server: {
     proxy: {
       //'/api': 'http://localhost:5296',
-      '/api': 'https://normal-coreen-neberg-a84da4bd.koyeb.app'
+      '/api': 'https://normal-coreen-neberg-a84da4bd.koyeb.app',
+      '/webhook': 'https://n8n.neberg.de',
     },
   },
   test: {

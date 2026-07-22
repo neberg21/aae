@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -115,7 +115,8 @@ describe('AgentsListPage', () => {
       })
     })
 
-    const link = await screen.findByRole('link', { name: /leo/i })
+    const table = await screen.findByRole('table')
+    const link = await within(table).findByRole('link', { name: /leo/i })
     expect(link).toHaveAttribute('href', '/module/agents/byId/leo')
     expect(screen.getByText('Ops')).toBeInTheDocument()
     expect(screen.getByText('Orchestrator')).toBeInTheDocument()

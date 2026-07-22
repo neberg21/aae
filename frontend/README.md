@@ -41,3 +41,18 @@ npm run test:watch
 ```
 
 Put new tests under `src/__tests__/` as `*.test.tsx` or `*.spec.tsx` files.
+
+## Leo chat
+
+The agents module now includes a chat page for `Leo` at `/module/agents/threads`.
+
+- By default the frontend calls `/webhook/leo-think`.
+- In local development Vite proxies `/webhook/*` to `https://n8n.neberg.de`.
+- If a different endpoint is needed, set `VITE_LEO_WEBHOOK_URL` before starting Vite.
+
+Example:
+
+```bash
+VITE_LEO_WEBHOOK_URL=https://example.test/webhook/leo-think npm run dev
+```
+

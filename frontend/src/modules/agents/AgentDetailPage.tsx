@@ -61,6 +61,16 @@ export default function AgentDetailPage() {
       {status === 'success' && agent && (
         <>
           <h1 className="mb-6 text-center">{agent.name}</h1>
+          {agent.agentId === 'leo' && (
+            <p className="mb-4">
+              <Link
+                to="/module/agents/threads"
+                className="inline-flex rounded-md bg-violet-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-violet-500"
+              >
+                Open chat with Leo
+              </Link>
+            </p>
+          )}
           <dl className="grid grid-cols-[8rem_1fr] gap-x-4 gap-y-2 rounded-lg border border-gray-200 p-4 text-sm dark:border-gray-700">
             <dt className="font-semibold text-gray-700 dark:text-gray-200">Department</dt>
             <dd className="text-gray-900 dark:text-gray-100">{agent.department}</dd>

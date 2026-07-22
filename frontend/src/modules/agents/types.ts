@@ -22,3 +22,11 @@ export type AgentSearchFilters = {
   department?: string
   jobTitle?: string
 }
+
+export type ChatRole = 'user' | 'assistant'
+
+export type ChatMessage = {
+  role: ChatRole
+  content: string
+}
+

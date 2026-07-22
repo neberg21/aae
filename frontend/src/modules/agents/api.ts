@@ -1,4 +1,6 @@
-import type { AgentDetail, AgentSearchFilters, AgentsPage } from './types'
+import type { AgentDetail, AgentSearchFilters, AgentsPage, ChatMessage } from './types'
+
+const leoWebhookUrl = import.meta.env.VITE_LEO_WEBHOOK_URL ?? '/webhook/leo-think'
 
 export class ApiError extends Error {
   readonly status: number
@@ -15,6 +17,58 @@ async function readJson<T>(response: Response): Promise<T> {
     throw new ApiError(response.status, response.statusText || `HTTP ${response.status}`)
   }
   return (await response.json()) as T
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function extractLeoResponseText(payload: unknown): string | null {
+  if (typeof payload === 'string') {
+    const value = payload.trim()
+    return value.length > 0 ? value : null
+  }
+
+  if (typeof payload === 'number' || typeof payload === 'boolean') {
+    return String(payload)
+  }
+
+  if (Array.isArray(payload)) {
+    const parts = payload
+      .map((item) => extractLeoResponseText(item))
+      .filter((item): item is string => Boolean(item))
+
+    return parts.length > 0 ? parts.join('\n\n') : null
+  }
+
+  if (!isRecord(payload)) {
+    return null
+  }
+
+  const preferredKeys = ['reply', 'response', 'message', 'output', 'text', 'content', 'answer']
+  for (const key of preferredKeys) {
+    const candidate = extractLeoResponseText(payload[key])
+    if (candidate) {
+      return candidate
+    }
+  }
+
+  const nestedKeys = ['data', 'result', 'body']
+  for (const key of nestedKeys) {
+    const candidate = extractLeoResponseText(payload[key])
+    if (candidate) {
+      return candidate
+    }
+  }
+
+  for (const value of Object.values(payload)) {
+    const candidate = extractLeoResponseText(value)
+    if (candidate) {
+      return candidate
+    }
+  }
+
+  return null
 }
 
 export async function getAgents(): Promise<AgentsPage> {
@@ -39,3 +93,51 @@ export async function getAgent(id: string): Promise<AgentDetail> {
   const response = await fetch(`/api/agents/${encodeURIComponent(id)}`)
   return readJson<AgentDetail>(response)
 }
+
+export async function sendLeoMessage(
+  message: string,
+  history: ChatMessage[] = [],
+  sessionId?: string,
+): Promise<string> {
+  const trimmedMessage = message.trim()
+  if (!trimmedMessage) {
+    throw new Error('Message is required')
+  }
+
+  const transcript = [...history, { role: 'user' as const, content: trimmedMessage }]
+  const response = await fetch(leoWebhookUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json, text/plain;q=0.9, */*;q=0.8',
+    },
+    body: JSON.stringify({
+      agentId: 'leo',
+      sessionId,
+      message: trimmedMessage,
+      input: trimmedMessage,
+      text: trimmedMessage,
+      prompt: trimmedMessage,
+      chatInput: trimmedMessage,
+      history,
+      messages: transcript,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new ApiError(response.status, response.statusText || `HTTP ${response.status}`)
+  }
+
+  const contentType = response.headers.get('content-type') ?? ''
+  const payload = contentType.includes('application/json')
+    ? ((await response.json()) as unknown)
+    : await response.text()
+
+  const reply = extractLeoResponseText(payload)
+  if (!reply) {
+    throw new Error('Leo returned an empty response')
+  }
+
+  return reply
+}
+

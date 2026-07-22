@@ -23,7 +23,7 @@ export default function ModuleNavigation() {
             : `${baseLinkClass} text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800`
         }
       >
-        Threads
+        Leo chat
       </NavLink>
     </nav>
   )
