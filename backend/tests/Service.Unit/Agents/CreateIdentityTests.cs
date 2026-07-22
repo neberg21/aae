@@ -1,5 +1,7 @@
 ﻿using System.Net;
+using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Module.Agents.DTOs;
 using Xunit;
 
 namespace Service.Unit.Agents;
@@ -8,7 +10,7 @@ public class CreateIdentityTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _factory;
 
-    public CreateIdentityTests (WebApplicationFactory<Program> factory)
+    public CreateIdentityTests(WebApplicationFactory<Program> factory)
     {
         _factory = factory;
     }
@@ -18,10 +20,12 @@ public class CreateIdentityTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var client = _factory.CreateClient();
         var response = await client.PostAsync("/api/agents/create-identity", null);
-        var body = await response.Content.ReadAsStringAsync();
+        var identity = await response.Content.ReadFromJsonAsync<CreateIdentityResponse>();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("pong", body);
+        Assert.NotNull(identity);
+        Assert.NotEmpty(identity.Name);
+        Assert.NotEmpty(identity.PublicKeyHex);
     }
 
     [Fact]

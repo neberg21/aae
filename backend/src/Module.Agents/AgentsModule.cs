@@ -22,12 +22,10 @@ public class AgentsModule : IModule
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        var api = endpoints.MapGroup("agents");
-
-        api.MapPost("route-chat-message", RouteChatMessage);
-        api.MapPost("create-identity", CreateIdentity);
-        api.MapPost("await-request-approval", AwaitRequestApproval);
-        api.MapPost("resolve-request-approval", ResolveRequestApproval);
+        endpoints.MapPost("route-chat-message", RouteChatMessage);
+        endpoints.MapPost("create-identity", CreateIdentity);
+        endpoints.MapPost("await-request-approval", AwaitRequestApproval);
+        endpoints.MapPost("resolve-request-approval", ResolveRequestApproval);
     }
 
     private Task RouteChatMessage(HttpContext context)
