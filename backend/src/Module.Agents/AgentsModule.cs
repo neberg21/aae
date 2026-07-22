@@ -2,8 +2,10 @@
 using Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Module.Agents.AI;
 using Module.Agents.DTOs;
 using Module.Agents.Nostr;
 
@@ -16,7 +18,10 @@ public class AgentsModule : IModule
     public void RegisterServices(IServiceCollection services)
     {
         services.AddHostedService<ListenOnMessages>();
+        services.AddSingleton<AppDbContext>();
 
+        services.AddScoped<ChatHub>();
+        services.AddScoped<AgentOrchestrationService>();
         services.AddScoped<Faker>(_ => new Faker("de"));
     }
 
@@ -28,8 +33,11 @@ public class AgentsModule : IModule
         endpoints.MapPost("resolve-request-approval", ResolveRequestApproval);
     }
 
-    private Task RouteChatMessage(HttpContext context)
+    private static async Task<IResult> RouteChatMessage(
+        [FromBody] RouteChatMessageRequest request,
+        AgentOrchestrationService agentOrchestrationService)
     {
+        await agentOrchestrationService.ProcessAgentMessageAsync(request);
         throw new NotImplementedException();
     }
 
