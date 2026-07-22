@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getAgents, searchAgents } from './api'
+import ModuleNavigation from './ModuleNavigation'
 import type { AgentDto } from './types'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
@@ -78,6 +79,7 @@ export default function AgentsListPage() {
   return (
     <main className="mx-auto my-8 w-full max-w-4xl px-4 text-left font-sans">
       <h1 className="text-center">Agents</h1>
+      <ModuleNavigation />
       <div className="mb-6 grid gap-3">
         <label className="grid gap-1 text-sm font-medium">
           Name
@@ -131,7 +133,7 @@ export default function AgentsListPage() {
               <tr key={agent.agentId} className="odd:bg-white even:bg-gray-50 dark:odd:bg-transparent dark:even:bg-gray-800/30">
                 <td className="border-b border-gray-200 px-3 py-2 align-top dark:border-gray-700">
                   <Link
-                    to={`/module/agents/${agent.agentId}`}
+                    to={`/module/agents/list/${agent.agentId}`}
                     className="text-violet-700 underline-offset-2 hover:underline dark:text-violet-300"
                   >
                     {agent.name}

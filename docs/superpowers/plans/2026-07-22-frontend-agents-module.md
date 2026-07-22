@@ -472,7 +472,7 @@ export default function AgentsListPage() {
 }
 ```
 
-Create a minimal `frontend/src/modules/agents/agents.css` (enough for the import to resolve; polish in Task 4 is fine):
+Create a minimal `frontend/src/modules/agents/list.css` (enough for the import to resolve; polish in Task 4 is fine):
 
 ```css
 .agents-page {
@@ -520,7 +520,7 @@ If `getByLabelText(/name/i)` matches multiple labels, tighten labels (e.g. wrap 
 - [ ] **Step 5: Commit**
 
 ```cmd
-git add frontend/src/modules/agents/AgentsListPage.tsx frontend/src/modules/agents/agents.css frontend/src/__tests__/AgentsListPage.test.tsx
+git add frontend/src/modules/agents/AgentsListPage.tsx frontend/src/modules/agents/list.css frontend/src/__tests__/AgentsListPage.test.tsx
 git commit -m "feat: add agents list/search page"
 ```
 
@@ -745,7 +745,7 @@ git commit -m "feat: add agent detail page"
 - Create: `frontend/src/modules/index.ts`
 - Modify: `frontend/src/App.tsx` (replace Vite starter)
 - Modify: `frontend/src/__tests__/App.test.tsx`
-- Modify: `frontend/src/modules/agents/agents.css` (optional polish only)
+- Modify: `frontend/src/modules/agents/list.css` (optional polish only)
 - Optionally remove unused starter assets imports from old `App` (do not delete asset files unless unused and requested)
 
 **Interfaces:**
@@ -871,7 +871,7 @@ Expected: all tests PASS (api, list, detail, App).
 - [ ] **Step 6: Commit**
 
 ```cmd
-git add frontend/src/modules/agents/routes.tsx frontend/src/modules/index.ts frontend/src/App.tsx frontend/src/__tests__/App.test.tsx frontend/src/modules/agents/agents.css
+git add frontend/src/modules/agents/routes.tsx frontend/src/modules/index.ts frontend/src/App.tsx frontend/src/__tests__/App.test.tsx frontend/src/modules/agents/list.css
 git commit -m "feat: wire agents module routes into app shell"
 ```
 

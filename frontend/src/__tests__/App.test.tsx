@@ -28,7 +28,7 @@ describe('AppRoutes', () => {
     cleanup()
   })
 
-  it('redirects / to /module/agents', async () => {
+  it('redirects / to /module/agents/list', async () => {
     render(
       <MemoryRouter initialEntries={['/']}>
         <AppRoutes />

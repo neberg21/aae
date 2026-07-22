@@ -16,9 +16,9 @@ const getAgentMock = vi.mocked(getAgent)
 
 function renderAt(id: string) {
   return render(
-    <MemoryRouter initialEntries={[`/module/agents/${id}`]}>
+    <MemoryRouter initialEntries={[`/module/agents/list/${id}`]}>
       <Routes>
-        <Route path="/module/agents/:id" element={<AgentDetailPage />} />
+        <Route path="/module/agents/list/:id" element={<AgentDetailPage />} />
       </Routes>
     </MemoryRouter>,
   )
@@ -55,7 +55,7 @@ describe('AgentDetailPage', () => {
     expect(screen.getByText('You are Leo.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /back to agents/i })).toHaveAttribute(
       'href',
-      '/module/agents',
+      '/module/agents/list',
     )
   })
 

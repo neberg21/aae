@@ -47,7 +47,7 @@ export default function AgentDetailPage() {
     <main className="mx-auto my-8 w-full max-w-4xl px-4 text-left font-sans">
       <p className="mb-4">
         <Link
-          to="/module/agents"
+          to="/module/agents/list"
           className="text-violet-700 underline-offset-2 hover:underline dark:text-violet-300"
         >
           Back to agents
