@@ -2,19 +2,19 @@ using System.Net;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
-namespace Service.Unit;
+namespace Service.Unit.Demo;
 
-public sealed class DemoPingTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class PingTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _factory;
 
-    public DemoPingTests(WebApplicationFactory<Program> factory)
+    public PingTests(WebApplicationFactory<Program> factory)
     {
         _factory = factory;
     }
 
     [Fact]
-    public async Task GetAsync_ApiDemoPingPath_ReturnsPong()
+    public async Task GetAsync_Ping_ReturnsPong()
     {
         var client = _factory.CreateClient();
 

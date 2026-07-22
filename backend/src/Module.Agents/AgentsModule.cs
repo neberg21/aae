@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Module.Agents.DTOs;
 using Module.Agents.Nostr;
 
 namespace Module.Agents;
@@ -38,8 +39,13 @@ public class AgentsModule : IModule
     {
         var firstName = faker.Person.FirstName;
         var profile = await ProfileGenerator.CreateProfileAsync(firstName);
+        var res = new CreateIdentityResponse
+        {
+            Name = profile.Name,
+            PublicKeyHex = profile.PublicKeyHex
+        };
 
-        return Results.Ok(profile);
+        return Results.Ok(res);
     }
 
     private async Task<IResult> AwaitRequestApproval()
