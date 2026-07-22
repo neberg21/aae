@@ -1,0 +1,147 @@
+{
+  "name": "AAE Specialist Think",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## AAE Specialist Think\nAttach OpenAI credential after import.\nWebhook: POST /webhook/specialist-think\nSingle tool: execute_tool → https://ai.neberg.de/api/agents/execute-tool\nDone: route-chat-message to managerId",
+        "height": 280,
+        "width": 400
+      },
+      "id": "spec-sticky-1",
+      "name": "Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "specialist-think",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "spec-webhook-1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [280, 320],
+      "webhookId": "aae-specialist-think"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function normalizeWebhookBody(body) {\n  const b = body ?? {};\n  return {\n    threadId: b.threadId ?? b.ThreadId ?? '',\n    chatHistory: b.chatHistory ?? b.History ?? b.history ?? [],\n    taskContext: b.taskContext ?? b.TaskContext ?? null,\n    allowedTools: b.allowedTools ?? b.AllowedTools ?? [],\n    managerId: b.managerId ?? b.ManagerId ?? null,\n    senderAgentId: b.senderAgentId ?? b.SenderAgentId ?? 'specialist',\n  };\n}\nconst raw = items[0].json.body ?? items[0].json;\nconst n = normalizeWebhookBody(raw);\nconst prompt = [\n  'You are an AAE specialist worker. Complete the task using ONLY execute_tool.',\n  `Hard allowlist allowedTools=${JSON.stringify(n.allowedTools)}. Never call tools outside this list.`,\n  'When finished, reply with JSON only: {\"content\":\"result summary for your manager\"}',\n  `TaskContext: ${JSON.stringify(n.taskContext)}`,\n  `History: ${JSON.stringify(n.chatHistory)}`,\n].join('\\n');\nreturn [{ json: { ...n, prompt } }];"
+      },
+      "id": "spec-code-normalize",
+      "name": "Normalize Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 320]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {
+          "systemMessage": "You are a tool-agnostic AAE specialist. Use only execute_tool for work. Never access the filesystem directly. Never use teamleiter naming. End with JSON {\"content\":\"...\"}."
+        }
+      },
+      "id": "spec-agent-1",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [760, 320]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o"
+        },
+        "options": {}
+      },
+      "id": "spec-openai-1",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [760, 560]
+    },
+    {
+      "parameters": {
+        "name": "execute_tool",
+        "description": "Execute an allowed AAE tool via the backend gateway. Pass tool name from allowedTools and args object.",
+        "method": "POST",
+        "url": "https://ai.neberg.de/api/agents/execute-tool",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ threadId: $('Normalize Input').item.json.threadId, agentId: $('Normalize Input').item.json.senderAgentId, tool: $fromAI('tool', 'Tool name from allowedTools', 'string'), args: JSON.parse($fromAI('argsJson', 'Tool args as JSON object string', 'string') || '{}') }) }}",
+        "placeholderDefinitions": {
+          "values": [
+            { "name": "tool", "description": "Tool name from allowedTools", "type": "string" },
+            { "name": "argsJson", "description": "Tool arguments as a JSON object string", "type": "string" }
+          ]
+        }
+      },
+      "id": "spec-tool-execute",
+      "name": "execute_tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [560, 560]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function parseJsonMaybe(text) {\n  if (text == null) return null;\n  if (typeof text === 'object') return text;\n  const raw = String(text).trim();\n  const fenced = raw.match(/```(?:json)?\\s*([\\s\\S]*?)```/i);\n  const candidate = fenced ? fenced[1].trim() : raw;\n  try { return JSON.parse(candidate); } catch { return null; }\n}\nfunction buildSpecialistDoneBody({ threadId, senderAgentId, managerId, content }) {\n  return { threadId, senderAgentId, targetAgentId: managerId, content };\n}\nfunction buildFailureRoute({ threadId, senderAgentId, content }) {\n  return { threadId, senderAgentId, targetAgentId: 'User', content };\n}\nconst prev = $('Normalize Input').first().json;\nconst agentItem = items[0].json;\nconst agentText = agentItem.output ?? agentItem.text ?? agentItem;\nconst parsed = parseJsonMaybe(agentText);\nconst content = parsed?.content ?? (typeof agentText === 'string' ? agentText : JSON.stringify(agentText));\nif (!prev.managerId) {\n  return [{\n    json: {\n      ok: false,\n      routeBody: buildFailureRoute({\n        threadId: prev.threadId,\n        senderAgentId: prev.senderAgentId,\n        content: 'Specialist missing managerId.',\n      }),\n    },\n  }];\n}\nreturn [{\n  json: {\n    ok: true,\n    routeBody: buildSpecialistDoneBody({\n      threadId: prev.threadId,\n      senderAgentId: prev.senderAgentId,\n      managerId: prev.managerId,\n      content: String(content ?? ''),\n    }),\n  },\n}];"
+      },
+      "id": "spec-code-parse",
+      "name": "Build Done Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ai.neberg.de/api/agents/route-chat-message",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.routeBody) }}",
+        "options": {}
+      },
+      "id": "spec-http-1",
+      "name": "Report To Manager",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1280, 320]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Normalize Input", "type": "main", "index": 0 }]]
+    },
+    "Normalize Input": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "execute_tool": {
+      "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]]
+    },
+    "AI Agent": {
+      "main": [[{ "node": "Build Done Body", "type": "main", "index": 0 }]]
+    },
+    "Build Done Body": {
+      "main": [[{ "node": "Report To Manager", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
