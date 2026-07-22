@@ -17,7 +17,9 @@ public class AgentsModule : IModule
 
     public void RegisterServices(IServiceCollection services)
     {
+        services.AddHostedService<SeedCoreAgents>();
         services.AddHostedService<ListenOnMessages>();
+
         services.AddSingleton<AppDbContext>();
         services.AddScoped<ChatHub>();
         services.AddScoped<NostrEventService>();
