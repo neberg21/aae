@@ -22,6 +22,7 @@
 }
 ```
 
+Expect before model: `GET /api/agents/search?department=Core&name=leo` then `GET /api/agents/{identityId}`.
 Expect: one or more POSTs to `https://ai.neberg.de/api/agents/route-chat-message` (camelCase).
 
 ### Helga clarify / create
@@ -40,6 +41,7 @@ Expect: one or more POSTs to `https://ai.neberg.de/api/agents/route-chat-message
 }
 ```
 
+Expect before model: `GET /api/agents/search?department=Core&name=helga` then `GET /api/agents/{identityId}`.
 Expect: either `route-chat-message` to User OR `create-identity` with `tools` / `guardrails` / `managerId`.
 
 ### Supervisor

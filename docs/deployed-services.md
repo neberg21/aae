@@ -95,7 +95,7 @@ BACKEND_BASE_URL=https://ai.neberg.de
 
 **n8n Nostr nodes** (community package `n8n-nodes-nostrobots`): set the relay field to `wss://nostr.neberg.de` (comma-separate additional public relays only if deliberately multi-homing).
 
-**Think workflow callbacks:** hardcoded base `https://ai.neberg.de` in the imported JSON (for example `POST /api/agents/route-chat-message`, `POST /api/agents/create-identity`).
+**Think workflow callbacks / identity reads:** hardcoded base `https://ai.neberg.de` in the imported JSON (for example `POST /api/agents/route-chat-message`, `POST /api/agents/create-identity`, and for Leo/Helga `GET /api/agents/search` + `GET /api/agents/{identityId}` for `systemPrompt`).
 
 **Flowise HTTP nodes / webhooks from n8n:** base URL `https://flowise.neberg.de` plus the flow-specific prediction path from the Flowise UI.
 

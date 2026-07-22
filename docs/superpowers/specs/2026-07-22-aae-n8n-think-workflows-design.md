@@ -53,6 +53,8 @@ n8n (stateless)
 
 | Purpose | Method + URL | Body |
 |---------|--------------|------|
+| Search identity | `GET https://ai.neberg.de/api/agents/search?department=Core&name=leo\|helga` | — (Leo/Helga; page of `AgentDto`) |
+| Get identity | `GET https://ai.neberg.de/api/agents/{identityId}` | — (includes `systemPrompt` for AI Agent `systemMessage`) |
 | Route message | `POST https://ai.neberg.de/api/agents/route-chat-message` | `RouteChatMessageRequest` |
 | Create identity | `POST https://ai.neberg.de/api/agents/create-identity` | `CreateIdentityRequest` |
 | Approval gate | `POST https://ai.neberg.de/api/await-request-approval` | `{ "threadId", "senderAgentId", "content", "artifacts": [] }` until backend finalizes the DTO |
@@ -99,7 +101,9 @@ Semantics:
 
 ### Common node skeleton
 
-`Webhook` → `Set` (normalize payload) → `AI Agent` (+ OpenAI Chat Model) → `Code` (parse/validate) → `Switch` (when needed) → `HTTP Request`(s) → end
+Leo/Helga: `Webhook` → `Normalize` → `Search` → `Resolve Id` → `Get Prompt` → `Prepare` → `AI Agent` (+ OpenAI Chat Model) → `Code` (parse/validate) → `Switch` (when needed) → `HTTP Request`(s) → end
+
+Supervisor/Specialist (unchanged): `Webhook` → `Normalize` → `AI Agent` (+ OpenAI Chat Model) → `Code` (parse/validate) → `Switch` (when needed) → `HTTP Request`(s) → end
 
 ## Workflow details
 
@@ -110,11 +114,12 @@ Semantics:
 **Flow**
 
 1. Webhook receives vision + history
-2. Set builds Agent prompt from `userVision` and `chatHistory`
-3. AI Agent decomposes vision into department-level work packages (JSON only)
-4. Code expands to one outbound item per target
-5. Split / item loop → one HTTP `route-chat-message` per item
-6. End
+2. Normalize builds Agent user prompt from `userVision` and `chatHistory`
+3. `GET /api/agents/search?department=Core&name=leo` → resolve `items[0].identityId` → `GET /api/agents/{identityId}` → bind `systemPrompt` as Agent `systemMessage`
+4. AI Agent decomposes vision into department-level work packages (JSON only)
+5. Code expands to one outbound item per target
+6. Split / item loop → one HTTP `route-chat-message` per item
+7. End
 
 **Agent output (before Code expansion)**
 
@@ -150,12 +155,14 @@ If a domain has no supervisor, Leo may include a delegation to `helga` with `int
 
 **Flow**
 
-1. Webhook → Set → AI Agent produces status + identity profile
-2. Code validates and maps to backend DTOs
-3. Switch on `status`:
+1. Webhook → Normalize builds user prompt from `delegationRequest` / history
+2. `GET /api/agents/search?department=Core&name=helga` → resolve `items[0].identityId` → `GET /api/agents/{identityId}` → bind `systemPrompt` as Agent `systemMessage`
+3. AI Agent produces status + identity profile
+4. Code validates and maps to backend DTOs
+5. Switch on `status`:
    - `needs_clarification` → `route-chat-message` with `targetAgentId: "User"` and open questions as `content`
    - `ready` → `create-identity` with full `CreateIdentityRequest`
-4. End
+6. End
 
 **Agent output**
 
