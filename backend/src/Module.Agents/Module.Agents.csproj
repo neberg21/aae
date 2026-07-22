@@ -10,4 +10,8 @@
       <ProjectReference Include="..\Core\Core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="NNostr.Client" Version="0.0.54" />
+    </ItemGroup>
+
 </Project>
