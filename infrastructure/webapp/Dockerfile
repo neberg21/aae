@@ -12,17 +12,21 @@ RUN npm run build
 
 # ==========================================
 # STAGE 2: Build der .NET Backend Applikation
+# Build context = repository root (Koyeb / monorepo).
 # ==========================================
 FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS backend-build
 WORKDIR /app/backend
 
-COPY Service.slnx ./
-COPY src/Core/*.csproj ./src/Core/
-COPY src/Service/*.csproj ./src/Service/
-COPY src/Module.Demo/*.csproj ./src/Module.Demo/
+COPY backend/Service.slnx ./
+COPY backend/src/Core/*.csproj ./src/Core/
+COPY backend/src/Service/*.csproj ./src/Service/
+COPY backend/src/Module.Agents/*.csproj ./src/Module.Agents/
+COPY backend/src/Module.Demo/*.csproj ./src/Module.Demo/
+COPY backend/tests/Core.Unit/*.csproj ./tests/Core.Unit/
+COPY backend/tests/Service.Unit/*.csproj ./tests/Service.Unit/
 RUN dotnet restore Service.slnx
 
-COPY . ./
+COPY backend/ ./
 RUN dotnet publish src/Service/Service.csproj -c Release -o /app/publish --no-restore
 
 # ==========================================
