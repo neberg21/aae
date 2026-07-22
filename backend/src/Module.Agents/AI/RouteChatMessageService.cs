@@ -91,8 +91,8 @@ public class RouteChatMessageService
         // Jeder Agent hat seinen eigenen n8n Webhook-Eingang
         var webhookUrl = agentId.ToLower().Trim() switch
         {
-            "leo" => "https://n8n.neberg.de/webhook/leo-input",
-            "helga" => "https://n8n.neberg.de/webhook/helga-input",
+            "leo" => "https://n8n.neberg.de/webhook/leo-think",
+            "helga" => "https://n8n.neberg.de/webhook/helga-think",
             _ => throw new ArgumentException($"Unbekannter Agent: {agentId}")
         };
 
