@@ -1,0 +1,31 @@
+﻿# https://n8n.neberg.de
+@n8nUrl = https://convenient-nonie-neberg-ad5744ad.koyeb.app
+# https://ai.neberg.de
+@aiUrl = https://normal-coreen-neberg-a84da4bd.koyeb.app
+
+### Create a new module
+POST {{n8nUrl}}/webhook/leo-think
+Content-Type: application/json
+
+{
+  "threadId": "smoke-leo",
+  "chatHistory": [],
+  "userVision": "Build a Finance module with UI and API"
+}
+
+
+### Get agents
+
+GET {{aiUrl}}/api/agents
+
+### Post a message to AI 
+
+POST {{aiUrl}}/api/agents/route-chat-message
+Content-Type: application/json
+
+{
+  "threadId": "smoke-leo",
+  "senderAgentId": "leo",
+  "targetAgentId": "supervisor-finance",
+  "content": "Build a comprehensive Finance module with both a user interface and an API. (delegation) [scope=Module.Finance]"
+}

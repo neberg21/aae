@@ -1,0 +1,24 @@
+export type AgentDto = {
+  identityId: string
+  name: string
+  department: string
+  jobTitle: string
+}
+
+export type AgentDetail = AgentDto & {
+  systemPrompt: string
+}
+
+export type AgentsPage = {
+  items: AgentDto[]
+  totalCount: number
+  pageSize: number
+  pageNumber: number
+  totalPages: number
+}
+
+export type AgentSearchFilters = {
+  name?: string
+  department?: string
+  jobTitle?: string
+}
