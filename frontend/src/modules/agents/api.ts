@@ -1,6 +1,7 @@
 import type { AgentDetail, AgentSearchFilters, AgentsPage, ChatMessage } from './types'
 
-const leoWebhookUrl = 'https://convenient-nonie-neberg-ad5744ad.koyeb.app/webhook/leo-think'
+const n8nUrl = 'https://convenient-nonie-neberg-ad5744ad.koyeb.app/webhook'
+const leoWebhookUrl = `${n8nUrl}/leo-think`
 
 export class ApiError extends Error {
   readonly status: number
