@@ -1,6 +1,6 @@
 import type { AgentDetail, AgentSearchFilters, AgentsPage, ChatMessage } from './types'
 
-const leoWebhookUrl = import.meta.env.VITE_LEO_WEBHOOK_URL ?? '/webhook/leo-think'
+const leoWebhookUrl = 'https://convenient-nonie-neberg-ad5744ad.koyeb.app/webhook/leo-think'
 
 export class ApiError extends Error {
   readonly status: number

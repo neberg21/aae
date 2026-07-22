@@ -104,7 +104,7 @@ describe('agents api', () => {
 
     expect(reply).toBe('Hello from Leo')
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(fetchMock).toHaveBeenCalledWith('/webhook/leo-think', {
+    expect(fetchMock).toHaveBeenCalledWith('https://convenient-nonie-neberg-ad5744ad.koyeb.app/webhook/leo-think', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
