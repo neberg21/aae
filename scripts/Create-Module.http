@@ -5,6 +5,7 @@
 
 ### Create a new module
 POST {{n8nUrl}}/webhook/leo-think
+Content-Type: application/json
 
 {
   "threadId": "smoke-leo",
