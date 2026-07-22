@@ -36,7 +36,7 @@ public class AgentsModule : IModule
         endpoints.MapHub<ChatHub>("/chat");
         endpoints.MapGet("", GetIdentities)
             .Produces<GetAgentsResponse>();
-        endpoints.MapGet("{publicKeyHex}", GetIdentity);
+        endpoints.MapGet("{identityId}", GetIdentity);
         endpoints.MapPost("create-identity", CreateIdentity)
             .Accepts<CreateIdentityRequest>("application/json")
             .Produces<CreateIdentityResponse>();
@@ -63,9 +63,9 @@ public class AgentsModule : IModule
         return Task.FromResult(Results.Ok(page));
     }
 
-    private IResult GetIdentity(string publicKeyHex, AppDbContext dbContext)
+    private IResult GetIdentity(string identityId, AppDbContext dbContext)
     {
-        var agent = dbContext.Agents.FirstOrDefault(a => a.PublicKeyHex == publicKeyHex);
+        var agent = dbContext.Agents.FirstOrDefault(a => a.Id == identityId);
         return agent is null
             ? Results.NotFound()
             : Results.Ok(new AgentByIdResponse(
