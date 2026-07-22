@@ -1,70 +1,58 @@
-Hier ist die schematische Darstellung für den **Human-in-the-Loop (HITL) Freigabe-Flow**.
+# Human-in-the-loop (HITL) approval flow
 
-Dieses Diagramm visualisiert den Weg vom Agenten-Code über die `n8n`-Warteschlange bis zu deiner Entscheidung und dem anschließenden Deployment. Du kannst dieses Diagramm direkt in deine Architektur-Blaupause (z. B. unter einem neuen Unterpunkt "3.3 Human-in-the-Loop & Approval Flow") einfügen.
+Path from agent work to human decision. n8n think workflows are **stateless** (no Wait nodes). Pause/resume belongs on the **.NET backend** and UI.
 
 ```text
                ┌─────────────────────────────────────────┐
-               │ 1. ENTWICKLUNG & LOKALER REVIEW         │
+               │ 1. DEVELOPMENT & LOCAL REVIEW           │
                └─────────────────────────────────────────┘
-                 ┌────────────────┐       (Code/Mockup) 
-                 │ Kinder-Agent   │ ──────────────────► 
-                 │(Frontend/React)│ ◄────────────────── 
-                 └────────────────┘   (Korrekturschleife)
+                 ┌────────────────┐       (Code / draft)
+                 │ Specialist     │ ──────────────────►
+                 │ (or nested     │ ◄──────────────────
+                 │  supervisor)   │   (correction loop)
+                 └────────────────┘
 
                                             ▼
                                   ┌──────────────────┐
-                                  │   Teamleiter     │ (Domain Supervisor)
-                                  │   (z.B. D&D)     │
+                                  │   Supervisor     │
+                                  │   (domain / nest)│
                                   └────────┬─────────┘
                                            │
-         (2. Sende JSON Intent: `user_approval_required`)
+                    (2. Outcome `done` → approval payload)
                                            │
                ┌───────────────────────────▼─────────────────────────────┐
-               │ 3. EVENT ROUTING & PAUSE (n8n)                          │
-               │ n8n fängt Webhook ab, speichert Kontext im "Wait Node"  │
-               │ und leitet das Mockup an das User Interface weiter.     │
+               │ 3. BACKEND APPROVAL GATE                                │
+               │ POST /api/agents/await-request-approval                 │
+               │ (routed; handler not implemented yet)                   │
+               │ Intended: hold context, surface draft to the UI         │
                └───────────────────────────┬─────────────────────────────┘
                                            │
                                            ▼
                ┌─────────────────────────────────────────┐
                │ 4. USER INTERVENTION (React UI / Nostr) │
-               │ Zeigt interaktive Karte mit Code/Design │
+               │ Interactive card with code / design     │
                └───────────────────┬─────────────────────┘
                                    │
-                           [ DEINE ENTSCHEIDUNG ]
+                           [ YOUR DECISION ]
                                    │
                ┌───────────────────┴───────────────────┐
                │                                       │
-     [ ÄNDERUNG VERLANGEN ]                     [ FREIGEBEN (Merge) ]
-   (z.B. "Mach Button grün")                           │
+     [ REQUEST CHANGES ]                        [ APPROVE ]
                │                                       │
                ▼                                       ▼
-     (n8n löst Pause auf &)                  (n8n löst Pause auf &)
-     (routet zurück zu 1. )                  (routet zu GitHub   )
-                                                       │
-                                                       ▼
-                                             ┌──────────────────┐
-                                             │  GitHub Commit   │
-                                             │ (Main Branch)    │
-                                             └────────┬─────────┘
-                                                      │
-                                          (Triggert autom. Build)
-                                                      │
-                                                      ▼
-                                             ┌──────────────────┐
-                                             │ Koyeb Deployment │
-                                             │  (Multi-Stage)   │
-                                             └──────────────────┘
-
+     POST /api/agents/resolve-request-approval   same endpoint
+     (routed; not implemented yet)               then continue work /
+     → feedback back into supervisor loop        merge / deploy path
 ```
 
-### Erklärung der Phasen für deine Dokumentation:
+### Phases
 
-* **Phase 1 & 2 (Die Vorarbeit):** Die Agenten arbeiten isoliert in ihrem Modul. Der Teamleiter erkennt durch seinen System-Prompt, dass er eine UI-Änderung nicht eigenmächtig pushen darf. Er bündelt den Entwurf und schickt ihn als Freigabe-Anfrage an `n8n`.
+* **1–2 — Prep:** Agents stay inside their module paths. The supervisor packages the deliverable and chooses outcome `done` (see [`template_supervisor.md`](../../agents/identities/template_supervisor.md)). The `supervisor-think` workflow POSTs to the backend approval URL.
+* **3 — Gate:** Backend owns the pause. Current code maps the route under `Module.Agents` but `AwaitRequestApproval` / `ResolveRequestApproval` still throw `NotImplementedException`.
+* **4 — Decision:** UI (or Nostr-driven UI path) calls `resolve-request-approval` with approve or reject + feedback.
+* **5 — After approve:** Intended follow-on is commit/merge and the multi-stage webapp image rebuild (Docker / Koyeb). That deploy wiring is packaging-side, not part of the n8n think graphs.
 
+### Related contracts
 
-* **Phase 3 (Der Türsteher):** `n8n` pausiert den Workflow dieses Agenten-Teams (via "Wait Node"), hält aber die restliche Infrastruktur am Laufen. Das Event wird als formatierte Nachricht an dein Interface (Nostr oder das native KI-Modul) gepusht.
-
-
-* **Phase 4 (Der God-Mode):** Du betrachtest das Mockup. Lehnst du ab, geht der Flow mit deinem kritischen Feedback in die Korrekturschleife zurück an den Teamleiter.
-* **Phase 5 (Produktion):** Stimmst du zu, wird der Code ins Monorepo committet, was sofort den Multi-Stage Docker-Build auf Koyeb anstößt, ohne dass du jemals eine Kommandozeile berühren musstest.
+* [`agents/workflow.md`](../../agents/workflow.md) — HTTP surface and four think workflows
+* [`docs/deployed-services.md`](../deployed-services.md) — hostnames (`ai.neberg.de`, `n8n.neberg.de`, …)

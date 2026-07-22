@@ -32,6 +32,7 @@ Point n8n Nostr nodes and scripts at the deployed relay:
 - Relay WebSocket: `wss://nostr.neberg.de`
 - n8n UI: `https://n8n.neberg.de`
 - Flowise UI: `https://flowise.neberg.de`
+- Web app: `https://ai.neberg.de`
 
 ### Configuration
 
@@ -40,7 +41,7 @@ Point n8n Nostr nodes and scripts at the deployed relay:
 | Nostr | [`nostr/`](nostr/) | Mount DB volume; optional `config.toml` |
 | n8n | [`n8n/`](n8n/) | Image preinstalls `n8n-nodes-nostrobots`; see [`n8n/README.md`](n8n/README.md) |
 | Flowise | [`flowise/`](flowise/) | Thin pin of `flowiseai/flowise:3.1.1` |
-| Webapp | [`webapp/`](webapp/) | Multi-stage frontend + backend publish; no `*.neberg.de` hostname assigned in docs yet |
+| Webapp | [`webapp/`](webapp/) | Multi-stage frontend + backend publish; live host `https://ai.neberg.de` |
 
 ### Common mistakes
 
@@ -83,8 +84,7 @@ Shows packaging → deploy → workflow binding; hostnames are the contract for 
 
 ### Limitations
 
-- Deploy/platform config (Koyeb, TLS, volumes) is outside this repo folder
-- Webapp public URL not documented until assigned
+- Deploy/platform config (Koyeb, TLS, volumes) is outside this repo folder; hostnames are in [`docs/deployed-services.md`](../docs/deployed-services.md)
 
 ### References
 

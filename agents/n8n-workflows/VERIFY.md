@@ -18,7 +18,7 @@
 {
   "threadId": "smoke-leo",
   "chatHistory": [],
-  "userVision": "Build a Finanzen module with UI and API"
+  "userVision": "Build a Finance module with UI and API"
 }
 ```
 
@@ -33,8 +33,8 @@ Expect: one or more POSTs to `https://ai.neberg.de/api/agents/route-chat-message
   "threadId": "smoke-helga",
   "chatHistory": [],
   "delegationRequest": {
-    "message": "Need a Finanzen supervisor",
-    "moduleScope": "Module.Finanzen",
+    "message": "Need a Finance supervisor",
+    "moduleScope": "Module.Finance",
     "role": "supervisor"
   }
 }
@@ -50,13 +50,13 @@ Expect: either `route-chat-message` to User OR `create-identity` with `tools` / 
 {
   "threadId": "smoke-sup",
   "chatHistory": [],
-  "taskContext": "Deliver Finanzen MVP",
-  "subordinatesList": ["specialist-react"],
-  "senderAgentId": "supervisor-finanzen"
+  "taskContext": "Deliver Finance MVP",
+  "subordinatesList": ["specialist-react", "supervisor-finance-reporting"],
+  "senderAgentId": "supervisor-finance"
 }
 ```
 
-Expect: waiting | delegate route calls | `await-request-approval`.
+Expect: waiting | delegate route calls (specialists and/or nested supervisors) | `/api/agents/await-request-approval`.
 
 ### Specialist
 
@@ -68,17 +68,16 @@ Expect: waiting | delegate route calls | `await-request-approval`.
   "chatHistory": [],
   "taskContext": "Scaffold React page",
   "allowedTools": ["GenerateCode"],
-  "managerId": "supervisor-finanzen",
+  "managerId": "supervisor-finance",
   "senderAgentId": "specialist-react"
 }
 ```
 
-Expect: optional `execute-tool` calls; final `route-chat-message` to `supervisor-finanzen`.
+Expect: optional `execute-tool` calls; final `route-chat-message` to `supervisor-finance`.
 
 ## Negatives
 
 - No Wait nodes in any workflow
-- No `teamleiter` agent ids in routing output (helpers reject them)
 - Specialist has no filesystem tool nodes
 
 ## Local helper tests

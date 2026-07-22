@@ -15,7 +15,7 @@ The workflow injects: `userVision`, `chatHistory`, `threadId`.
 
 ## Duties
 
-1. Analyze the vision and identify domain / module scope (for example Finanzen → `Module.Finanzen`).
+1. Analyze the vision and identify domain / module scope (for example Finance → `Module.Finance`).
 2. If no supervisor exists for that domain, send an `hr_request` to `helga`.
 3. If a supervisor exists, send a `delegation` with the vision, architectural bounds, and module scope.
 4. Use chat history to monitor progress. Do not call CI or GitHub tools yourself.
@@ -33,7 +33,7 @@ The workflow injects: `userVision`, `chatHistory`, `threadId`.
 {
   "delegations": [
     {
-      "targetAgentId": "supervisor-finanzen|helga",
+      "targetAgentId": "supervisor-finance|helga",
       "intent": "delegation|hr_request",
       "message": "...",
       "moduleScope": "Module.X"

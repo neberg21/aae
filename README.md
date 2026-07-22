@@ -34,7 +34,7 @@ n8n routes events; Flowise hosts the cognitive/orchestrator layer; the applicati
 |------|----------------|----------------|
 | Orchestrator (CEO) | Leo | Understand vision, recruit via HR when needed, delegate to domain supervisors — never writes code |
 | HR / identity smith | Helga | Create agent identity profiles (system prompts, tools, guardrails) as structured data — never writes app code or wires workflows |
-| Domain supervisor | Supervisor per domain | Plan architecture, request specialists, review quality within a module |
+| Domain supervisor | Supervisor per domain | Plan architecture, may nest subordinate supervisors, request specialists, review quality within a module |
 | Specialists | Backend / Frontend children | Implement only inside their allowed module paths |
 
 Identity definitions live under [`agents/identities/`](agents/identities/).
@@ -89,6 +89,7 @@ Live hosts (use these in workflows and scripts):
 | Nostr relay | `https://nostr.neberg.de` · `wss://nostr.neberg.de` |
 | n8n | `https://n8n.neberg.de` |
 | Flowise | `https://flowise.neberg.de` |
+| Web app | `https://ai.neberg.de` |
 
 Details: [`docs/deployed-services.md`](docs/deployed-services.md). Packaging: [`infrastructure/`](infrastructure/). Example n8n workflow JSON: [`agents/n8n-workflows/`](agents/n8n-workflows/).
 
@@ -97,15 +98,15 @@ Details: [`docs/deployed-services.md`](docs/deployed-services.md). Packaging: [`
 | Doc | Notes |
 |-----|--------|
 | [`docs/deployed-services.md`](docs/deployed-services.md) | Canonical `*.neberg.de` hosts for workflows and docs |
-| [`docs/aae-architectutre.html`](docs/aae-architectutre.html) | Full architecture blueprint (German UI) |
-| [`docs/process/human-in-the-loop.md`](docs/process/human-in-the-loop.md) | Approval / HITL flow (German) |
-| [`docs/process/organigramm.md`](docs/process/organigramm.md) | Agent hierarchy sketch (German) |
-| [`docs/process/erstelle_teamleiter.md`](docs/process/erstelle_teamleiter.md) | How domain supervisors get their prompts (German) |
+| [`docs/aae-architecture.html`](docs/aae-architecture.html) | Full architecture blueprint |
+| [`docs/process/human-in-the-loop.md`](docs/process/human-in-the-loop.md) | Approval / HITL flow |
+| [`docs/process/org-chart.md`](docs/process/org-chart.md) | Agent hierarchy (recursive supervisors) |
+| [`docs/process/create-supervisor.md`](docs/process/create-supervisor.md) | How supervisors get their prompts |
 | [`agents/identities/leo.md`](agents/identities/leo.md) | Orchestrator system prompt |
 | [`agents/identities/helga.md`](agents/identities/helga.md) | HR identity system prompt |
 | [`infrastructure/README.md`](infrastructure/README.md) | Docker packaging overview |
-| [`infrastructure/n8n/README.md`](infrastructure/n8n/README.md) | n8n + Nostr community node setup (German) |
+| [`infrastructure/n8n/README.md`](infrastructure/n8n/README.md) | n8n + Nostr community node setup |
 
 ## Status
 
-Early scaffold: frontend and backend hosts exist with backend `Module.*` auto-discovery (`Module.Demo` proof). Frontend module registry paths remain a target pattern until those folders land. Agent identities and architecture docs remain richer than the full runtime surface.
+Early scaffold: frontend and backend hosts exist with backend `Module.*` auto-discovery (`Module.Demo`, `Module.Agents`). Frontend module registry paths remain a target pattern until those folders land. Some agent APIs (HITL approve/resolve, execute-tool) are routed but not implemented yet.

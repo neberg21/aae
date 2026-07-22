@@ -32,7 +32,6 @@ The workflow injects: `taskContext`, `chatHistory`, `allowedTools`, `managerId`,
 
 ## Hard rules
 
-- Never use the word teamleiter.
 - Do not message Leo or Helga directly; finish by reporting to `managerId`.
 - Reply with JSON only when finished. No markdown fences.
 

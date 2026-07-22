@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AAE — Architektur-Blaupause</title>
+<title>AAE — Architecture Blueprint</title>
 <style>
   :root{
     --bg:        #0e2740;
@@ -45,7 +45,6 @@
     section:hover .callout-num{ box-shadow:0 0 0 4px rgba(143,193,234,0.15); }
   }
 
-  /* ---------- margin ruler ---------- */
   .ruler{
     position:fixed;
     left:0; top:0; bottom:0;
@@ -68,7 +67,6 @@
     text-align:center;
   }
 
-  /* ---------- title block (signature) ---------- */
   .titleblock{
     margin:56px auto 0;
     max-width:900px;
@@ -133,14 +131,12 @@
   .crosshair.bl{ bottom:-7px; left:-7px; }
   .crosshair.br{ bottom:-7px; right:-7px; }
 
-  /* ---------- page shell ---------- */
   .sheet{
     max-width:900px;
     margin:0 auto;
     padding:56px 24px 120px;
   }
 
-  /* ---------- topology diagram beneath header ---------- */
   .topo-caption{
     font-family:var(--mono);
     font-size:11px;
@@ -150,7 +146,6 @@
     margin:40px 0 10px;
   }
 
-  /* ---------- sections ---------- */
   section{
     margin-top:64px;
     scroll-margin-top:24px;
@@ -226,7 +221,6 @@
     border-radius:3px;
   }
 
-  /* ---------- code / diagram panels ---------- */
   .panel{
     position:relative;
     margin:16px 0 24px;
@@ -265,7 +259,6 @@
   .tok-cm{ color:#6d8caa; font-style:italic; }
   .tok-type{ color:#8fc1ea; }
 
-  /* ---------- risk table ---------- */
   .tbl-wrap{
     border:1px solid var(--line);
     overflow-x:auto;
@@ -308,7 +301,6 @@
   .stamp.ok{ color:var(--green); }
   .stamp.mid{ color:var(--amber); }
 
-  /* ---------- footer ---------- */
   footer{
     margin-top:80px;
     padding-top:22px;
@@ -339,16 +331,14 @@
 </head>
 <body>
 
-  <!-- decorative drafting ruler -->
   <div class="ruler" aria-hidden="true">
     <span>AAE—01</span>
-    <span>MASSSTAB N.T.M.</span>
-    <span>BLATT 1/1</span>
+    <span>SCALE N.T.S.</span>
+    <span>SHEET 1/1</span>
   </div>
 
   <div class="sheet">
 
-    <!-- Title block: signature element -->
     <div class="titleblock">
       <div class="crosshair tl" aria-hidden="true"></div>
       <div class="crosshair tr" aria-hidden="true"></div>
@@ -356,23 +346,23 @@
       <div class="crosshair br" aria-hidden="true"></div>
       <div class="tb-big">
         <h1>Autonomous Agent Ecosystem</h1>
-        <p>Zentrale System- und Architektur-Dokumentation</p>
+        <p>System and architecture documentation</p>
       </div>
       <div class="tb-cell">
-        <p class="tb-label">Projekt</p>
+        <p class="tb-label">Project</p>
         <p class="tb-value">backend / Service</p>
       </div>
       <div class="tb-cell">
         <p class="tb-label">Revision</p>
-        <p class="tb-value mono">Rev. B</p>
+        <p class="tb-value mono">Rev. C</p>
       </div>
       <div class="tb-cell">
-        <p class="tb-label">Blatt</p>
+        <p class="tb-label">Sheet</p>
         <p class="tb-value mono">01 / 01</p>
       </div>
       <div class="tb-cell">
         <p class="tb-label">Stack</p>
-        <p class="tb-value mono">n8n · Flowise · Nostr</p>
+        <p class="tb-value mono">n8n · .NET · Nostr</p>
       </div>
       <div class="tb-cell">
         <p class="tb-label">Host</p>
@@ -380,288 +370,272 @@
       </div>
       <div class="tb-cell">
         <p class="tb-label">Status</p>
-        <p class="tb-value mono" style="color:var(--amber)">Entwurf / Freigabe ausstehend</p>
+        <p class="tb-value mono" style="color:var(--amber)">Scaffold / partial runtime</p>
       </div>
     </div>
 
-    <!-- Section 1 -->
     <section id="s1">
       <div class="section-head">
         <div class="callout-num">01</div>
         <h2>Executive Summary &amp; Vision</h2>
       </div>
       <p>
-        Dieses Dokument dient als architektonisches Fundament für das <strong>Autonomous Agent Ecosystem (AAE)</strong>.
-        Die Kernvision beschreibt eine selbst-expandierende, KI-gesteuerte Plattform, auf der spezialisierte
-        Agenten-Teams (bereitgestellt über Flowise) autark Module einer Webapplikation verwalten, erweitern und
-        mit Endnutzern interagieren.
+        This document is the architectural foundation for the <strong>Autonomous Agent Ecosystem (AAE)</strong>.
+        Specialized agent teams build modular product features under human approval: Leo orchestrates,
+        Helga forges identities, domain supervisors plan (and may nest further supervisors), and specialists implement
+        inside module boundaries.
       </p>
-      <p>Das System setzt auf einen hybriden Ansatz aus etablierten Anwendungs-Stacks, moderner Event-Automatisierung und dezentralen Kommunikationsprotokollen:</p>
+      <p>Hybrid stack in use today:</p>
       <ul>
-        <li><strong>Orchestrierung &amp; Event-Bus:</strong> n8n</li>
-        <li><strong>Kognitive Ebene (LLM-Logik):</strong> Flowise</li>
-        <li><strong>Interface-Protokolle:</strong> Nostr (dezentral &amp; asynchron) + natives KI-Modul</li>
-        <li><strong>Anwendungs-Stack:</strong> .NET Core Backend &amp; React Frontend</li>
-        <li><strong>Infrastruktur/Hosting:</strong> Docker-Monolith auf Koyeb</li>
+        <li><strong>Orchestration &amp; event bus:</strong> n8n (four stateless <code>*-think</code> workflows)</li>
+        <li><strong>Optional LLM canvas:</strong> Flowise</li>
+        <li><strong>Interfaces:</strong> Nostr (async DMs) + native React / KI UI on the web app</li>
+        <li><strong>Application stack:</strong> ASP.NET Core (<code>net10.0</code>) + React (Vite)</li>
+        <li><strong>Infrastructure:</strong> Docker images under <code>infrastructure/</code>, hosted on Koyeb</li>
       </ul>
 
-      <p class="topo-caption">Detail A — System-Topologie (Datenfluss & Rekursion)</p>
+      <p class="topo-caption">Detail A — System topology</p>
       <div class="panel">
-        <span class="panel-tab">Schema · Datenfluss</span>
+        <span class="panel-tab">Schema · Data flow</span>
         <pre><code>               ┌────────────────────────────────────────┐
-               │         Eingangs-Schnittstellen        │
-               │   [Nostr]        [KI-Modul / React]    │
+               │           Ingress interfaces           │
+               │   [Nostr]        [React / KI UI]       │
                └──────────────────┬───────────────────────┘
-                                  │ (Event Routing)
+                                  │ (event routing)
                                   ▼
                ┌──────────────────┴───────────────────────┐
                │                  n8n                     │
-               │   (Event-Routing &amp; API-Orchestrierung)   │
+               │   (webhooks · think workflows)           │
                └─────────┬─────────────────────┬──────────┘
                          │                     │
                          ▼                     ▼
           ┌───────────────────────┐   ┌───────────────────────┐
-          │        Flowise        │   │    Anwendungs-Stack   │
-          │  (Orchestrator &amp;      │   │   (.NET Core + React) │
-          │    Agenten-Teams)     │   │    [Hosted auf Koyeb] │
+          │        Flowise        │   │   Application stack   │
+          │  (optional LLM flows) │   │  (.NET + React)       │
+          │                       │   │  ai.neberg.de         │
           └───────────────────────┘   └───────────────────────┘</code></pre>
       </div>
     </section>
 
-    <!-- Section 2 -->
     <section id="s2">
       <div class="section-head">
         <div class="callout-num">02</div>
         <h2>Core System Architecture</h2>
       </div>
 
-      <h3>2.1 &nbsp;Interface Layer (Nostr &amp; KI-Modul)</h3>
+      <h3>2.1 &nbsp;Interface layer (Nostr &amp; KI UI)</h3>
       <p>
-        Neben dem <strong>Nostr-Protokoll</strong>, das als dezentrale Event-Infrastruktur dient, fungiert das interne <strong>KI-Modul</strong> der Webapplikation als gleichwertiger, nativer Eingang. Diese Architektur-Rekursion ermöglicht es den Agenten, dieselbe Plattform zur Kommunikation zu nutzen, an der sie selbst mitentwickeln.
-        <code>n8n</code> lauscht auf alle eingehenden Events (verschlüsselte Nostr-DMs, interne Web-Requests) und routet diese gebündelt weiter.
+        <strong>Nostr</strong> is the decentralized event ingress. The web app’s <strong>KI / team UI</strong> is a first-class
+        peer channel. Agents can use the same product they help build. <code>n8n</code> consumes relay traffic and app events
+        and wakes the matching think webhook.
       </p>
 
       <div class="panel">
-        <span class="panel-tab">UI Mockup · Team-Chats</span>
+        <span class="panel-tab">UI sketch · Team chats</span>
         <pre><code>+-----------------------------------------------------------------------+
-|  [≡] AAE Team-Workspace                               [Helga] [Profil]  |
+|  [≡] AAE Team Workspace                               [Helga] [Profile]|
 |-----------------------------------------------------------------------|
-|  [ KANÄLE ]            |  Team-Chat: #core-dev-squad                  |
+|  [ CHANNELS ]          |  Team chat: #core-dev-squad                  |
 |  # general             |----------------------------------------------|
 |  # frontend            |                                              |
 |  # backend-api         | [User] 10:14 AM                              |
-|                        | Wir brauchen eine neue API-Route für die     |
-|  [ DIREKTNACHRICHTEN ] | D&amp;D Module.                                  |
+|                        | We need an API route for the new module.     |
+|  [ DIRECT MESSAGES ]   |                                              |
 |  @ Helga (HR)          |                                              |
-|                        | [Orchestrator] 10:14 AM                      |
-|  [ TEAM AGENTEN ]      | Verstanden. Ich delegiere die Aufgabe an den |
-|  * Orchestrator        | Backend-Agenten zur Implementierung.         |
-|  * Backend-Agent       |                                              |
-|  * Frontend-Agent      | [Backend-Agent] 10:16 AM                     |
-|                        | Route erstellt und getestet. Commit in den   |
-|                        | Main-Branch wurde gepusht.                   |
+|                        | [Leo] 10:14 AM                               |
+|  [ TEAM AGENTS ]       | Understood. Delegating to the domain         |
+|  * Leo (orchestrator)  | supervisor.                                  |
+|  * Domain supervisor   |                                              |
+|  * Specialists         | [Supervisor] 10:16 AM                        |
+|                        | Task split; specialists assigned.            |
 |-----------------------------------------------------------------------|
-| [ KI-Eingabe: @Agent erwähnen oder Nachricht tippen... ]   [ Senden ] |
+| [ KI input: @mention an agent or type… ]                    [ Send ]  |
 +-----------------------------------------------------------------------+</code></pre>
       </div>
 
-      <h3>2.2 &nbsp;Cognitive Layer &amp; Team Erstellung (Flowise)</h3>
+      <h3>2.2 &nbsp;Agent hierarchy (recursive supervisors)</h3>
       <p>
-        Flowise verwaltet Prompt-Chains, das Gedächtnis und Tool-Bindings. Um eine Fragmentierung durch unzählige isolierte Flows zu verhindern, nutzt das System ein Supervisor-Muster. Ein universeller Master-Agenten-Flow fungiert als <strong>Orchestrator (Leo)</strong> und primärer Laufzeit-Container. Dieser analysiert die Absicht des Nutzers, zerlegt Aufgaben und ruft dynamisch spezialisierte Kinder-Agenten auf, indem System-Prompts, Identitäten und Werkzeuge via Payload in den Master-Flow injiziert werden.
+        Runtime cognition for Leo, Helga, supervisors, and specialists runs in the four n8n think workflows
+        (<code>leo-think</code>, <code>helga-think</code>, <code>supervisor-think</code>, <code>specialist-think</code>).
+        Each wake is stateless: the backend injects context; the workflow calls back into
+        <code>https://ai.neberg.de/api/agents/…</code>.
       </p>
       <p>
-        Die HR-Agentin <strong>Helga</strong> hat hierbei einen strikt limitierten Aktionsradius: Sie baut keine Infrastruktur und verknüpft keine Nodes. Helga fungiert als reine <em>Identitäts-Schmiede</em>. Wird ein neues Teammitglied benötigt, generiert sie den optimalen System-Prompt, definiert API-Werkzeuge, setzt Leitplanken und speichert diese "Software-Seele" als JSON in einer Datenbank ab, aus der der Orchestrator schöpft.
+        <strong>Helga</strong> is identity-only: she does not wire workflows or write application code. She fills
+        supervisor / specialist templates and posts <code>create-identity</code>. Supervisors may nest: a supervisor can
+        request further supervisors under itself (<code>managerId</code> = parent <code>supervisor-*</code>) as well as specialists.
       </p>
 
       <div class="panel">
-        <span class="panel-tab">Schema · Agenten-Hierarchie</span>
+        <span class="panel-tab">Schema · Agent hierarchy</span>
         <pre><code>               ┌────────────────────────────────────────┐
-               │       LEO (ORCHESTRATOR-AGENT)         │
-               │  (Universeller Master-Agenten-Flow)    │
+               │            LEO (ORCHESTRATOR)          │
                └─────────┬───────────────────┬──────────┘
-                         │ (Task)            │ (Task)
+                         │                   │ (hr_request)
                          ▼                   ▼
-                 ┌───────────────┐   ┌───────────────┐
-                 │ Kinder-Agent A│   │ Kinder-Agent B│
-                 │ (z.B. Backend)│   │ (z.B. Frontend)│
-                 └───────▲───────┘   └───────▲───────┘
-                         │                   │
-               ┌─────────┴───────────────────┴──────────┐
-               │        AGENTEN-DATENBANK               │
-               │  (Verhaltensparameter / Identitäten)   │
-               └──────────────────▲─────────────────────┘
-                                  │ (Schreibt Profile)
-                             [ HELGA (HR) ]</code></pre>
+                 ┌───────────────┐     [ HELGA (HR) ]
+                 │  Supervisor A │           │
+                 └──┬─────────┬──┘           │ create-identity
+                    │         │              ▼
+                    ▼         ▼      ┌──────────────────┐
+           [ Nested sup. ] [ Spec. ] │ Identity store   │
+                    │                │ (Module.Agents)  │
+                    ▼                └──────────────────┘
+                 [ Spec. ]</code></pre>
       </div>
 
-      <h3>2.3 &nbsp;Automation &amp; Synchronization Layer (n8n)</h3>
+      <h3>2.3 &nbsp;Automation layer (n8n)</h3>
       <p>
-        n8n fungiert als zentrales Nervensystem. Es synchronisiert Workflows direkt via n8n Source Control
-        ins GitHub-Repo. Für Flowise-Flows extrahiert ein automatisierter n8n-Cronjob die Konfigurationen
-        über die Flowise-API und committet die JSON-Definitionen ins Repository.
+        n8n is the event bus and execution layer for the think workflows. Approvals are <strong>not</strong> n8n Wait nodes;
+        HITL is owned by backend routes under <code>Module.Agents</code> (see process doc
+        <code>docs/process/human-in-the-loop.md</code>). Workflow JSON lives in <code>agents/n8n-workflows/</code>.
       </p>
     </section>
 
-    <!-- Section 3 -->
     <section id="s3">
       <div class="section-head">
         <div class="callout-num">03</div>
-        <h2>Modular .NET &amp; React Architecture Pattern</h2>
+        <h2>Modular .NET &amp; React Pattern</h2>
       </div>
       <p>
-        Um das performancelastige und fehleranfällige dynamische Kompilieren von Docker-Images zur Laufzeit
-        zu vermeiden, nutzt die Applikation ein <strong>Static Container / Dynamic Module Integration Pattern</strong>.
-        Die Struktur ist so aufgebaut, dass Agenten Code-Module hinzufügen können, ohne die
-        Kern-Bootstrapping-Logik zu brechen.
+        <strong>Static container / dynamic module integration:</strong> agents add <code>Module.*</code> projects without rewriting
+        core bootstrap. Discovery registers each module under <code>/api/{module.Name}</code>.
       </p>
 
-      <h3>3.1 &nbsp;Backend Architecture (.NET Directory &amp; Code)</h3>
+      <h3>3.1 &nbsp;Backend (.NET)</h3>
       <div class="panel">
-        <span class="panel-tab">Verzeichnis · .NET</span>
+        <span class="panel-tab">Tree · .NET</span>
         <pre><code>backend/
 ├── Service.slnx
 └── src/
-    ├── Core/                  <span class="tok-cm"># IModule contract + discovery</span>
+    ├── Core/                  <span class="tok-cm"># IModule + discovery + UseCoreHost</span>
+    ├── Module.Agents/         <span class="tok-cm"># Agent APIs, Nostr listen, chat</span>
     ├── Module.Demo/           <span class="tok-cm"># Proof / example feature module</span>
-    ├── Module.Dnd/            <span class="tok-cm"># Example domain module (when added)</span>
-    └── Service/               <span class="tok-cm"># Host entrypoint (Program.cs)</span>
+    └── Service/               <span class="tok-cm"># Host entrypoint</span>
         ├── Program.cs
         └── appsettings.json</code></pre>
       </div>
 
-      <h4>Entwurf der Program.cs</h4>
+      <h4>Program.cs (current)</h4>
       <div class="panel">
         <span class="panel-tab">C# · Program.cs</span>
         <pre><code><span class="tok-kw">using</span> Core;
 
 <span class="tok-kw">var</span> builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddCore(); <span class="tok-cm">// discovers Module.*; registers per-module OpenAPI docs</span>
+builder.Services.AddCore();
 
 <span class="tok-kw">var</span> app = builder.Build();
 
 app.UseHttpsRedirection();
-app.UseCoreHost(); <span class="tok-cm">// OpenAPI + controllers + all module endpoints under /api/{name}</span>
+app.UseWebUi();
+app.UseCoreHost(); <span class="tok-cm">// OpenAPI + /api/{module} endpoints</span>
+app.MapWebUiFallback();
 
 app.Run();</code></pre>
       </div>
 
-      <h3>3.2 &nbsp;Frontend Architecture (React Registry)</h3>
-      <p>Das Frontend nutzt eine dynamische Feature-Registrierung. Agenten modifizieren ausschließlich ihren dedizierten Unterordner.</p>
+      <h3>3.2 &nbsp;Frontend (React)</h3>
+      <p>
+        Target isolation: specialists only touch <code>frontend/src/modules/[name]/</code>. Those module folders are not present
+        yet; the Vite app and static serving into the webapp image already exist.
+      </p>
       <div class="panel">
-        <span class="panel-tab">Verzeichnis · React</span>
+        <span class="panel-tab">Tree · React (target isolation)</span>
         <pre><code>frontend/
 ├── src/
-│   ├── components/            <span class="tok-cm"># Globale UI Elemente</span>
-│   ├── modules/                <span class="tok-cm"># Feature-Module Registry</span>
-│   │   ├── dnd/
-│   │   │   ├── DndDashboard.jsx
-│   │   │   └── index.js
-│   │   ├── therapy/
-│   │   │   ├── TherapySession.jsx
-│   │   │   └── index.js
-│   │   └── index.js           <span class="tok-cm"># Exportiert alle aktiven Module gesammelt</span>
-│   ├── App.jsx                 <span class="tok-cm"># Verteilt Routen dynamisch basierend auf der Registry</span>
-│   └── main.jsx</code></pre>
+│   ├── components/            <span class="tok-cm"># Shared shell UI</span>
+│   ├── modules/               <span class="tok-cm"># Per-domain feature modules (when added)</span>
+│   │   └── index.js           <span class="tok-cm"># Registry export</span>
+│   ├── App.tsx
+│   └── main.tsx</code></pre>
       </div>
     </section>
 
-    <!-- Section 4 -->
     <section id="s4">
       <div class="section-head">
         <div class="callout-num">04</div>
-        <h2>Containerization &amp; Deployment Pattern</h2>
+        <h2>Containerization &amp; Deployment</h2>
       </div>
       <p>
-        Das Deployment erfolgt über ein optimiertes <strong>Multi-Stage Dockerfile</strong>. Sobald ein Agent
-        Code freigibt und in den Main-Branch pusht, baut Koyeb den Container vollautomatisch neu. Das Frontend
-        wird direkt in den Web-Root des .NET-Backends kompiliert, um Ressourcen zu sparen.
+        The combined webapp image is a multi-stage Dockerfile under <code>infrastructure/webapp/</code>.
+        Build context is the repository root. Frontend assets land in ASP.NET <code>wwwroot</code>.
       </p>
 
-      <h4>Die Produktions-Umgebung (Dockerfile)</h4>
+      <h4>Production Dockerfile (excerpt)</h4>
       <div class="panel">
-        <span class="panel-tab">Docker · Multi-Stage</span>
-        <pre><code><span class="tok-cm"># ==========================================
-# STAGE 1: Build der React Frontend Applikation
-# ==========================================</span>
+        <span class="panel-tab">Docker · Multi-stage</span>
+        <pre><code><span class="tok-cm"># STAGE 1: React frontend</span>
 <span class="tok-kw">FROM</span> node:22-alpine <span class="tok-kw">AS</span> frontend-build
 <span class="tok-kw">WORKDIR</span> /app/frontend
-
 <span class="tok-kw">COPY</span> frontend/package*.json ./
 <span class="tok-kw">RUN</span> npm ci
-
 <span class="tok-kw">COPY</span> frontend/ ./
 <span class="tok-kw">RUN</span> npm run build
 
-<span class="tok-cm"># ==========================================
-# STAGE 2: Build der .NET Backend Applikation
-# ==========================================</span>
+<span class="tok-cm"># STAGE 2: .NET backend (context = repo root)</span>
 <span class="tok-kw">FROM</span> mcr.microsoft.com/dotnet/sdk:10.0-alpine <span class="tok-kw">AS</span> backend-build
 <span class="tok-kw">WORKDIR</span> /app/backend
-
-<span class="tok-kw">COPY</span> Service.slnx ./
-<span class="tok-kw">COPY</span> src/Core/*.csproj ./src/Core/
-<span class="tok-kw">COPY</span> src/Service/*.csproj ./src/Service/
-<span class="tok-kw">COPY</span> src/Module.Demo/*.csproj ./src/Module.Demo/
+<span class="tok-kw">COPY</span> backend/Service.slnx ./
+<span class="tok-kw">COPY</span> backend/src/Core/*.csproj ./src/Core/
+<span class="tok-kw">COPY</span> backend/src/Service/*.csproj ./src/Service/
+<span class="tok-kw">COPY</span> backend/src/Module.Agents/*.csproj ./src/Module.Agents/
+<span class="tok-kw">COPY</span> backend/src/Module.Demo/*.csproj ./src/Module.Demo/
 <span class="tok-kw">RUN</span> dotnet restore Service.slnx
-
-<span class="tok-kw">COPY</span> . ./
+<span class="tok-kw">COPY</span> backend/ ./
 <span class="tok-kw">RUN</span> dotnet publish src/Service/Service.csproj -c Release -o /app/publish --no-restore
 
-<span class="tok-cm"># ==========================================
-# STAGE 3: Finaler Runtime Aggregations-Container
-# ==========================================</span>
+<span class="tok-cm"># STAGE 3: Runtime</span>
 <span class="tok-kw">FROM</span> mcr.microsoft.com/dotnet/aspnet:10.0-alpine <span class="tok-kw">AS</span> runtime
 <span class="tok-kw">WORKDIR</span> /app
 <span class="tok-kw">EXPOSE</span> 8080
 <span class="tok-kw">ENV</span> ASPNETCORE_URLS=http://+:8080
-
-<span class="tok-cm"># Kopiert die kompilierten .NET Binaries</span>
 <span class="tok-kw">COPY</span> --from=backend-build /app/publish .
-
-<span class="tok-cm"># Integriert die statischen Frontend-Assets direkt in das wwwroot von .NET</span>
 <span class="tok-kw">COPY</span> --from=frontend-build /app/frontend/dist ./wwwroot
-
 <span class="tok-kw">ENTRYPOINT</span> [<span class="tok-str">"dotnet"</span>, <span class="tok-str">"Service.dll"</span>]</code></pre>
       </div>
     </section>
 
-    <!-- Section 5 -->
     <section id="s5">
       <div class="section-head">
         <div class="callout-num">05</div>
-        <h2>Feasibility Assessment &amp; Risk Mitigation</h2>
+        <h2>Feasibility &amp; Risk Mitigation</h2>
       </div>
 
       <div class="tbl-wrap">
         <table>
           <thead>
             <tr>
-              <th>Komponente</th>
-              <th>Risiko-Bewertung</th>
-              <th>Empfehlung / Mitigation</th>
+              <th>Component</th>
+              <th>Risk</th>
+              <th>Mitigation</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Dynamische Container</td>
-              <td><span class="stamp crit">Kritisches Risiko</span></td>
-              <td>Kein dynamisches Image-Bauen zur Laufzeit. Nutzung des statischen Multi-Stage-Builds (Kapitel 4). KI modifiziert nur Code-Dateien, Git-Trigger auf Koyeb übernimmt den Build.</td>
+              <td>Dynamic containers</td>
+              <td><span class="stamp crit">Critical</span></td>
+              <td>No runtime image builds. Static multi-stage webapp image; agents change source only; platform rebuilds on push.</td>
             </tr>
             <tr>
-              <td>Nostr-Integration</td>
-              <td><span class="stamp ok">Sehr gut umsetzbar</span></td>
-              <td>n8n hält die WebSocket-Verbindung zu den Relays dauerhaft offen, filtert Nachrichten und leitet strukturierte JSONs an Flowise weiter.</td>
+              <td>Nostr integration</td>
+              <td><span class="stamp ok">Good</span></td>
+              <td>Dedicated relay <code>wss://nostr.neberg.de</code>; n8n Nostr nodes + <code>Module.Agents</code> listeners.</td>
             </tr>
             <tr>
-              <td>HR-Agent „Helga"</td>
-              <td><span class="stamp mid">Mittleres Risiko</span></td>
-              <td>Helga darf keine Nodes programmatisch verknüpfen. Stattdessen schreibt Helga Verhaltensparameter und Identitäten in eine DB, die vom Orchestrator dynamisch ausgelesen werden.</td>
+              <td>Helga (HR)</td>
+              <td><span class="stamp mid">Medium</span></td>
+              <td>Identity forge only — templates + <code>create-identity</code>; no workflow wiring.</td>
             </tr>
             <tr>
-              <td>Synchronisation</td>
-              <td><span class="stamp ok">Sehr gut umsetzbar</span></td>
-              <td>Nutzung von n8n Git-Source-Control für Workflows. Flowise-Flows werden per API-Call zyklisch als JSON exportiert und ins GitHub-Repository gepusht.</td>
+              <td>HITL approvals</td>
+              <td><span class="stamp mid">Medium</span></td>
+              <td>Routes mapped on <code>Module.Agents</code>; handlers still stubbed (<code>NotImplementedException</code>). n8n stays Wait-free.</td>
+            </tr>
+            <tr>
+              <td>Workflow sync</td>
+              <td><span class="stamp ok">Good</span></td>
+              <td>Version think workflows under <code>agents/n8n-workflows/</code>; import on <code>n8n.neberg.de</code>.</td>
             </tr>
           </tbody>
         </table>
@@ -670,7 +644,7 @@ app.Run();</code></pre>
 
     <footer>
       <span>AAE Architecture Blueprint</span>
-      <span>Generiert für die Repository-Initialisierung</span>
+      <span>Aligned to repository runtime contracts</span>
     </footer>
 
   </div>

@@ -6,8 +6,8 @@ The backend owns state, concurrency (fan-out/fan-in), and UI status updates.
 | --- | --- | --- |
 | **POST** `/api/agents/route-chat-message` | n8n & UI | Multi-router. Body (camelCase): `{ threadId, senderAgentId, targetAgentId, content }`. `targetAgentId` = agent id wakes that n8n webhook; `null` or `"User"` = persist + UI only. |
 | **POST** `/api/agents/create-identity` | n8n (Helga) | Creates identity from Helga profile: `jobTitle`, `jobDescription`, `department`, `managerId`, `systemPrompt`, `guardrails`, `tools`. |
-| **POST** `/api/await-request-approval` | n8n (Supervisor) | Approval gate: pushes drafts to the web app and waits for human resolve. |
-| **POST** `/api/resolve-request-approval` | UI | Continues the flow after Approve / Reject. |
+| **POST** `/api/agents/await-request-approval` | n8n (Supervisor) | Approval gate: pushes drafts to the web app and waits for human resolve (handler stubbed). |
+| **POST** `/api/agents/resolve-request-approval` | UI | Continues the flow after Approve / Reject (handler stubbed). |
 | **POST** `/api/agents/execute-tool` | n8n (Specialist) | Tool gateway; enforces `allowedTools` (backend follow-up). |
 
 ---
@@ -37,7 +37,7 @@ Import from `agents/n8n-workflows/`. Verify: [`VERIFY.md`](n8n-workflows/VERIFY.
 * **Webhook:** `POST /webhook/supervisor-think`
 * **Input:** `threadId`, `chatHistory`, `taskContext`, `subordinatesList`, `senderAgentId`
 * **Tools:** `create_github_issue`, `update_issue_status`, `add_issue_comment`
-* **Flow:** AI Agent → waiting (`targetAgentId: null`) | delegate (one HTTP per specialist) | done → `await-request-approval`
+* **Flow:** AI Agent → waiting (`targetAgentId: null`) | delegate (specialists and/or nested supervisors) | done → `/api/agents/await-request-approval`
 
 ### D. Specialist (`specialist-think.json`)
 

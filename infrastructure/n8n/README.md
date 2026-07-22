@@ -70,7 +70,7 @@ Design: [`docs/superpowers/specs/2026-07-22-aae-n8n-think-workflows-design.md`](
 
 ### Runtime flow
 
-See [`docs/deployed-services.md`](../../docs/deployed-services.md) §4 for Nostr → n8n → Flowise sequencing. HITL uses Wait nodes as described in [`docs/process/human-in-the-loop.md`](../../docs/process/human-in-the-loop.md).
+See [`docs/deployed-services.md`](../../docs/deployed-services.md) §4 for Nostr → n8n → app sequencing. HITL is backend-owned (no n8n Wait nodes); see [`docs/process/human-in-the-loop.md`](../../docs/process/human-in-the-loop.md).
 
 ### Key types
 
