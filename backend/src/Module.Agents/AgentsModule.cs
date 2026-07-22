@@ -1,4 +1,5 @@
-﻿using Core;
+﻿using Bogus;
+using Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -14,6 +15,8 @@ public class AgentsModule : IModule
     public void RegisterServices(IServiceCollection services)
     {
         services.AddHostedService<ListenOnMessages>();
+
+        services.AddScoped<Faker>(_ => new Faker("de"));
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -31,12 +34,15 @@ public class AgentsModule : IModule
         throw new NotImplementedException();
     }
 
-    private Task CreateIdentity(HttpContext context)
+    private static async Task<IResult> CreateIdentity(Faker faker)
     {
-        throw new NotImplementedException();
+        var firstName = faker.Person.FirstName;
+        var profile = await ProfileGenerator.CreateProfileAsync(firstName);
+
+        return Results.Ok(profile);
     }
 
-    private Task AwaitRequestApproval(HttpContext context)
+    private async Task<IResult> AwaitRequestApproval()
     {
         throw new NotImplementedException();
     }

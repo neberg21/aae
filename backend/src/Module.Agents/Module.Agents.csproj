@@ -11,6 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Bogus" Version="35.6.5" />
       <PackageReference Include="NNostr.Client" Version="0.0.54" />
     </ItemGroup>
 
