@@ -33,30 +33,37 @@ Polling DM path runs about every 2 minutes (NIP-04). Dedupe in the Code node avo
 
 Image installs `n8n-nodes-nostrobots@1.2.1`, `@noble/hashes@1.3.1`, `@noble/secp256k1@2.1.0`, `@faker-js/faker@9.3.0`, `nostr-tools@2.10.4`, and `ws@8.18.0` under `/home/node/.n8n/nodes`. The image sets `NODE_PATH=/home/node/.n8n/nodes/node_modules` so the JS task runner can `require()` those packages (community-node path alone is not enough).
 
-### Helga create-identity workflow
+### Think workflows (Leo / Helga / Supervisor / Specialist)
 
-Import [`agents/n8n-workflows/helga-create-identity.json`](../../agents/n8n-workflows/helga-create-identity.json).
+Import these four files from [`agents/n8n-workflows/`](../../agents/n8n-workflows/):
 
-Host env (required for Code nodes). Allowlist only packages the Code nodes `require()` directly — the task runner calls `require()` on every allowlisted name at startup:
+| File | Webhook |
+|------|---------|
+| `leo-think.json` | `/webhook/leo-think` |
+| `helga-think.json` | `/webhook/helga-think` |
+| `supervisor-think.json` | `/webhook/supervisor-think` |
+| `specialist-think.json` | `/webhook/specialist-think` |
 
-```text
-NODE_FUNCTION_ALLOW_EXTERNAL=@faker-js/faker,@faker-js/faker/locale/de,nostr-tools,ws
-```
+After import:
 
-Do **not** allowlist `@noble/hashes` (root import throws and the runner exits), `faker` (wrong package name), or `@noble/secp256k1` (transitive via `nostr-tools`).
+1. Attach an **OpenAI** credential on every Chat Model node
+2. On Supervisor: attach **GitHub** credentials and replace `OWNER/REPO` in tool URLs
+3. Activate workflows
+4. Follow smoke tests in [`agents/n8n-workflows/VERIFY.md`](../../agents/n8n-workflows/VERIFY.md)
 
-Design: [`docs/superpowers/specs/2026-07-21-helga-create-identity-n8n-design.md`](../../docs/superpowers/specs/2026-07-21-helga-create-identity-n8n-design.md).
+Backend callbacks use hardcoded base URL `https://ai.neberg.de` (camelCase bodies). Specialist depends on `/api/agents/execute-tool`; Supervisor done-path calls `/api/await-request-approval` (backend may still stub those).
 
-Helpers (unit-tested logic mirrored in Code nodes): [`agents/n8n-workflows/helga-create-identity/`](../../agents/n8n-workflows/helga-create-identity/).
+Helpers (unit-tested, mirrored in Code nodes): [`agents/n8n-workflows/think-helpers/`](../../agents/n8n-workflows/think-helpers/).
+
+Design: [`docs/superpowers/specs/2026-07-22-aae-n8n-think-workflows-design.md`](../../docs/superpowers/specs/2026-07-22-aae-n8n-think-workflows-design.md).
 
 ### Common mistakes
 
 - Leaving example relays (`damus`, `nos.lol`, …) instead of `wss://nostr.neberg.de`
 - Expecting realtime DMs from the poll path (it is schedule-based)
 - Committing real credentials into workflow JSON
-- Forgetting `NODE_FUNCTION_ALLOW_EXTERNAL` for Helga HR (symptoms: `faker_unavailable`)
-- Allowlisting `@noble/hashes` (task runner crash: `root module cannot be imported`)
-- Installing Code deps only under `~/.n8n/nodes` without `NODE_PATH` (symptoms: `Allowlisted module … is not installed`)
+- Forgetting to attach OpenAI (or GitHub for Supervisor) after import
+- Expecting Wait / long-running HITL inside n8n — approvals are backend-owned
 - Committing employee `nsec` into `agents/identities/*.json`
 
 ## Implementation Details
