@@ -28,6 +28,8 @@ public class AgentsModule : IModule
         services.AddScoped<SearchIdentityService>();
         services.AddScoped<CreateIdentityService>();
         services.AddScoped<ParkDelegationService>();
+        services.AddScoped<GetThreadsService>();
+        services.AddScoped<GetThreadByIdService>();
         services.AddScoped<ProfileGenerator>();
         services.AddScoped<Faker>(_ => new Faker("de"));
         services.AddHttpClient<RouteChatMessageService>();
@@ -64,40 +66,15 @@ public class AgentsModule : IModule
         endpoints.MapPost("execute-tool", ExecuteTool);
     }
 
-    private static IResult GetThread(string threadId, AppDbContext dbContext)
+    private static IResult GetThread(string threadId, GetThreadByIdService threadService)
     {
-        var messages = dbContext.ChatMessages
-            .Where(m => m.ThreadId == threadId)
-            .OrderBy(c => c.CreatedAt).ToArray();
-        var result = new GetThreadResponse
-        {
-            ThreadId = threadId,
-            Messages = messages.Select(m => new ChatMessageDto
-            {
-                Sender = dbContext.Agents.FirstOrDefault(a => a.Id == m.Sender)?.Name ?? m.Sender,
-                Receiver = dbContext.Agents.FirstOrDefault(a => a.Id == m.Receiver)?.Name ?? m.Receiver,
-                Content = m.Content,
-                CreatedAt = m.CreatedAt
-            }).ToArray()
-        };
-        return Results.Ok(result);
+        var thread = threadService.GetById(threadId);
+        return thread is null ? Results.NotFound() : Results.Ok(thread);
     }
 
-    private static IResult GetThreads(AppDbContext dbContext)
+    private static IResult GetThreads(GetThreadsService threadService)
     {
-        var threads = dbContext.ChatMessages
-            .GroupBy(c => c.ThreadId)
-            .Select(g => new ThreadDto(g.Key, g.First().CreatedAt, g.Last().CreatedAt, g.Count()))
-            .ToArray();
-        var page = new GetThreadsResponse
-        {
-            Items = threads,
-            TotalCount = threads.Length,
-            PageSize = threads.Length,
-            PageNumber = 1,
-            TotalPages = (int)Math.Ceiling((double)threads.Length / threads.Length)
-        };
-
+        var page = threadService.GetThreads();
         return Results.Ok(page);
     }
 
@@ -105,7 +82,6 @@ public class AgentsModule : IModule
     {
         var agents = dbContext.Agents.ToArray();
         var page = GetAgentsResponse(agents);
-
         return Results.Ok(page);
     }
 
