@@ -68,6 +68,8 @@ npm install
 npm run dev
 ```
 
+For `/api` calls from the Vite dev server, run the backend on `http://localhost:5296` (default `http` launch profile). The Vite config proxies `/api` to that origin so the UI can use relative `/api/...` paths.
+
 ### Backend
 
 From the repository root:
