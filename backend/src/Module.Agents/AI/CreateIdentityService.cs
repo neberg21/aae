@@ -23,18 +23,17 @@ public class CreateIdentityService
         var keyPair = NostrKeyPair.GenerateKeyPair();
         var firstName = _faker.Person.FirstName;
         var profile = await _profileGenerator.CreateProfileAsync(keyPair, firstName);
+        var agent = await CreateAgent(profile, keyPair, request);
         var res = new CreateIdentityResponse
         {
-            Name = profile.Name,
-            PublicKeyHex = profile.PublicKeyHex
+            IdentityId = agent.Id,
+            Name = profile.Name
         };
-
-        await CreateAgent(profile, keyPair, request);
 
         return res;
     }
 
-    private async Task CreateAgent(NostrProfile profile, NostrKeyPair keyPair, CreateIdentityRequest request)
+    private async Task<Agent> CreateAgent(NostrProfile profile, NostrKeyPair keyPair, CreateIdentityRequest request)
     {
         var agent = new Agent
         {
@@ -51,5 +50,6 @@ public class CreateIdentityService
 
         _dbContext.Agents.Add(agent);
         await _dbContext.SaveChangesAsync();
+        return agent;
     }
 }

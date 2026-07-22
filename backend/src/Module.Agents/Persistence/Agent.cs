@@ -2,6 +2,7 @@
 
 public record Agent
 {
+    public string Id => $"{Name}:{Department}:{JobTitle}".ToLower().Replace(" ", "-");
     public required string Name { get; set; }
     public required string PublicKeyHex { get; set; }
     public required string JobTitle { get; set; }

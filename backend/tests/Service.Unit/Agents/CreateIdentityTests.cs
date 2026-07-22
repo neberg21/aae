@@ -35,7 +35,7 @@ public class CreateIdentityTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(identity);
         Assert.NotEmpty(identity.Name);
-        Assert.NotEmpty(identity.PublicKeyHex);
+        Assert.NotEmpty(identity.IdentityId);
     }
 
     [Fact]
