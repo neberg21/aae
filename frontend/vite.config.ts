@@ -7,7 +7,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': 'http://localhost:5296',
+      //'/api': 'http://localhost:5296',
+      '/api': 'https://normal-coreen-neberg-a84da4bd.koyeb.app'
     },
   },
   test: {

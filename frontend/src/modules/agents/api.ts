@@ -17,6 +17,12 @@ async function readJson<T>(response: Response): Promise<T> {
   return (await response.json()) as T
 }
 
+export async function getAgents(): Promise<AgentsPage> {
+  const url = '/api/agents';
+  const response = await fetch(url)
+  return readJson<AgentsPage>(response);
+}
+
 export async function searchAgents(filters: AgentSearchFilters): Promise<AgentsPage> {
   const params = new URLSearchParams()
   if (filters.name?.trim()) params.set('name', filters.name.trim())
