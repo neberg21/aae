@@ -47,6 +47,8 @@ public class AgentsModule : IModule
 
         endpoints.MapGet("threads", GetThreads)
             .Produces<GetThreadsResponse>();
+        endpoints.MapGet("threads/{threadId}", GetThread)
+            .Produces<GetThreadResponse>();
 
         endpoints.MapPost("create-identity", CreateIdentity)
             .Accepts<CreateIdentityRequest>("application/json")
@@ -60,6 +62,25 @@ public class AgentsModule : IModule
         endpoints.MapPost("await-request-approval", AwaitRequestApproval);
         endpoints.MapPost("resolve-request-approval", ResolveRequestApproval);
         endpoints.MapPost("execute-tool", ExecuteTool);
+    }
+
+    private static IResult GetThread(string threadId, AppDbContext dbContext)
+    {
+        var messages = dbContext.ChatMessages
+            .Where(m => m.ThreadId == threadId)
+            .OrderBy(c => c.CreatedAt).ToArray();
+        var result = new GetThreadResponse
+        {
+            ThreadId = threadId,
+            Messages = messages.Select(m => new ChatMessageDto
+            {
+                Sender = dbContext.Agents.FirstOrDefault(a => a.Id == m.Sender)?.Name ?? m.Sender,
+                Receiver = dbContext.Agents.FirstOrDefault(a => a.Id == m.Receiver)?.Name ?? m.Receiver,
+                Content = m.Content,
+                CreatedAt = m.CreatedAt
+            }).ToArray()
+        };
+        return Results.Ok(result);
     }
 
     private static IResult GetThreads(AppDbContext dbContext)
