@@ -1,18 +1,25 @@
 ﻿using Module.Agents.DTOs;
 using Microsoft.AspNetCore.SignalR;
 using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
 using Module.Agents.Persistence;
 
 namespace Module.Agents.AI;
 
 public class RouteChatMessageService
 {
+    private readonly ILogger<RouteChatMessageService> _logger;
     private readonly AppDbContext _db;
     private readonly HttpClient _httpClient;
     private readonly IHubContext<ChatHub> _signalRHub;
 
-    public RouteChatMessageService(AppDbContext db, HttpClient httpClient, IHubContext<ChatHub> signalRHub)
+    public RouteChatMessageService(
+        ILogger<RouteChatMessageService> logger,
+        AppDbContext db,
+        HttpClient httpClient,
+        IHubContext<ChatHub> signalRHub)
     {
+        _logger = logger;
         _db = db;
         _httpClient = httpClient;
         _signalRHub = signalRHub;
@@ -79,6 +86,10 @@ public class RouteChatMessageService
             delegationRequest = content,
             taskContext = content
         };
-        await _httpClient.PostAsJsonAsync(webhookUrl, payload);
+        var response = await _httpClient.PostAsJsonAsync(webhookUrl, payload);
+        _logger.LogInformation(
+            "Executed webhook for agent {AgentId} with response status {StatusCode}",
+            agentId,
+            response.StatusCode);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Bogus;
+using Microsoft.Extensions.Logging;
 using Module.Agents.DTOs;
 using Module.Agents.Nostr;
 using Module.Agents.Persistence;
@@ -7,6 +8,7 @@ namespace Module.Agents.AI;
 
 public class CreateIdentityService
 {
+    private readonly ILogger<CreateIdentityService> _logger;
     private readonly Faker _faker;
     private readonly AppDbContext _dbContext;
     private readonly ProfileGenerator _profileGenerator;
@@ -14,12 +16,14 @@ public class CreateIdentityService
     private readonly RouteChatMessageService _routeChatMessageService;
 
     public CreateIdentityService(
+        ILogger<CreateIdentityService> logger,
         Faker faker,
         AppDbContext dbContext,
         ProfileGenerator profileGenerator,
         ParkDelegationService parkDelegationService,
         RouteChatMessageService routeChatMessageService)
     {
+        _logger = logger;
         _faker = faker;
         _dbContext = dbContext;
         _profileGenerator = profileGenerator;
@@ -46,6 +50,7 @@ public class CreateIdentityService
             Name = profile.Name
         };
 
+        _logger.LogInformation("Identity created: {AgentId}, {Name}", res.AgentId, res.Name);
         await AddResponseMessage(request.ThreadId, res);
         await ExecuteParkedEntries(agent);
 
@@ -100,6 +105,11 @@ public class CreateIdentityService
             };
 
             await _routeChatMessageService.RouteChatMessage(routeRequest);
+            _logger.LogInformation(
+                "Parked entry executed: {ThreadId}, {SenderAgentId}, {TargetAgentId}",
+                item.ThreadId,
+                item.SenderAgentId,
+                item.TargetAgentId);
         }
     }
 }

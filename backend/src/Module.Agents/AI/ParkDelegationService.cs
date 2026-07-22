@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Module.Agents.DTOs;
 using Module.Agents.Persistence;
 
@@ -5,10 +6,12 @@ namespace Module.Agents.AI;
 
 public class ParkDelegationService
 {
+    private readonly ILogger<ParkDelegationService> _logger;
     private readonly AppDbContext _dbContext;
 
-    public ParkDelegationService(AppDbContext dbContext)
+    public ParkDelegationService(ILogger<ParkDelegationService> logger, AppDbContext dbContext)
     {
+        _logger = logger;
         _dbContext = dbContext;
     }
 
@@ -23,6 +26,11 @@ public class ParkDelegationService
         };
         _dbContext.ParkedDelegations.Add(parked);
         await _dbContext.SaveChangesAsync();
+        _logger.LogInformation(
+            "Delegation parked: {ThreadId}, {SenderAgentId}, {TargetAgentId}",
+            request.ThreadId,
+            request.SenderAgentId,
+            request.TargetAgentId);
 
         var response = new ParkDelegationResponse
         {
