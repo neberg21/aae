@@ -33,11 +33,11 @@ public class ListenOnMessages : BackgroundService
                 _logger.LogInformation("Erfolgreich verbunden!");
 
                 // Subscription ID generieren (kann ein beliebiger String sein)
-                string subId = Guid.NewGuid().ToString("N");
+                var subId = Guid.NewGuid().ToString("N");
 
                 // Wir senden einen Request ("REQ") an den Relay.
                 // Der leere Filter {} sagt dem Node: Abonniere ALLES.
-                string reqMessage = $"[\"REQ\", \"{subId}\", {{}}]";
+                var reqMessage = $"[\"REQ\", \"{subId}\", {{}}]";
                 var reqBytes = Encoding.UTF8.GetBytes(reqMessage);
 
                 await ws.SendAsync(
