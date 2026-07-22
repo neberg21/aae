@@ -91,7 +91,7 @@ public class AgentsModule : IModule
         return agent is null
             ? Results.NotFound()
             : Results.Ok(new GetAgentByIdResponse(
-                agent.PublicKeyHex,
+                agent.Id,
                 agent.Name,
                 agent.Department,
                 agent.JobTitle,
