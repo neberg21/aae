@@ -9,8 +9,8 @@ public class RouteChatMessageService
 {
     private readonly AppDbContext _db;
     private readonly HttpClient _httpClient;
-    private readonly IHubContext<ChatHub> _signalRHub; // Für Echtzeit-Updates ans React Frontend
-
+    private readonly IHubContext<ChatHub> _signalRHub; 
+    
     public RouteChatMessageService(AppDbContext db, HttpClient httpClient, IHubContext<ChatHub> signalRHub)
     {
         _db = db;
