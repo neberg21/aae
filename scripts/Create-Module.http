@@ -17,3 +17,15 @@ Content-Type: application/json
 ### Get agents
 
 GET {{aiUrl}}/api/agents
+
+### Post a message to AI 
+
+POST {{aiUrl}}/api/agents/route-chat-message
+Content-Type: application/json
+
+{
+  "threadId": "smoke-leo",
+  "senderAgentId": "leo",
+  "targetAgentId": "supervisor-finance",
+  "content": "Build a comprehensive Finance module with both a user interface and an API. (delegation) [scope=Module.Finance]"
+}
