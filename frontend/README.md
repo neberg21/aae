@@ -30,3 +30,14 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+## Testing
+
+Unit and component tests use [Vitest](https://vitest.dev/) and [Testing Library](https://testing-library.com/react).
+
+```bash
+npm test
+npm run test:watch
+```
+
+Put new tests under `src/__tests__/` as `*.test.tsx` or `*.spec.tsx` files.
