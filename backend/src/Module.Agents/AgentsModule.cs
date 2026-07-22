@@ -45,6 +45,9 @@ public class AgentsModule : IModule
         endpoints.MapGet("search", SearchIdentities)
             .Produces<GetAgentsResponse>();
 
+        endpoints.MapGet("threads", GetThreads)
+            .Produces<GetThreadsResponse>();
+
         endpoints.MapPost("create-identity", CreateIdentity)
             .Accepts<CreateIdentityRequest>("application/json")
             .Produces<CreateIdentityResponse>();
@@ -57,6 +60,24 @@ public class AgentsModule : IModule
         endpoints.MapPost("await-request-approval", AwaitRequestApproval);
         endpoints.MapPost("resolve-request-approval", ResolveRequestApproval);
         endpoints.MapPost("execute-tool", ExecuteTool);
+    }
+
+    private static IResult GetThreads(AppDbContext dbContext)
+    {
+        var threads = dbContext.ChatMessages
+            .GroupBy(c => c.ThreadId)
+            .Select(g => new ThreadDto(g.Key, g.First().CreatedAt, g.Last().CreatedAt, g.Count()))
+            .ToArray();
+        var page = new GetThreadsResponse
+        {
+            Items = threads,
+            TotalCount = threads.Length,
+            PageSize = threads.Length,
+            PageNumber = 1,
+            TotalPages = (int)Math.Ceiling((double)threads.Length / threads.Length)
+        };
+
+        return Results.Ok(page);
     }
 
     private IResult GetIdentities(AppDbContext dbContext)
