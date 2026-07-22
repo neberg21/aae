@@ -31,11 +31,33 @@ public class AgentsModule : IModule
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("create-identity", CreateIdentity);
-        endpoints.MapPost("route-chat-message", RouteChatMessage);
+        endpoints.MapHub<ChatHub>("/chat");
+        endpoints.MapGet("", GetIdentities)
+            .Produces<GetAgentsResponse>();
+        endpoints.MapPost("create-identity", CreateIdentity)
+            .Accepts<CreateIdentityRequest>("application/json")
+            .Produces<CreateIdentityResponse>();
+        endpoints.MapPost("route-chat-message", RouteChatMessage)
+            .Accepts<RouteChatMessageRequest>("application/json")
+            .Produces<RouteChatMessageResponse>();
         endpoints.MapPost("await-request-approval", AwaitRequestApproval);
         endpoints.MapPost("resolve-request-approval", ResolveRequestApproval);
         endpoints.MapPost("execute-tool", ExecuteTool);
+    }
+
+    private Task<IResult> GetIdentities(AppDbContext dbContext)
+    {
+        var agents = dbContext.Agents.ToArray();
+        var page = new GetAgentsResponse
+        {
+            Items = agents.Select(a => new AgentDto(a.PublicKeyHex, a.Name, a.Department, a.JobTitle)).ToArray(),
+            TotalCount = agents.Length,
+            PageSize = agents.Length,
+            PageNumber = 1,
+            TotalPages = (int)Math.Ceiling((double)agents.Length / agents.Length)
+        };
+
+        return Task.FromResult(Results.Ok(page));
     }
 
     private static async Task<IResult> CreateIdentity(
