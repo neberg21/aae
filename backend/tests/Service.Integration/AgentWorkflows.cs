@@ -25,4 +25,23 @@ public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
 
         Assert.NotNull(agent);
     }
+
+    public async Task CreateEmployeeAsync()
+    {
+        var agent = await GetLeo();
+        var leoPrompt = agent.SystemPrompt;
+        const string url = "https://api.nano-gpt.com/api/v1";
+        const string testApiKey = "sk-nano-1b0ff19f-026f-4775-a946-46254d6f8ebd";
+
+    }
+
+    private async Task<GetAgentByIdResponse> GetLeo()
+    {
+        var httpClient = _factory.CreateClient();
+        var response = await httpClient.GetAsync($"api/agents/leo");
+        var agent = await response.Content.ReadFromJsonAsync<GetAgentByIdResponse>();
+
+        Assert.NotNull(agent);
+        return agent;
+    }
 }
