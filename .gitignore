@@ -1,5 +1,6 @@
 ﻿.idea
 .superpowers
+.worktrees
 bin
 obj
 dist
