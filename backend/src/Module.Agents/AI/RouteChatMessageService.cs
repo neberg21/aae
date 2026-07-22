@@ -20,12 +20,7 @@ public class RouteChatMessageService
 
     public async Task<RouteChatMessageResponse> RouteChatMessage(RouteChatMessageRequest request)
     {
-        var targets = GetTargets(request);
-
-        foreach (var target in targets)
-        {
-            await HandleTarget(request, target);
-        }
+        await HandleTarget(request);
 
         var res = new RouteChatMessageResponse
         {
@@ -35,14 +30,14 @@ public class RouteChatMessageService
         return res;
     }
 
-    private async Task HandleTarget(RouteChatMessageRequest request, string? target)
+    private async Task HandleTarget(RouteChatMessageRequest request)
     {
         // 1. Nachricht in der DB speichern (Das "Gedächtnis")
         var message = new ChatMessage
         {
             ThreadId = request.ThreadId,
             Sender = request.SenderAgentId,
-            Receiver = target,
+            Receiver = request.TargetAgentId,
             Content = request.Content
         };
 
@@ -54,7 +49,7 @@ public class RouteChatMessageService
             .SendAsync("ReceiveMessage", message);
 
         // 3. Routing: Wen müssen wir aufwecken?
-        if (string.IsNullOrWhiteSpace(target) || target == "User")
+        if (string.IsNullOrWhiteSpace(request.TargetAgentId) || request.TargetAgentId == "User")
         {
             // Agent hat eine Rückfrage an DICH. Wir machen nichts weiter. 
             // Der Prozess pausiert hier. n8n ist beendet.
@@ -63,20 +58,7 @@ public class RouteChatMessageService
         }
 
         // Wenn der CEO an Helga delegiert, wecken wir Helga in n8n auf
-        await ExecuteAgentWebhook(target, request.ThreadId);
-    }
-
-    private static List<string?> GetTargets(RouteChatMessageRequest request)
-    {
-        var targets = new List<string?>();
-
-        if (request.TargetAgentIds != null)
-        {
-            targets.AddRange(request.TargetAgentIds);
-        }
-        else targets.Add(null);
-
-        return targets;
+        await ExecuteAgentWebhook(request.TargetAgentId, request.ThreadId);
     }
 
     private async Task ExecuteAgentWebhook(string agentId, string threadId)
