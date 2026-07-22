@@ -3,9 +3,9 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## AAE Leo Think\nAttach OpenAI credential after import.\nWebhook: POST /webhook/leo-think\nCallbacks: https://ai.neberg.de/api/agents/route-chat-message",
-        "height": 240,
-        "width": 360
+        "content": "## AAE Leo Think\nAttach OpenAI credential after import.\nWebhook: POST /webhook/leo-think\nLoad systemPrompt: GET /api/agents/search?department=Core&name=leo then GET /api/agents/{identityId}\nCallbacks: https://ai.neberg.de/api/agents/route-chat-message",
+        "height": 280,
+        "width": 400
       },
       "id": "leo-sticky-1",
       "name": "Setup",
@@ -40,17 +40,63 @@
     },
     {
       "parameters": {
+        "method": "GET",
+        "url": "https://ai.neberg.de/api/agents/search?department=Core&name=leo",
+        "options": {}
+      },
+      "id": "leo-http-search",
+      "name": "Search Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const search = items[0].json;\nconst page = search.body ?? search;\nconst list = page.items ?? page.Items ?? [];\nif (!Array.isArray(list) || list.length === 0) {\n  throw new Error('leo_identity_not_found');\n}\nconst first = list[0];\nconst identityId = first.identityId ?? first.IdentityId;\nif (!identityId) {\n  throw new Error('leo_identity_id_missing');\n}\nconst prev = $('Normalize Input').first().json;\nreturn [{ json: { ...prev, identityId } }];"
+      },
+      "id": "leo-code-resolve-id",
+      "name": "Resolve Identity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [940, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://ai.neberg.de/api/agents/{{ $json.identityId }}",
+        "options": {}
+      },
+      "id": "leo-http-get-prompt",
+      "name": "Get System Prompt",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1160, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const agent = items[0].json;\nconst body = agent.body ?? agent;\nconst systemPrompt = body.systemPrompt ?? body.SystemPrompt ?? '';\nif (!systemPrompt) {\n  throw new Error('leo_system_prompt_missing');\n}\nconst prev = $('Resolve Identity').first().json;\nreturn [{ json: { ...prev, systemPrompt } }];"
+      },
+      "id": "leo-code-prepare",
+      "name": "Prepare Agent Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1380, 300]
+    },
+    {
+      "parameters": {
         "promptType": "define",
         "text": "={{ $json.prompt }}",
         "options": {
-          "systemMessage": "You are Leo, CEO orchestrator of the Autonomous Agent Ecosystem. Never write code. Never use teamleiter naming — use supervisor-* ids. Reply with JSON only, no markdown."
+          "systemMessage": "={{ $json.systemPrompt }}"
         }
       },
       "id": "leo-agent-1",
       "name": "AI Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
-      "position": [740, 300]
+      "position": [1600, 300]
     },
     {
       "parameters": {
@@ -65,7 +111,7 @@
       "name": "OpenAI Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
-      "position": [740, 520]
+      "position": [1600, 520]
     },
     {
       "parameters": {
@@ -76,7 +122,7 @@
       "name": "Parse Delegations",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1000, 300]
+      "position": [1840, 300]
     },
     {
       "parameters": {
@@ -106,7 +152,7 @@
       "name": "OK?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [1220, 300]
+      "position": [2060, 300]
     },
     {
       "parameters": {
@@ -117,7 +163,7 @@
       "name": "Split Items",
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
-      "position": [1460, 200]
+      "position": [2300, 200]
     },
     {
       "parameters": {
@@ -132,7 +178,7 @@
       "name": "Route Chat Message",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1700, 200]
+      "position": [2540, 200]
     },
     {
       "parameters": {
@@ -147,7 +193,7 @@
       "name": "Route Failure To User",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1460, 420]
+      "position": [2300, 420]
     }
   ],
   "connections": {
@@ -155,6 +201,18 @@
       "main": [[{ "node": "Normalize Input", "type": "main", "index": 0 }]]
     },
     "Normalize Input": {
+      "main": [[{ "node": "Search Agent", "type": "main", "index": 0 }]]
+    },
+    "Search Agent": {
+      "main": [[{ "node": "Resolve Identity", "type": "main", "index": 0 }]]
+    },
+    "Resolve Identity": {
+      "main": [[{ "node": "Get System Prompt", "type": "main", "index": 0 }]]
+    },
+    "Get System Prompt": {
+      "main": [[{ "node": "Prepare Agent Input", "type": "main", "index": 0 }]]
+    },
+    "Prepare Agent Input": {
       "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
     },
     "OpenAI Chat Model": {

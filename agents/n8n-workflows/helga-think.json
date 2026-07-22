@@ -3,9 +3,9 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## AAE Helga Think\nAttach OpenAI credential after import.\nWebhook: POST /webhook/helga-think\nPaths: clarify → route-chat-message (User); ready → create-identity",
-        "height": 260,
-        "width": 380
+        "content": "## AAE Helga Think\nAttach OpenAI credential after import.\nWebhook: POST /webhook/helga-think\nLoad systemPrompt: GET /api/agents/search?department=Core&name=helga then GET /api/agents/{identityId}\nPaths: clarify → route-chat-message (User); ready → create-identity",
+        "height": 300,
+        "width": 420
       },
       "id": "helga-sticky-1",
       "name": "Setup",
@@ -40,17 +40,63 @@
     },
     {
       "parameters": {
+        "method": "GET",
+        "url": "https://ai.neberg.de/api/agents/search?department=Core&name=helga",
+        "options": {}
+      },
+      "id": "helga-http-search",
+      "name": "Search Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const search = items[0].json;\nconst page = search.body ?? search;\nconst list = page.items ?? page.Items ?? [];\nif (!Array.isArray(list) || list.length === 0) {\n  throw new Error('helga_identity_not_found');\n}\nconst first = list[0];\nconst identityId = first.identityId ?? first.IdentityId;\nif (!identityId) {\n  throw new Error('helga_identity_id_missing');\n}\nconst prev = $('Normalize Input').first().json;\nreturn [{ json: { ...prev, identityId } }];"
+      },
+      "id": "helga-code-resolve-id",
+      "name": "Resolve Identity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [940, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://ai.neberg.de/api/agents/{{ $json.identityId }}",
+        "options": {}
+      },
+      "id": "helga-http-get-prompt",
+      "name": "Get System Prompt",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1160, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const agent = items[0].json;\nconst body = agent.body ?? agent;\nconst systemPrompt = body.systemPrompt ?? body.SystemPrompt ?? '';\nif (!systemPrompt) {\n  throw new Error('helga_system_prompt_missing');\n}\nconst prev = $('Resolve Identity').first().json;\nreturn [{ json: { ...prev, systemPrompt } }];"
+      },
+      "id": "helga-code-prepare",
+      "name": "Prepare Agent Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1380, 300]
+    },
+    {
+      "parameters": {
         "promptType": "define",
         "text": "={{ $json.prompt }}",
         "options": {
-          "systemMessage": "You are Helga, HR director of AAE. Create agent identity profiles as strict JSON. Never write application code. Never use teamleiter naming."
+          "systemMessage": "={{ $json.systemPrompt }}"
         }
       },
       "id": "helga-agent-1",
       "name": "AI Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
-      "position": [740, 300]
+      "position": [1600, 300]
     },
     {
       "parameters": {
@@ -65,7 +111,7 @@
       "name": "OpenAI Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
-      "position": [740, 520]
+      "position": [1600, 520]
     },
     {
       "parameters": {
@@ -76,7 +122,7 @@
       "name": "Parse Decision",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1000, 300]
+      "position": [1840, 300]
     },
     {
       "parameters": {
@@ -122,7 +168,7 @@
       "name": "Branch",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
-      "position": [1240, 300]
+      "position": [2080, 300]
     },
     {
       "parameters": {
@@ -137,7 +183,7 @@
       "name": "Clarify To User",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1500, 160]
+      "position": [2340, 160]
     },
     {
       "parameters": {
@@ -152,7 +198,7 @@
       "name": "Create Identity",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1500, 300]
+      "position": [2340, 300]
     },
     {
       "parameters": {
@@ -167,7 +213,7 @@
       "name": "Failure To User",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1500, 460]
+      "position": [2340, 460]
     }
   ],
   "connections": {
@@ -175,6 +221,18 @@
       "main": [[{ "node": "Normalize Input", "type": "main", "index": 0 }]]
     },
     "Normalize Input": {
+      "main": [[{ "node": "Search Agent", "type": "main", "index": 0 }]]
+    },
+    "Search Agent": {
+      "main": [[{ "node": "Resolve Identity", "type": "main", "index": 0 }]]
+    },
+    "Resolve Identity": {
+      "main": [[{ "node": "Get System Prompt", "type": "main", "index": 0 }]]
+    },
+    "Get System Prompt": {
+      "main": [[{ "node": "Prepare Agent Input", "type": "main", "index": 0 }]]
+    },
+    "Prepare Agent Input": {
       "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
     },
     "OpenAI Chat Model": {
