@@ -1,7 +1,7 @@
 # AAE agent identities — Design
 
 **Date:** 2026-07-22  
-**Status:** Pending user review  
+**Status:** Approved  
 **Deliverable:** English canonical system-prompt markdown under `agents/identities/`, aligned with the four n8n think-workflows
 
 ## Goal
