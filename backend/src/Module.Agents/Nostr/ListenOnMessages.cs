@@ -11,7 +11,8 @@ public class ListenOnMessages : BackgroundService
     private readonly ILogger<ListenOnMessages> _logger;
 
     // Nostr nutzt standardmäßig sichere WebSockets (wss://)
-    private readonly Uri _relayUri = new("wss://nostr.neberg.de");
+    // private readonly Uri _relayUri = new("wss://nostr.neberg.de");
+    private readonly Uri _relayUri = new("wss://economic-nicoline-neberg-cbee2179.koyeb.app");
 
     public ListenOnMessages(ILogger<ListenOnMessages> logger)
     {
