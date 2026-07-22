@@ -41,25 +41,7 @@ public class CreateIdentityService
         var profile = await _profileGenerator.CreateProfileAsync(keyPair, firstName);
         var agent = await CreateAgent(profile, keyPair, request);
 
-        var parked = _parkDelegationService.DequeueByTargetAgentId(agent.AgentId);
-        foreach (var item in parked)
-        {
-            var routeRequest = new RouteChatMessageRequest
-            {
-                ThreadId = item.ThreadId,
-                SenderAgentId = item.SenderAgentId,
-                TargetAgentId = item.TargetAgentId,
-                Content = item.Content
-            };
-            try
-            {
-                await _routeChatMessageService.RouteChatMessage(routeRequest);
-            }
-            catch
-            {
-                // create already committed; wake best-effort
-            }
-        }
+        await ExecuteParkedEntries(agent);
 
         var res = new CreateIdentityResponse
         {
@@ -89,5 +71,22 @@ public class CreateIdentityService
         _dbContext.Agents.Add(agent);
         await _dbContext.SaveChangesAsync();
         return agent;
+    }
+
+    private async Task ExecuteParkedEntries(Agent agent)
+    {
+        var parked = _parkDelegationService.DequeueByTargetAgentId(agent.AgentId);
+        foreach (var item in parked)
+        {
+            var routeRequest = new RouteChatMessageRequest
+            {
+                ThreadId = item.ThreadId,
+                SenderAgentId = item.SenderAgentId,
+                TargetAgentId = item.TargetAgentId,
+                Content = item.Content
+            };
+
+            await _routeChatMessageService.RouteChatMessage(routeRequest);
+        }
     }
 }
