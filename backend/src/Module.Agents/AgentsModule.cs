@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Module.Agents.AI;
 using Module.Agents.DTOs;
 using Module.Agents.Nostr;
+using Module.Agents.Persistence;
 
 namespace Module.Agents;
 
@@ -24,6 +25,7 @@ public class AgentsModule : IModule
         services.AddScoped<ChatHub>();
         services.AddScoped<NostrEventService>();
 
+        services.AddScoped<SearchIdentityService>();
         services.AddScoped<CreateIdentityService>();
         services.AddScoped<ProfileGenerator>();
         services.AddScoped<Faker>(_ => new Faker("de"));
@@ -34,9 +36,14 @@ public class AgentsModule : IModule
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         endpoints.MapHub<ChatHub>("/chat");
+
         endpoints.MapGet("", GetIdentities)
             .Produces<GetAgentsResponse>();
-        endpoints.MapGet("{identityId}", GetIdentity);
+        endpoints.MapGet("{identityId}", GetIdentity)
+            .Produces<GetAgentByIdResponse>();
+        endpoints.MapGet("search", SearchIdentities)
+            .Produces<GetAgentsResponse>();
+
         endpoints.MapPost("create-identity", CreateIdentity)
             .Accepts<CreateIdentityRequest>("application/json")
             .Produces<CreateIdentityResponse>();
@@ -48,19 +55,12 @@ public class AgentsModule : IModule
         endpoints.MapPost("execute-tool", ExecuteTool);
     }
 
-    private Task<IResult> GetIdentities(AppDbContext dbContext)
+    private IResult GetIdentities(AppDbContext dbContext)
     {
         var agents = dbContext.Agents.ToArray();
-        var page = new GetAgentsResponse
-        {
-            Items = agents.Select(a => new AgentDto(a.Id, a.Name, a.Department, a.JobTitle)).ToArray(),
-            TotalCount = agents.Length,
-            PageSize = agents.Length,
-            PageNumber = 1,
-            TotalPages = (int)Math.Ceiling((double)agents.Length / agents.Length)
-        };
+        var page = GetAgentsResponse(agents);
 
-        return Task.FromResult(Results.Ok(page));
+        return Results.Ok(page);
     }
 
     private IResult GetIdentity(string identityId, AppDbContext dbContext)
@@ -68,12 +68,24 @@ public class AgentsModule : IModule
         var agent = dbContext.Agents.FirstOrDefault(a => a.Id == identityId);
         return agent is null
             ? Results.NotFound()
-            : Results.Ok(new AgentByIdResponse(
+            : Results.Ok(new GetAgentByIdResponse(
                 agent.PublicKeyHex,
                 agent.Name,
                 agent.Department,
                 agent.JobTitle,
                 agent.SystemPrompt));
+    }
+
+    private IResult SearchIdentities(
+        [FromQuery] string? name,
+        [FromQuery] string? department,
+        [FromQuery] string? jobTitle,
+        SearchIdentityService searchIdentityService)
+    {
+        var items = searchIdentityService.SearchIdentities(name, department, jobTitle);
+        var page = GetAgentsResponse(items);
+
+        return Results.Ok(page);
     }
 
     private static async Task<IResult> CreateIdentity(
@@ -105,5 +117,18 @@ public class AgentsModule : IModule
     private Task ExecuteTool(HttpContext context)
     {
         throw new NotImplementedException();
+    }
+
+    private static GetAgentsResponse GetAgentsResponse(IReadOnlyCollection<Agent> agents)
+    {
+        var page = new GetAgentsResponse
+        {
+            Items = agents.Select(a => new AgentDto(a.Id, a.Name, a.Department, a.JobTitle)).ToArray(),
+            TotalCount = agents.Count,
+            PageSize = agents.Count,
+            PageNumber = 1,
+            TotalPages = (int)Math.Ceiling((double)agents.Count / agents.Count)
+        };
+        return page;
     }
 }
