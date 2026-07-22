@@ -93,6 +93,8 @@ public class RouteChatMessageService
         {
             "leo" => "https://n8n.neberg.de/webhook/leo-think",
             "helga" => "https://n8n.neberg.de/webhook/helga-think",
+            "supervisor" => "https://n8n.neberg.de/webhook/supervisor-think",
+            "specialist" => "https://n8n.neberg.de/webhook/specialist-think",
             _ => throw new ArgumentException($"Unbekannter Agent: {agentId}")
         };
 
