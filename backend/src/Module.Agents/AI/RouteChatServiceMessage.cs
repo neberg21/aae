@@ -5,53 +5,65 @@ using Module.Agents.Persistence;
 
 namespace Module.Agents.AI;
 
-public class AgentOrchestrationService
+public class RouteChatServiceMessage
 {
     private readonly AppDbContext _db;
     private readonly HttpClient _httpClient;
     private readonly IHubContext<ChatHub> _signalRHub; // Für Echtzeit-Updates ans React Frontend
 
-    public AgentOrchestrationService(AppDbContext db, HttpClient httpClient, IHubContext<ChatHub> signalRHub)
+    public RouteChatServiceMessage(AppDbContext db, HttpClient httpClient, IHubContext<ChatHub> signalRHub)
     {
         _db = db;
         _httpClient = httpClient;
         _signalRHub = signalRHub;
     }
 
-    public async Task ProcessAgentMessageAsync(RouteChatMessageRequest request)
+    public async Task<RouteChatMessageResponse> RouteChatMessage(RouteChatMessageRequest request)
     {
         var targets = GetTargets(request);
 
         foreach (var target in targets)
         {
-            // 1. Nachricht in der DB speichern (Das "Gedächtnis")
-            var message = new ChatMessage
-            {
-                ThreadId = request.ThreadId,
-                Sender = request.SenderAgentId,
-                Receiver = target,
-                Content = request.Content
-            };
-
-            _db.ChatMessages.Add(message);
-            await _db.SaveChangesAsync();
-
-            // 2. Echtzeit-Update an dein React-Frontend (falls du mitlesen willst)
-            await _signalRHub.Clients.Group(request.ThreadId)
-                .SendAsync("ReceiveMessage", message);
-
-            // 3. Routing: Wen müssen wir aufwecken?
-            if (string.IsNullOrWhiteSpace(target) || target == "User")
-            {
-                // Agent hat eine Rückfrage an DICH. Wir machen nichts weiter. 
-                // Der Prozess pausiert hier. n8n ist beendet.
-                // Sobald du im Frontend antwortest, geht es weiter.
-                return;
-            }
-
-            // Wenn der CEO an Helga delegiert, wecken wir Helga in n8n auf
-            await WakeUpAgentInN8nAsync(target, request.ThreadId);
+            await HandleTarget(request, target);
         }
+
+        var res = new RouteChatMessageResponse
+        {
+            ThreadId = request.ThreadId
+        };
+
+        return res;
+    }
+
+    private async Task HandleTarget(RouteChatMessageRequest request, string? target)
+    {
+        // 1. Nachricht in der DB speichern (Das "Gedächtnis")
+        var message = new ChatMessage
+        {
+            ThreadId = request.ThreadId,
+            Sender = request.SenderAgentId,
+            Receiver = target,
+            Content = request.Content
+        };
+
+        _db.ChatMessages.Add(message);
+        await _db.SaveChangesAsync();
+
+        // 2. Echtzeit-Update an dein React-Frontend (falls du mitlesen willst)
+        await _signalRHub.Clients.Group(request.ThreadId)
+            .SendAsync("ReceiveMessage", message);
+
+        // 3. Routing: Wen müssen wir aufwecken?
+        if (string.IsNullOrWhiteSpace(target) || target == "User")
+        {
+            // Agent hat eine Rückfrage an DICH. Wir machen nichts weiter. 
+            // Der Prozess pausiert hier. n8n ist beendet.
+            // Sobald du im Frontend antwortest, geht es weiter.
+            return;
+        }
+
+        // Wenn der CEO an Helga delegiert, wecken wir Helga in n8n auf
+        await ExecuteAgentWebhook(target, request.ThreadId);
     }
 
     private static List<string?> GetTargets(RouteChatMessageRequest request)
@@ -67,7 +79,7 @@ public class AgentOrchestrationService
         return targets;
     }
 
-    private async Task WakeUpAgentInN8nAsync(string agentId, string threadId)
+    private async Task ExecuteAgentWebhook(string agentId, string threadId)
     {
         // Hole die bisherige Chat-Historie aus der DB, damit der Agent Kontext hat
         var history = _db.ChatMessages

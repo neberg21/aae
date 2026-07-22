@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Module.Agents.AI;
 using Module.Agents.DTOs;
 using Module.Agents.Nostr;
-using Module.Agents.Persistence;
 
 namespace Module.Agents;
 
@@ -20,10 +19,11 @@ public class AgentsModule : IModule
     {
         services.AddHostedService<ListenOnMessages>();
         services.AddSingleton<AppDbContext>();
-
         services.AddScoped<ChatHub>();
-        services.AddScoped<AgentOrchestrationService>();
+
+        services.AddScoped<CreateIdentityService>();
         services.AddScoped<Faker>(_ => new Faker("de"));
+        services.AddScoped<RouteChatServiceMessage>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -35,38 +35,19 @@ public class AgentsModule : IModule
     }
 
     private static async Task<IResult> CreateIdentity(
-        [FromBody] CreateIdentityRequest request, Faker faker, AppDbContext dbContext)
+        [FromBody] CreateIdentityRequest request,
+        CreateIdentityService createIdentityService)
     {
-        var firstName = faker.Person.FirstName;
-        var profile = await ProfileGenerator.CreateProfileAsync(firstName);
-        var agent = new Agent
-        {
-            Name = profile.Name,
-            PublicKeyHex = profile.PublicKeyHex,
-            PrivateKeyHex = profile.PrivateKeyHex,
-            JobTitle = request.JobTitle,
-            JobDescription = request.JobDescription,
-            SystemPrompt = request.SystemPrompt
-        };
-
-        dbContext.Agents.Add(agent);
-        await dbContext.SaveChangesAsync();
-
-        var res = new CreateIdentityResponse
-        {
-            Name = profile.Name,
-            PublicKeyHex = profile.PublicKeyHex
-        };
-
+        var res = await createIdentityService.CreateIdentity(request);
         return Results.Ok(res);
     }
 
     private static async Task<IResult> RouteChatMessage(
         [FromBody] RouteChatMessageRequest request,
-        AgentOrchestrationService agentOrchestrationService)
+        RouteChatServiceMessage routeChatMessageServiceMessage)
     {
-        await agentOrchestrationService.ProcessAgentMessageAsync(request);
-        throw new NotImplementedException();
+        var res = await routeChatMessageServiceMessage.RouteChatMessage(request);
+        return Results.Ok(res);
     }
 
     private async Task<IResult> AwaitRequestApproval()
