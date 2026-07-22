@@ -71,7 +71,7 @@ public class RouteChatMessageService
             .ToList();
 
         // Jeder Agent hat seinen eigenen n8n Webhook-Eingang
-        var webhookUrl = agentId.ToLower().Trim() switch
+        var webhookUrl = agentId.Split('-')[0].ToLower().Trim() switch
         {
             "leo" => "https://n8n.neberg.de/webhook/leo-think",
             "helga" => "https://n8n.neberg.de/webhook/helga-think",
