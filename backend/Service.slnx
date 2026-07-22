@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Core/Core.csproj" />
+    <Project Path="src/Module.Agents/Module.Agents.csproj" />
     <Project Path="src/Module.Demo/Module.Demo.csproj" />
     <Project Path="src/Service/Service.csproj" />
   </Folder>
