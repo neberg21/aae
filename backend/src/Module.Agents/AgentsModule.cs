@@ -27,6 +27,7 @@ public class AgentsModule : IModule
 
         services.AddScoped<SearchIdentityService>();
         services.AddScoped<CreateIdentityService>();
+        services.AddScoped<ParkDelegationService>();
         services.AddScoped<ProfileGenerator>();
         services.AddScoped<Faker>(_ => new Faker("de"));
         services.AddHttpClient<RouteChatMessageService>();
@@ -47,6 +48,9 @@ public class AgentsModule : IModule
         endpoints.MapPost("create-identity", CreateIdentity)
             .Accepts<CreateIdentityRequest>("application/json")
             .Produces<CreateIdentityResponse>();
+        endpoints.MapPost("park-delegation", ParkDelegation)
+            .Accepts<ParkDelegationRequest>("application/json")
+            .Produces<ParkDelegationResponse>();
         endpoints.MapPost("route-chat-message", RouteChatMessage)
             .Accepts<RouteChatMessageRequest>("application/json")
             .Produces<RouteChatMessageResponse>();
@@ -95,6 +99,14 @@ public class AgentsModule : IModule
         CreateIdentityService createIdentityService)
     {
         var res = await createIdentityService.CreateIdentity(request);
+        return Results.Ok(res);
+    }
+
+    private static async Task<IResult> ParkDelegation(
+        [FromBody] ParkDelegationRequest request,
+        ParkDelegationService parkDelegationService)
+    {
+        var res = await parkDelegationService.Park(request);
         return Results.Ok(res);
     }
 
