@@ -35,6 +35,7 @@ public class AgentsModule : IModule
         endpoints.MapPost("route-chat-message", RouteChatMessage);
         endpoints.MapPost("await-request-approval", AwaitRequestApproval);
         endpoints.MapPost("resolve-request-approval", ResolveRequestApproval);
+        endpoints.MapPost("execute-tool", ExecuteTool);
     }
 
     private static async Task<IResult> CreateIdentity(
@@ -59,6 +60,11 @@ public class AgentsModule : IModule
     }
 
     private Task ResolveRequestApproval(HttpContext context)
+    {
+        throw new NotImplementedException();
+    }
+
+    private Task ExecuteTool(HttpContext context)
     {
         throw new NotImplementedException();
     }
