@@ -51,6 +51,7 @@ public class ParkDelegationTests : IClassFixture<WebApplicationFactory<Program>>
 
         var createRequest = new CreateIdentityRequest
         {
+            ThreadId = "thread-resume-1",
             AgentId = "supervisor-finance",
             JobTitle = "Supervisor Finance",
             JobDescription = "Hire finance supervisor",
@@ -77,6 +78,7 @@ public class ParkDelegationTests : IClassFixture<WebApplicationFactory<Program>>
         var client = _factory.CreateClient();
         var createRequest = new CreateIdentityRequest
         {
+            ThreadId = "thread-search-1",
             AgentId = "supervisor-qa",
             JobTitle = "Supervisor QA",
             JobDescription = "QA lead",

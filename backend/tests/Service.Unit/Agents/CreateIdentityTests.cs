@@ -21,6 +21,7 @@ public class CreateIdentityTests : IClassFixture<WebApplicationFactory<Program>>
         var client = _factory.CreateClient();
         var createIdentityRequest = new CreateIdentityRequest
         {
+            ThreadId = "thread-1",
             AgentId = "specialist-test-engineer",
             JobTitle = "Software Engineer",
             JobDescription = "I am a software engineer",
