@@ -21,6 +21,7 @@ public class CreateIdentityTests : IClassFixture<WebApplicationFactory<Program>>
         var client = _factory.CreateClient();
         var createIdentityRequest = new CreateIdentityRequest
         {
+            AgentId = "specialist-test-engineer",
             JobTitle = "Software Engineer",
             JobDescription = "I am a software engineer",
             SystemPrompt = "You are a helpful assistant.",
@@ -35,7 +36,7 @@ public class CreateIdentityTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(identity);
         Assert.NotEmpty(identity.Name);
-        Assert.NotEmpty(identity.AgentId);
+        Assert.Equal("specialist-test-engineer", identity.AgentId);
     }
 
     [Fact]

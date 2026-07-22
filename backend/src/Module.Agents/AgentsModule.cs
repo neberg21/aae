@@ -99,6 +99,11 @@ public class AgentsModule : IModule
         CreateIdentityService createIdentityService)
     {
         var res = await createIdentityService.CreateIdentity(request);
+        if (res is null)
+        {
+            return Results.Conflict();
+        }
+
         return Results.Ok(res);
     }
 
