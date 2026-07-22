@@ -20,8 +20,10 @@ public class AgentsModule : IModule
         services.AddHostedService<ListenOnMessages>();
         services.AddSingleton<AppDbContext>();
         services.AddScoped<ChatHub>();
+        services.AddScoped<NostrEventService>();
 
         services.AddScoped<CreateIdentityService>();
+        services.AddScoped<ProfileGenerator>();
         services.AddScoped<Faker>(_ => new Faker("de"));
         services.AddHttpClient<RouteChatMessageService>();
         services.AddScoped<RouteChatMessageService>();
