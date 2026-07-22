@@ -77,12 +77,14 @@ public class AgentsModule : IModule
     }
 
     private IResult SearchIdentities(
+        [FromQuery] string? identityId,
         [FromQuery] string? name,
         [FromQuery] string? department,
         [FromQuery] string? jobTitle,
         SearchIdentityService searchIdentityService)
     {
-        var items = searchIdentityService.SearchIdentities(name, department, jobTitle);
+        var items = searchIdentityService.SearchIdentities(
+            identityId, name, department, jobTitle);
         var page = GetAgentsResponse(items);
 
         return Results.Ok(page);

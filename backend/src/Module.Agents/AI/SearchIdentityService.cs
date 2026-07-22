@@ -11,10 +11,13 @@ public class SearchIdentityService
         _dbContext = dbContext;
     }
 
-    public IReadOnlyCollection<Agent> SearchIdentities(string? name, string? department, string? jobTitle)
+    public IReadOnlyCollection<Agent> SearchIdentities(
+        string? identityId, string? name, string? department, string? jobTitle)
     {
         var query = _dbContext.Agents.AsEnumerable();
 
+        if (!string.IsNullOrEmpty(identityId))
+            query = query.Where(a => a.Id.Equals(identityId, StringComparison.OrdinalIgnoreCase));
         if (!string.IsNullOrEmpty(name))
             query = query.Where(a => a.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
         if (!string.IsNullOrEmpty(department))
