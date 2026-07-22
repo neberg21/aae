@@ -36,6 +36,6 @@ describe('AppRoutes', () => {
     )
 
     expect(await screen.findByRole('heading', { name: 'Agents' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /search/i })).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: /^name$/i })).toBeInTheDocument()
   })
 })

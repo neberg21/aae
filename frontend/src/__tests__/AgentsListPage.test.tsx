@@ -60,18 +60,29 @@ describe('AgentsListPage', () => {
 
   it('loads all agents again when all filters are empty', async () => {
     const user = userEvent.setup()
+    searchAgentsMock.mockResolvedValue({
+      items: [],
+      totalCount: 0,
+      pageSize: 0,
+      pageNumber: 1,
+      totalPages: 0,
+    })
     renderPage()
 
     await waitFor(() => {
       expect(getAgentsMock).toHaveBeenCalledTimes(1)
     })
 
-    await user.click(screen.getByRole('button', { name: /search/i }))
+    await user.type(screen.getByRole('textbox', { name: /^name$/i }), 'Leo')
+    await waitFor(() => {
+      expect(searchAgentsMock).toHaveBeenCalledTimes(1)
+    })
+
+    await user.clear(screen.getByRole('textbox', { name: /^name$/i }))
 
     await waitFor(() => {
       expect(getAgentsMock).toHaveBeenCalledTimes(2)
     })
-    expect(searchAgentsMock).not.toHaveBeenCalled()
   })
 
   it('searches and renders result links to detail routes', async () => {
@@ -94,7 +105,7 @@ describe('AgentsListPage', () => {
     renderPage()
 
     await user.type(screen.getByRole('textbox', { name: /^name$/i }), 'Leo')
-    await user.click(screen.getByRole('button', { name: /search/i }))
+    expect(searchAgentsMock).not.toHaveBeenCalled()
 
     await waitFor(() => {
       expect(searchAgentsMock).toHaveBeenCalledWith({

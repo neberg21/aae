@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getAgents, searchAgents } from './api'
 import type { AgentDto } from './types'
@@ -14,6 +13,7 @@ export default function AgentsListPage() {
   const [status, setStatus] = useState<Status>('idle')
   const [message, setMessage] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const hasMountedFilters = useRef(false)
 
   useEffect(() => {
     void loadAllAgents()
@@ -34,9 +34,7 @@ export default function AgentsListPage() {
     }
   }
 
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault()
-
+  async function loadByFilters() {
     const filters = {
       name: name.trim() || undefined,
       department: department.trim() || undefined,
@@ -62,10 +60,25 @@ export default function AgentsListPage() {
     }
   }
 
+  useEffect(() => {
+    if (!hasMountedFilters.current) {
+      hasMountedFilters.current = true
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void loadByFilters()
+    }, 300)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [name, department, jobTitle])
+
   return (
     <main className="mx-auto my-8 w-full max-w-4xl px-4 text-left font-sans">
       <h1 className="text-center">Agents</h1>
-      <form onSubmit={onSubmit} className="mb-6 grid gap-3">
+      <div className="mb-6 grid gap-3">
         <label className="grid gap-1 text-sm font-medium">
           Name
           <input
@@ -96,14 +109,7 @@ export default function AgentsListPage() {
             autoComplete="off"
           />
         </label>
-        <button
-          type="submit"
-          className="w-fit rounded-md bg-violet-600 px-4 py-2 font-medium text-white transition hover:bg-violet-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={status === 'loading'}
-        >
-          Search
-        </button>
-      </form>
+      </div>
 
       {status === 'loading' && <p className="text-sm text-gray-600 dark:text-gray-300">Loading...</p>}
       {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
