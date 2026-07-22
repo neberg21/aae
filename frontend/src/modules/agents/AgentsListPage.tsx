@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { searchAgents } from './api'
+import { getAgents, searchAgents } from './api'
 import type { AgentDto } from './types'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
@@ -12,8 +12,27 @@ export default function AgentsListPage() {
   const [jobTitle, setJobTitle] = useState('')
   const [items, setItems] = useState<AgentDto[]>([])
   const [status, setStatus] = useState<Status>('idle')
-  const [message, setMessage] = useState('Enter at least one filter')
+  const [message, setMessage] = useState('')
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    void loadAllAgents()
+  }, [])
+
+  async function loadAllAgents() {
+    setStatus('loading')
+    setError(null)
+    try {
+      const page = await getAgents()
+      setItems(page.items)
+      setStatus('success')
+      setMessage(page.items.length === 0 ? 'No agents available.' : '')
+    } catch (err) {
+      setItems([])
+      setStatus('error')
+      setError(err instanceof Error ? err.message : 'Search failed')
+    }
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -25,10 +44,7 @@ export default function AgentsListPage() {
     }
 
     if (!filters.name && !filters.department && !filters.jobTitle) {
-      setItems([])
-      setStatus('idle')
-      setMessage('Enter at least one filter')
-      setError(null)
+      await loadAllAgents()
       return
     }
 

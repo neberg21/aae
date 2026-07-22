@@ -4,6 +4,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppRoutes } from '../App'
 
 vi.mock('../modules/agents/api', () => ({
+  getAgents: vi.fn().mockResolvedValue({
+    items: [],
+    totalCount: 0,
+    pageSize: 0,
+    pageNumber: 1,
+    totalPages: 0,
+  }),
   searchAgents: vi.fn(),
   getAgent: vi.fn(),
   ApiError: class ApiError extends Error {
@@ -29,6 +36,6 @@ describe('AppRoutes', () => {
     )
 
     expect(await screen.findByRole('heading', { name: 'Agents' })).toBeInTheDocument()
-    expect(screen.getByText(/enter at least one filter/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /search/i })).toBeInTheDocument()
   })
 })

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, getAgent, searchAgents } from '../modules/agents/api'
+import { ApiError, getAgent, getAgents, searchAgents } from '../modules/agents/api'
 
 describe('agents api', () => {
   afterEach(() => {
@@ -25,6 +25,25 @@ describe('agents api', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const url = String(fetchMock.mock.calls[0][0])
     expect(url).toBe('/api/agents/search?name=Leo')
+  })
+
+  it('getAgents calls the list endpoint', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        items: [],
+        totalCount: 0,
+        pageSize: 0,
+        pageNumber: 1,
+        totalPages: 0,
+      }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await getAgents()
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith('/api/agents')
   })
 
   it('getAgent returns detail on success', async () => {
