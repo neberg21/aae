@@ -23,7 +23,11 @@ public class CreateIdentityTests : IClassFixture<WebApplicationFactory<Program>>
         {
             JobTitle = "Software Engineer",
             JobDescription = "I am a software engineer",
-            SystemPrompt = "You are a helpful assistant."
+            SystemPrompt = "You are a helpful assistant.",
+            Department = "Development",
+            ManagerId = null,
+            Guardrails = [],
+            Tools = []
         };
         var response = await client.PostAsJsonAsync("/api/agents/create-identity", createIdentityRequest);
         var identity = await response.Content.ReadFromJsonAsync<CreateIdentityResponse>();
