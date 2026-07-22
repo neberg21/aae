@@ -34,7 +34,7 @@ n8n routes events; Flowise hosts the cognitive/orchestrator layer; the applicati
 |------|----------------|----------------|
 | Orchestrator (CEO) | Leo | Understand vision, recruit via HR when needed, delegate to domain supervisors — never writes code |
 | HR / identity smith | Helga | Create agent identity profiles (system prompts, tools, guardrails) as structured data — never writes app code or wires workflows |
-| Domain supervisor | Teamleiter per domain | Plan architecture, request specialists, review quality within a module |
+| Domain supervisor | Supervisor per domain | Plan architecture, request specialists, review quality within a module |
 | Specialists | Backend / Frontend children | Implement only inside their allowed module paths |
 
 Identity definitions live under [`agents/identities/`](agents/identities/).
