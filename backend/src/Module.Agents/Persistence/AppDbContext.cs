@@ -1,7 +1,4 @@
-﻿using Module.Agents.AI;
-using Module.Agents.Persistence;
-
-namespace Module.Agents;
+﻿namespace Module.Agents.Persistence;
 
 public class AppDbContext
 {
