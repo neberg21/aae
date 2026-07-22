@@ -9,6 +9,9 @@ import {
   parseSupervisorDecision,
   buildSpecialistDoneBody,
   buildFailureRoute,
+  buildHelgaHrRequestContent,
+  buildParkDelegationBody,
+  planLeoItemAction,
 } from './helpers.mjs';
 
 describe('normalizeWebhookBody', () => {
@@ -87,7 +90,28 @@ describe('parseHelgaDecision', () => {
     assert.equal(r.branch, 'create');
     assert.equal(r.createBody.jobTitle, 'Supervisor Finanzen');
     assert.equal(r.createBody.managerId, 'leo');
+    assert.equal(r.createBody.agentId, 'supervisor-finanzen');
     assert.deepEqual(r.createBody.tools, ['github_read']);
+  });
+
+  it('rejects ready identity without agentId', () => {
+    const r = parseHelgaDecision(
+      JSON.stringify({
+        status: 'ready',
+        clarificationQuestions: null,
+        identity: {
+          roleTitle: 'Supervisor Finance',
+          department: 'Operations',
+          systemPrompt: '…',
+          tools: [],
+          guardrails: [],
+          managerId: 'leo',
+        },
+      }),
+      't1',
+      'hire',
+    );
+    assert.equal(r.ok, false);
   });
 
   it('routes clarification to User', () => {
@@ -188,5 +212,79 @@ describe('buildFailureRoute', () => {
       content: 'parse failed',
     });
     assert.equal(body.targetAgentId, 'User');
+  });
+});
+
+describe('planLeoItemAction', () => {
+  it('routes when supervisor exists', () => {
+    const item = {
+      threadId: 't1',
+      senderAgentId: 'leo',
+      targetAgentId: 'supervisor-finance',
+      content: 'Own Finance (delegation) [scope=Module.Finance]',
+      intent: 'delegation',
+      message: 'Own Finance',
+      moduleScope: 'Module.Finance',
+    };
+    const planned = planLeoItemAction(item, true);
+    assert.equal(planned.action, 'route');
+    assert.equal(planned.routeBody.targetAgentId, 'supervisor-finance');
+    assert.equal(planned.routeBody.content, item.content);
+  });
+
+  it('parks and wakes helga when supervisor missing', () => {
+    const item = {
+      threadId: 't1',
+      senderAgentId: 'leo',
+      targetAgentId: 'supervisor-finance',
+      content: 'Own Finance (delegation) [scope=Module.Finance]',
+      intent: 'delegation',
+      message: 'Own Finance',
+      moduleScope: 'Module.Finance',
+    };
+    const planned = planLeoItemAction(item, false);
+    assert.equal(planned.action, 'park_and_hire');
+    assert.equal(planned.parkBody.targetAgentId, 'supervisor-finance');
+    assert.equal(planned.parkBody.content, item.content);
+    assert.equal(planned.helgaRouteBody.targetAgentId, 'helga');
+    const hr = JSON.parse(planned.helgaRouteBody.content);
+    assert.equal(hr.intent, 'hr_request');
+    assert.equal(hr.agentId, 'supervisor-finance');
+    assert.equal(hr.role, 'supervisor');
+    assert.equal(hr.moduleScope, 'Module.Finance');
+    assert.equal(hr.message, 'Own Finance');
+  });
+
+  it('routes helga items without park', () => {
+    const item = {
+      threadId: 't1',
+      senderAgentId: 'leo',
+      targetAgentId: 'helga',
+      content: 'Need hire (hr_request)',
+      intent: 'hr_request',
+      message: 'Need hire',
+      moduleScope: null,
+    };
+    const planned = planLeoItemAction(item, false);
+    assert.equal(planned.action, 'route');
+    assert.equal(planned.routeBody.targetAgentId, 'helga');
+  });
+});
+
+describe('mapHelgaIdentityToCreateRequest agentId', () => {
+  it('includes agentId', () => {
+    const body = mapHelgaIdentityToCreateRequest(
+      {
+        agentId: 'supervisor-finance',
+        roleTitle: 'Supervisor Finance',
+        department: 'Operations',
+        systemPrompt: '…',
+        tools: [],
+        guardrails: [],
+        managerId: 'leo',
+      },
+      'Hire finance supervisor',
+    );
+    assert.equal(body.agentId, 'supervisor-finance');
   });
 });
