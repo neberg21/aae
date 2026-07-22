@@ -19,7 +19,13 @@ public class CreateIdentityTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task PostAsync_CreateIdentity_CreatesNewIdentity()
     {
         var client = _factory.CreateClient();
-        var response = await client.PostAsync("/api/agents/create-identity", null);
+        var createIdentityRequest = new CreateIdentityRequest
+        {
+            JobTitle = "Software Engineer",
+            JobDescription = "I am a software engineer",
+            SystemPrompt = "You are a helpful assistant."
+        };
+        var response = await client.PostAsJsonAsync("/api/agents/create-identity", createIdentityRequest);
         var identity = await response.Content.ReadFromJsonAsync<CreateIdentityResponse>();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
