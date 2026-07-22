@@ -48,7 +48,7 @@ public static class WebUiHostExtensions
         return app;
     }
 
-    internal static bool IsSpaFallbackCandidate(PathString path)
+    private static bool IsSpaFallbackCandidate(PathString path)
     {
         if (path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase))
         {
