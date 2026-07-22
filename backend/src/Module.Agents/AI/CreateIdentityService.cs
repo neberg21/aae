@@ -40,14 +40,14 @@ public class CreateIdentityService
         var firstName = _faker.Person.FirstName;
         var profile = await _profileGenerator.CreateProfileAsync(keyPair, firstName);
         var agent = await CreateAgent(profile, keyPair, request);
-
-        await ExecuteParkedEntries(agent);
-
         var res = new CreateIdentityResponse
         {
             AgentId = agent.AgentId,
             Name = profile.Name
         };
+
+        await AddResponseMessage(request.ThreadId, res);
+        await ExecuteParkedEntries(agent);
 
         return res;
     }
@@ -71,6 +71,19 @@ public class CreateIdentityService
         _dbContext.Agents.Add(agent);
         await _dbContext.SaveChangesAsync();
         return agent;
+    }
+
+    private async Task AddResponseMessage(string threadId, CreateIdentityResponse res)
+    {
+        var message = new ChatMessage
+        {
+            Receiver = "leo",
+            Sender = "helga",
+            ThreadId = threadId,
+            Content = $"Identity created successfully. AgentId: {res.AgentId}, Name: {res.Name}"
+        };
+        _dbContext.ChatMessages.Add(message);
+        await _dbContext.SaveChangesAsync();
     }
 
     private async Task ExecuteParkedEntries(Agent agent)

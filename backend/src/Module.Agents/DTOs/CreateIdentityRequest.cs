@@ -2,6 +2,7 @@
 
 public record CreateIdentityRequest
 {
+    public required string ThreadId { get; init; }
     public required string AgentId { get; init; }
     public required string JobTitle { get; init; }
     public required string JobDescription { get; init; }
