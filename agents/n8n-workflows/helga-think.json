@@ -1,0 +1,205 @@
+{
+  "name": "AAE Helga Think",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## AAE Helga Think\nAttach OpenAI credential after import.\nWebhook: POST /webhook/helga-think\nPaths: clarify → route-chat-message (User); ready → create-identity",
+        "height": 260,
+        "width": 380
+      },
+      "id": "helga-sticky-1",
+      "name": "Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "helga-think",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "helga-webhook-1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [280, 300],
+      "webhookId": "aae-helga-think"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function normalizeWebhookBody(body) {\n  const b = body ?? {};\n  return {\n    threadId: b.threadId ?? b.ThreadId ?? '',\n    chatHistory: b.chatHistory ?? b.History ?? b.history ?? [],\n    delegationRequest: b.delegationRequest ?? b.DelegationRequest ?? null,\n  };\n}\nconst raw = items[0].json.body ?? items[0].json;\nconst n = normalizeWebhookBody(raw);\nconst req = n.delegationRequest ?? {};\nconst jobDescription = typeof req === 'string' ? req : (req.message ?? JSON.stringify(req));\nconst prompt = [\n  'You are Helga, HR identity forge for AAE. Output ONLY JSON.',\n  'status must be ready or needs_clarification.',\n  'Never use teamleiter naming; use supervisor-* for manager/agent ids.',\n  'Schema: {\"status\":\"ready|needs_clarification\",\"clarificationQuestions\":string|null,\"identity\":{\"agentId\":\"...\",\"roleTitle\":\"...\",\"department\":\"Frontend|Backend|Operations|QA\",\"systemPrompt\":\"...\",\"tools\":[],\"guardrails\":[],\"managerId\":\"leo|supervisor-...\"}|null}',\n  `DelegationRequest: ${JSON.stringify(req)}`,\n  `History: ${JSON.stringify(n.chatHistory ?? [])}`,\n].join('\\n');\nreturn [{ json: { ...n, jobDescription, prompt } }];"
+      },
+      "id": "helga-code-normalize",
+      "name": "Normalize Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {
+          "systemMessage": "You are Helga, HR director of AAE. Create agent identity profiles as strict JSON. Never write application code. Never use teamleiter naming."
+        }
+      },
+      "id": "helga-agent-1",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [740, 300]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o"
+        },
+        "options": {}
+      },
+      "id": "helga-openai-1",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [740, 520]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function parseJsonMaybe(text) {\n  if (text == null) return null;\n  if (typeof text === 'object') return text;\n  const raw = String(text).trim();\n  const fenced = raw.match(/```(?:json)?\\s*([\\s\\S]*?)```/i);\n  const candidate = fenced ? fenced[1].trim() : raw;\n  try { return JSON.parse(candidate); } catch { return null; }\n}\nfunction assertNoTeamleiter(id) {\n  return !String(id).toLowerCase().includes('teamleiter');\n}\nfunction mapHelgaIdentityToCreateRequest(identity, jobDescription) {\n  return {\n    jobTitle: identity.roleTitle ?? identity.jobTitle ?? '',\n    jobDescription: jobDescription ?? identity.jobDescription ?? '',\n    department: identity.department ?? '',\n    managerId: identity.managerId ?? null,\n    systemPrompt: identity.systemPrompt ?? '',\n    guardrails: identity.guardrails ?? [],\n    tools: identity.tools ?? identity.required_tools ?? [],\n  };\n}\nfunction parseHelgaDecision(agentOutput, threadId, jobDescription) {\n  const obj = parseJsonMaybe(agentOutput);\n  if (!obj || !obj.status) {\n    return { ok: false, error: 'invalid_helga_output', userMessage: 'Helga returned invalid JSON.' };\n  }\n  if (obj.status === 'needs_clarification') {\n    return {\n      ok: true,\n      branch: 'clarify',\n      routeBody: {\n        threadId,\n        senderAgentId: 'helga',\n        targetAgentId: 'User',\n        content: String(obj.clarificationQuestions ?? 'Need more details.'),\n      },\n    };\n  }\n  if (obj.status === 'ready' && obj.identity) {\n    if (obj.identity.managerId && !assertNoTeamleiter(obj.identity.managerId)) {\n      return { ok: false, error: 'invalid_manager', userMessage: 'Helga used forbidden teamleiter naming.' };\n    }\n    return {\n      ok: true,\n      branch: 'create',\n      createBody: mapHelgaIdentityToCreateRequest(obj.identity, jobDescription),\n    };\n  }\n  return { ok: false, error: 'invalid_helga_status', userMessage: 'Helga status was neither ready nor needs_clarification.' };\n}\nfunction buildFailureRoute({ threadId, senderAgentId, content }) {\n  return { threadId, senderAgentId, targetAgentId: 'User', content };\n}\nconst prev = $('Normalize Input').first().json;\nconst agentItem = items[0].json;\nconst agentText = agentItem.output ?? agentItem.text ?? agentItem;\nconst parsed = parseHelgaDecision(agentText, prev.threadId, prev.jobDescription);\nif (!parsed.ok) {\n  return [{ json: { ok: false, branch: 'fail', routeBody: buildFailureRoute({ threadId: prev.threadId, senderAgentId: 'helga', content: parsed.userMessage }) } }];\n}\nreturn [{ json: { ok: true, ...parsed } }];"
+      },
+      "id": "helga-code-parse",
+      "name": "Parse Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "id": "helga-clarify",
+                    "leftValue": "={{ $json.branch }}",
+                    "rightValue": "clarify",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "clarify"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "id": "helga-create",
+                    "leftValue": "={{ $json.branch }}",
+                    "rightValue": "create",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "create"
+            }
+          ]
+        },
+        "options": { "fallbackOutput": "extra" }
+      },
+      "id": "helga-switch-1",
+      "name": "Branch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [1240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ai.neberg.de/api/agents/route-chat-message",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.routeBody) }}",
+        "options": {}
+      },
+      "id": "helga-http-clarify",
+      "name": "Clarify To User",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1500, 160]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ai.neberg.de/api/agents/create-identity",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.createBody) }}",
+        "options": {}
+      },
+      "id": "helga-http-create",
+      "name": "Create Identity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ai.neberg.de/api/agents/route-chat-message",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.routeBody) }}",
+        "options": {}
+      },
+      "id": "helga-http-fail",
+      "name": "Failure To User",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1500, 460]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Normalize Input", "type": "main", "index": 0 }]]
+    },
+    "Normalize Input": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "AI Agent": {
+      "main": [[{ "node": "Parse Decision", "type": "main", "index": 0 }]]
+    },
+    "Parse Decision": {
+      "main": [[{ "node": "Branch", "type": "main", "index": 0 }]]
+    },
+    "Branch": {
+      "main": [
+        [{ "node": "Clarify To User", "type": "main", "index": 0 }],
+        [{ "node": "Create Identity", "type": "main", "index": 0 }],
+        [{ "node": "Failure To User", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
