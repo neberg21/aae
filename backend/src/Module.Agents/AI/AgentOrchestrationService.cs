@@ -1,6 +1,7 @@
 ﻿using Module.Agents.DTOs;
 using Microsoft.AspNetCore.SignalR;
 using System.Net.Http.Json;
+using Module.Agents.Persistence;
 
 namespace Module.Agents.AI;
 

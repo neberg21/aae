@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Module.Agents.AI;
 using Module.Agents.DTOs;
 using Module.Agents.Nostr;
+using Module.Agents.Persistence;
 
 namespace Module.Agents;
 
@@ -27,10 +28,37 @@ public class AgentsModule : IModule
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("route-chat-message", RouteChatMessage);
         endpoints.MapPost("create-identity", CreateIdentity);
+        endpoints.MapPost("route-chat-message", RouteChatMessage);
         endpoints.MapPost("await-request-approval", AwaitRequestApproval);
         endpoints.MapPost("resolve-request-approval", ResolveRequestApproval);
+    }
+
+    private static async Task<IResult> CreateIdentity(
+        [FromBody] CreateIdentityRequest request, Faker faker, AppDbContext dbContext)
+    {
+        var firstName = faker.Person.FirstName;
+        var profile = await ProfileGenerator.CreateProfileAsync(firstName);
+        var agent = new Agent
+        {
+            Name = profile.Name,
+            PublicKeyHex = profile.PublicKeyHex,
+            PrivateKeyHex = profile.PrivateKeyHex,
+            JobTitle = request.JobTitle,
+            JobDescription = request.JobDescription,
+            SystemPrompt = request.SystemPrompt
+        };
+
+        dbContext.Agents.Add(agent);
+        await dbContext.SaveChangesAsync();
+
+        var res = new CreateIdentityResponse
+        {
+            Name = profile.Name,
+            PublicKeyHex = profile.PublicKeyHex
+        };
+
+        return Results.Ok(res);
     }
 
     private static async Task<IResult> RouteChatMessage(
@@ -39,19 +67,6 @@ public class AgentsModule : IModule
     {
         await agentOrchestrationService.ProcessAgentMessageAsync(request);
         throw new NotImplementedException();
-    }
-
-    private static async Task<IResult> CreateIdentity(Faker faker)
-    {
-        var firstName = faker.Person.FirstName;
-        var profile = await ProfileGenerator.CreateProfileAsync(firstName);
-        var res = new CreateIdentityResponse
-        {
-            Name = profile.Name,
-            PublicKeyHex = profile.PublicKeyHex
-        };
-
-        return Results.Ok(res);
     }
 
     private async Task<IResult> AwaitRequestApproval()
