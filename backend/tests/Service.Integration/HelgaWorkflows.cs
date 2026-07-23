@@ -17,7 +17,7 @@ public class HelgaWorkflows : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task GetResponse_SingleScope_ReturnsSingleScope()
+    public async Task Recruit_VisionProvided_RecruitSupervisor()
     {
         var response = GetVision();
 
@@ -28,6 +28,8 @@ public class HelgaWorkflows : IClassFixture<WebApplicationFactory<Program>>
 
             Assert.True(_helgaChatService.TryGetResponse(history, out var recruiting));
             Assert.Equal(RecruitingStatus.Ready, recruiting.Status);
+            Assert.StartsWith("supervisor-", recruiting.Agent.AgentId);
+            Assert.StartsWith(response.AgentId, recruiting.Agent.SupervisorId);
         }
     }
 
