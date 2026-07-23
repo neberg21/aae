@@ -13,7 +13,8 @@ public class LeoWorkflows : IClassFixture<WebApplicationFactory<Program>>
 
     public LeoWorkflows(WebApplicationFactory<Program> factory)
     {
-        _leoChatService = factory.Services.GetRequiredService<LeoChatService>();
+        var serviceProvider = factory.Services.CreateScope().ServiceProvider;
+        _leoChatService = serviceProvider.GetRequiredService<LeoChatService>();
     }
 
     [Fact]
