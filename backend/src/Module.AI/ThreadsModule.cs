@@ -11,7 +11,7 @@ namespace Module.Agents;
 
 public class ThreadsModule : IModule
 {
-    public string GroupName => "agents";
+    public string GroupName => "ai";
 
     public void RegisterServices(IServiceCollection services)
     {
@@ -21,6 +21,8 @@ public class ThreadsModule : IModule
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
+        endpoints = endpoints.MapGroup("threads");
+
         endpoints.MapGet("", GetThreads)
             .Produces<GetThreadsResponse>();
         endpoints.MapGet("{threadId}", GetThread)
