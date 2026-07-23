@@ -6,13 +6,16 @@ public class ChatHistory
 {
     private readonly List<ChatMessage> _messages = [];
 
-    public ChatHistory(IEnumerable<ChatMessage> chatMessages, ChatResponse response)
+    public ChatHistory(string threadId, IEnumerable<ChatMessage> chatMessages, ChatResponse response)
     {
+        ThreadId = threadId;
         _messages.AddRange(chatMessages);
         _messages.AddRange(response.Messages);
     }
 
-    public ChatMessage CurrentMessage => _messages.Last();
+    public string ThreadId { get; }
+
+    public string CurrentMessage => _messages.Last().Text;
 
     public ChatHistory AddChatResponse(ChatResponse response)
     {

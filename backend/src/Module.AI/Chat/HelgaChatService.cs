@@ -29,15 +29,14 @@ public partial class HelgaChatService
             new(ChatRole.User, recruitingRequest.Message)
         };
         var response = await _chatClient.GetResponseAsync(chatMessages);
-
-        return new ChatHistory(chatMessages, response);
+        return new ChatHistory(recruitingRequest.ThreadId, chatMessages, response);
     }
 
     public bool TryGetResponse(ChatHistory history, [NotNullWhen(true)] out RecruitingResponse? response)
     {
         try
         {
-            var responseContent = history.CurrentMessage.Text;
+            var responseContent = history.CurrentMessage;
             var json = responseContent.Replace("```json", "").Replace("```", "");
             var options = new JsonSerializerOptions().ConfigureJsonSerialization();
             response = JsonSerializer.Deserialize<RecruitingResponse>(json, options);

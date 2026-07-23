@@ -2,6 +2,8 @@
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Module.AI.AI;
+using Module.AI.Persistence;
+using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 
 namespace Module.AI.Chat;
 
@@ -9,11 +11,13 @@ public partial class LeoChatService
 {
     private readonly CoreAgentService _coreAgentService;
     private readonly IChatClient _chatClient;
+    private readonly AppDbContext _dbContext;
 
-    public LeoChatService(CoreAgentService coreAgentService, IChatClient chatClient)
+    public LeoChatService(CoreAgentService coreAgentService, IChatClient chatClient, AppDbContext dbContext)
     {
         _coreAgentService = coreAgentService;
         _chatClient = chatClient;
+        _dbContext = dbContext;
     }
 
     public async Task<ChatHistory> CreateVision(string initialMessage)
@@ -28,8 +32,10 @@ public partial class LeoChatService
             new(ChatRole.User, initialMessage)
         };
         var response = await _chatClient.GetResponseAsync(chatMessages);
-
-        return new ChatHistory(chatMessages, response);
+        var hostory = new ChatHistory(threadId, chatMessages, response);
+        _dbContext.ChatHistories.Add(hostory);
+        await _dbContext.SaveChangesAsync();
+        return hostory;
     }
 
     public async Task<ChatHistory> AnswerQuestions(ChatHistory history, string answer)
@@ -44,7 +50,7 @@ public partial class LeoChatService
     {
         try
         {
-            var responseContent = history.CurrentMessage.Text;
+            var responseContent = history.CurrentMessage;
             var json = responseContent.Replace("```json", "").Replace("```", "");
             var options = new JsonSerializerOptions().ConfigureJsonSerialization();
             response = JsonSerializer.Deserialize<Vision>(json, options);

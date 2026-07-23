@@ -1,4 +1,6 @@
-﻿namespace Module.AI.Persistence;
+﻿using Module.AI.Chat;
+
+namespace Module.AI.Persistence;
 
 public class AppDbContext
 {
@@ -7,6 +9,7 @@ public class AppDbContext
     public List<ChatMessage> ChatMessages { get; set; } = [];
 
     public List<ParkedDelegation> ParkedDelegations { get; set; } = [];
+    public List<ChatHistory> ChatHistories { get; set; } = [];
 
     public Task SaveChangesAsync()
     {

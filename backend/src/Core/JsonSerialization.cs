@@ -12,4 +12,7 @@ public static class JsonSerialization
         options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseUpper));
         return options;
     }
+
+    public static JsonElement ToJsonElement<T>(this T obj) =>
+        JsonSerializer.SerializeToElement(obj, new JsonSerializerOptions().ConfigureJsonSerialization());
 }
