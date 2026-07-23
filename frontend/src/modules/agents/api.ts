@@ -3,13 +3,13 @@ import type {
   AgentSearchFilters,
   AgentsPage,
   ChatMessage,
+  CreateVisionResponse,
+  LeoChatResult,
   ThreadDetail,
   ThreadsPage,
 } from './types'
 
 const apiBaseUrl = '/ai-api'
-const leoAgentId = 'leo'
-const defaultSenderAgentId = 'helga'
 
 export class ApiError extends Error {
   readonly status: number
@@ -77,10 +77,6 @@ function normalizeThreadsPage(page: {
   }
 }
 
-function createThreadId() {
-  return `thread-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-}
-
 export async function getAgents(): Promise<AgentsPage> {
   const url = `${apiBaseUrl}/agents`
   const response = await fetch(url)
@@ -142,39 +138,36 @@ export async function getThread(threadId: string): Promise<ThreadDetail> {
 
 export async function sendLeoMessage(
   message: string,
-  history: ChatMessage[] = [],
+  _history: ChatMessage[] = [],
   threadId?: string,
-): Promise<string> {
+): Promise<LeoChatResult> {
   const trimmedMessage = message.trim()
   if (!trimmedMessage) {
     throw new Error('Message is required')
   }
 
-  const requestedThreadId = threadId ?? createThreadId()
-  const response = await fetch(`${apiBaseUrl}/agents/actions/route-chat-message`, {
+  const response = await fetch(`${apiBaseUrl}/chats/actions/create-vision`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      threadId: requestedThreadId,
-      senderAgentId: defaultSenderAgentId,
-      targetAgentId: leoAgentId,
+      threadId: threadId ?? null,
       content: trimmedMessage,
     }),
   })
 
-  const routeResult = await readJson<{ threadId: string }>(response)
-  const resolvedThread = await getThread(routeResult.threadId)
-  const lastReply = [...resolvedThread.messages]
-    .reverse()
-    .find((entry) => entry.sender.toLowerCase() !== defaultSenderAgentId && entry.content.trim().length > 0)
-
-  if (lastReply) {
-    return lastReply.content
+  const payload = await readJson<CreateVisionResponse>(response)
+  const reply = payload.content.trim()
+  if (!reply) {
+    throw new Error('Leo returned an empty response')
   }
 
-  const lastKnownMessage = history.at(-1)?.content
-  return lastKnownMessage ?? 'Message sent to Leo.'
+  return {
+    threadId: payload.threadId,
+    reply,
+    done: payload.vision !== null && payload.vision !== undefined,
+    vision: payload.vision ?? null,
+  }
 }
 

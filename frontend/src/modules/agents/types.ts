@@ -57,3 +57,18 @@ export type ThreadDetail = {
   messages: ThreadMessage[]
 }
 
+export type VisionObject = Record<string, unknown>
+
+export type CreateVisionResponse = {
+  threadId: string
+  content: string
+  vision?: VisionObject | null
+}
+
+export type LeoChatResult = {
+  threadId: string
+  reply: string
+  done: boolean
+  vision: VisionObject | null
+}
+

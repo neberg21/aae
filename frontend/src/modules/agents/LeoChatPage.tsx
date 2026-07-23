@@ -3,24 +3,20 @@ import ModuleNavigation from './ModuleNavigation'
 import { sendLeoMessage } from './api'
 import type { ChatMessage } from './types'
 
-type Status = 'idle' | 'sending' | 'error'
-
-function createThreadId() {
-  return `leo-thread-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-}
+type Status = 'idle' | 'sending' | 'error' | 'done'
 
 export default function LeoChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [draft, setDraft] = useState('')
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState<string | null>(null)
-  const threadIdRef = useRef(createThreadId())
+  const threadIdRef = useRef<string | null>(null)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     const message = draft.trim()
-    if (!message || status === 'sending') {
+    if (!message || status === 'sending' || status === 'done') {
       return
     }
 
@@ -31,9 +27,10 @@ export default function LeoChatPage() {
     setStatus('sending')
 
     try {
-      const reply = await sendLeoMessage(message, history, threadIdRef.current)
-      setMessages((current) => [...current, { role: 'assistant', content: reply }])
-      setStatus('idle')
+      const result = await sendLeoMessage(message, history, threadIdRef.current ?? undefined)
+      threadIdRef.current = result.threadId
+      setMessages((current) => [...current, { role: 'assistant', content: result.reply }])
+      setStatus(result.done ? 'done' : 'idle')
     } catch (err) {
       setStatus('error')
       setError(err instanceof Error ? err.message : 'Leo could not be reached')
@@ -41,7 +38,7 @@ export default function LeoChatPage() {
   }
 
   function handleReset() {
-    threadIdRef.current = createThreadId()
+    threadIdRef.current = null
     setMessages([])
     setDraft('')
     setError(null)
@@ -57,7 +54,8 @@ export default function LeoChatPage() {
         <p className="font-semibold">Leo is ready.</p>
         <p className="mt-1 text-violet-900/80 dark:text-violet-100/80">
           Ask questions, describe a task, or continue a thread. The page keeps the local
-          conversation history and routes your message through the default backend using a thread id.
+          conversation history and routes your message through create-vision. Chat is done as soon
+          as Leo returns a populated vision object.
         </p>
       </section>
 
@@ -93,6 +91,12 @@ export default function LeoChatPage() {
           {status === 'sending' && (
             <p className="text-sm text-gray-600 dark:text-gray-300">Leo is thinking...</p>
           )}
+
+          {status === 'done' && (
+            <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+              Vision object is complete. Start a new conversation to continue.
+            </p>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="grid gap-3 p-4">
@@ -104,7 +108,7 @@ export default function LeoChatPage() {
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               placeholder="Write to Leo..."
-              disabled={status === 'sending'}
+              disabled={status === 'sending' || status === 'done'}
             />
           </label>
 
@@ -113,7 +117,7 @@ export default function LeoChatPage() {
           <div className="flex flex-wrap gap-3">
             <button
               type="submit"
-              disabled={status === 'sending' || draft.trim().length === 0}
+              disabled={status === 'sending' || status === 'done' || draft.trim().length === 0}
               className="rounded-md bg-violet-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Send

@@ -34,7 +34,12 @@ describe('LeoChatPage', () => {
 
   it('sends a message to Leo and renders the reply', async () => {
     const user = userEvent.setup()
-    sendLeoMessageMock.mockResolvedValue('Hallo, ich bin Leo.')
+    sendLeoMessageMock.mockResolvedValue({
+      threadId: 'thread-1',
+      reply: 'Hallo, ich bin Leo.',
+      done: false,
+      vision: null,
+    })
 
     renderPage()
 
@@ -44,7 +49,7 @@ describe('LeoChatPage', () => {
     expect(screen.getByText('Hi Leo')).toBeInTheDocument()
 
     await waitFor(() => {
-      expect(sendLeoMessageMock).toHaveBeenCalledWith('Hi Leo', [], expect.any(String))
+      expect(sendLeoMessageMock).toHaveBeenCalledWith('Hi Leo', [], undefined)
     })
 
     expect(await screen.findByText('Hallo, ich bin Leo.')).toBeInTheDocument()
@@ -52,14 +57,32 @@ describe('LeoChatPage', () => {
 
   it('shows an error when the backend call fails', async () => {
     const user = userEvent.setup()
-    sendLeoMessageMock.mockRejectedValue(new Error('Webhook unavailable'))
+    sendLeoMessageMock.mockRejectedValue(new Error('Backend unavailable'))
 
     renderPage()
 
     await user.type(screen.getByRole('textbox', { name: /your message/i }), 'Kannst du helfen?')
     await user.click(screen.getByRole('button', { name: /send/i }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Webhook unavailable')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Backend unavailable')
+  })
+
+  it('marks chat as done when vision is returned', async () => {
+    const user = userEvent.setup()
+    sendLeoMessageMock.mockResolvedValue({
+      threadId: 'thread-77',
+      reply: 'Vision is complete.',
+      done: true,
+      vision: { threadId: 'thread-77' },
+    })
+
+    renderPage()
+
+    await user.type(screen.getByRole('textbox', { name: /your message/i }), 'Define my vision')
+    await user.click(screen.getByRole('button', { name: /send/i }))
+
+    expect(await screen.findByText(/vision object is complete/i)).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: /your message/i })).toBeDisabled()
   })
 })
 

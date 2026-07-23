@@ -143,57 +143,39 @@ describe('agents api', () => {
     expect(fetch).toHaveBeenCalledWith('/ai-api/threads/thread%2F1')
   })
 
-  it('sendLeoMessage routes via default backend and resolves Leo reply from thread messages', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          threadId: 'thread-123',
-        }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          threadId: 'thread-123',
-          messages: [
-            {
-              sender: 'helga',
-              receiver: 'leo',
-              content: 'Hi Leo',
-              createdAt: '2026-07-23T08:00:00Z',
-            },
-            {
-              sender: 'leo',
-              receiver: 'helga',
-              content: 'Hello from Leo',
-              createdAt: '2026-07-23T08:00:01Z',
-            },
-          ],
-        }),
-      })
+  it('sendLeoMessage posts only to create-vision and marks done when vision is present', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        threadId: 'thread-123',
+        content: 'Hello from Leo',
+        vision: { threadId: 'thread-123' },
+      }),
+    })
     vi.stubGlobal('fetch', fetchMock)
 
-    const reply = await sendLeoMessage(
+    const result = await sendLeoMessage(
       'Hi Leo',
       [{ role: 'assistant', content: 'How can I help?' }],
       'thread-123',
     )
 
-    expect(reply).toBe('Hello from Leo')
-    expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(fetchMock).toHaveBeenNthCalledWith(1, '/ai-api/agents/actions/route-chat-message', {
+    expect(result).toEqual({
+      threadId: 'thread-123',
+      reply: 'Hello from Leo',
+      done: true,
+      vision: { threadId: 'thread-123' },
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith('/ai-api/chats/actions/create-vision', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         threadId: 'thread-123',
-        senderAgentId: 'helga',
-        targetAgentId: 'leo',
         content: 'Hi Leo',
       }),
     })
-    expect(fetchMock).toHaveBeenNthCalledWith(2, '/ai-api/threads/thread-123')
   })
 })
