@@ -1,6 +1,6 @@
 ﻿namespace Module.Agents.DTOs;
 
-public record CreateIdentityRequest
+public record CreateAgentRequest
 {
     public required string ThreadId { get; init; }
     public required string AgentId { get; init; }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR;
 using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
+using Module.Agents.Chat;
 using Module.Agents.Persistence;
 
 namespace Module.Agents.AI;

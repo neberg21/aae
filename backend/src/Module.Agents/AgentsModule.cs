@@ -1,14 +1,13 @@
-﻿using Bogus;
-using Core;
+﻿using Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Module.Agents.AI;
+using Module.Agents.Chat;
 using Module.Agents.DTOs;
 using Module.Agents.Nostr;
-using Module.Agents.Persistence;
 
 namespace Module.Agents;
 
@@ -21,99 +20,66 @@ public class AgentsModule : IModule
         services.AddHostedService<SeedCoreAgents>();
         services.AddHostedService<ListenOnMessages>();
 
-        services.AddSingleton<AppDbContext>();
-        services.AddScoped<ChatHub>();
-        services.AddScoped<NostrEventService>();
-
         services.AddScoped<SearchIdentityService>();
         services.AddScoped<CreateIdentityService>();
         services.AddScoped<ParkDelegationService>();
-        services.AddScoped<GetThreadsService>();
-        services.AddScoped<GetThreadByIdService>();
         services.AddScoped<ProfileGenerator>();
-        services.AddScoped<Faker>(_ => new Faker("de"));
         services.AddHttpClient<RouteChatMessageService>();
         services.AddScoped<RouteChatMessageService>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapHub<ChatHub>("/chat");
-
-        endpoints.MapGet("", GetIdentities)
+        endpoints.MapGet("", GetAgents)
             .Produces<GetAgentsResponse>();
-        endpoints.MapGet("{agentId}", GetIdentity)
+        endpoints.MapPost("", CreateAgent)
+            .Accepts<CreateAgentRequest>("application/json")
+            .Produces<CreateAgentResponse>();
+        endpoints.MapGet("{agentId}", GetAgent)
             .Produces<GetAgentByIdResponse>();
-        endpoints.MapGet("search", SearchIdentities)
+        endpoints.MapGet("search", SearchAgents7)
             .Produces<GetAgentsResponse>();
 
-        endpoints.MapGet("threads", GetThreads)
-            .Produces<GetThreadsResponse>();
-        endpoints.MapGet("threads/{threadId}", GetThread)
-            .Produces<GetThreadResponse>();
+        var actions = endpoints.MapGroup("actions");
 
-        endpoints.MapPost("create-identity", CreateIdentity)
-            .Accepts<CreateIdentityRequest>("application/json")
-            .Produces<CreateIdentityResponse>();
-        endpoints.MapPost("park-delegation", ParkDelegation)
+        actions.MapPost("park-delegation", ParkDelegation)
             .Accepts<ParkDelegationRequest>("application/json")
             .Produces<ParkDelegationResponse>();
-        endpoints.MapPost("route-chat-message", RouteChatMessage)
+        actions.MapPost("route-chat-message", RouteChatMessage)
             .Accepts<RouteChatMessageRequest>("application/json")
             .Produces<RouteChatMessageResponse>();
-        endpoints.MapPost("await-request-approval", AwaitRequestApproval);
-        endpoints.MapPost("resolve-request-approval", ResolveRequestApproval);
-        endpoints.MapPost("execute-tool", ExecuteTool);
+        actions.MapPost("await-request-approval", AwaitRequestApproval);
+        actions.MapPost("resolve-request-approval", ResolveRequestApproval);
+        actions.MapPost("execute-tool", ExecuteTool);
     }
 
-    private static IResult GetThread(string threadId, GetThreadByIdService threadService)
+    private IResult GetAgents(SearchIdentityService searchIdentityService)
     {
-        var thread = threadService.GetById(threadId);
-        return thread is null ? Results.NotFound() : Results.Ok(thread);
-    }
-
-    private static IResult GetThreads(GetThreadsService threadService)
-    {
-        var page = threadService.GetThreads();
+        var page = searchIdentityService.GetAgents();
         return Results.Ok(page);
     }
 
-    private IResult GetIdentities(AppDbContext dbContext)
+    private IResult GetAgent(string agentId, GetAgentByIdService agentService)
     {
-        var agents = dbContext.Agents.ToArray();
-        var page = GetAgentsResponse(agents);
-        return Results.Ok(page);
+        var result = agentService.GetById(agentId);
+        return result is null ? Results.NotFound() : Results.Ok(result);
     }
 
-    private IResult GetIdentity(string agentId, AppDbContext dbContext)
-    {
-        var agent = dbContext.Agents.FirstOrDefault(a => a.Id == agentId);
-        return agent is null
-            ? Results.NotFound()
-            : Results.Ok(new GetAgentByIdResponse(
-                agent.Id,
-                agent.Name,
-                agent.Department,
-                agent.JobTitle,
-                agent.SystemPrompt));
-    }
-
-    private IResult SearchIdentities(
+    private IResult SearchAgents7(
         [FromQuery] string? agentId,
         [FromQuery] string? name,
         [FromQuery] string? department,
         [FromQuery] string? jobTitle,
         SearchIdentityService searchIdentityService)
     {
-        var items = searchIdentityService.SearchIdentities(
+        var page = searchIdentityService.SearchIdentities(
             agentId, name, department, jobTitle);
-        var page = GetAgentsResponse(items);
 
         return Results.Ok(page);
     }
 
-    private static async Task<IResult> CreateIdentity(
-        [FromBody] CreateIdentityRequest request,
+    private static async Task<IResult> CreateAgent(
+        [FromBody] CreateAgentRequest request,
         CreateIdentityService createIdentityService)
     {
         var res = await createIdentityService.CreateIdentity(request);
@@ -154,18 +120,5 @@ public class AgentsModule : IModule
     private Task ExecuteTool(HttpContext context)
     {
         throw new NotImplementedException();
-    }
-
-    private static GetAgentsResponse GetAgentsResponse(IReadOnlyCollection<Agent> agents)
-    {
-        var page = new GetAgentsResponse
-        {
-            Items = agents.Select(a => new AgentDto(a.Id, a.Name, a.Department, a.JobTitle)).ToArray(),
-            TotalCount = agents.Count,
-            PageSize = agents.Count,
-            PageNumber = 1,
-            TotalPages = (int)Math.Ceiling((double)agents.Count / agents.Count)
-        };
-        return page;
     }
 }

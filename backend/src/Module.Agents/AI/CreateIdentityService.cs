@@ -31,7 +31,7 @@ public class CreateIdentityService
         _routeChatMessageService = routeChatMessageService;
     }
 
-    public async Task<CreateIdentityResponse?> CreateIdentity(CreateIdentityRequest request)
+    public async Task<CreateAgentResponse?> CreateIdentity(CreateAgentRequest request)
     {
         var existing = _dbContext.Agents.FirstOrDefault(a =>
             a.AgentId.Equals(request.AgentId, StringComparison.OrdinalIgnoreCase));
@@ -44,7 +44,7 @@ public class CreateIdentityService
         var firstName = _faker.Person.FirstName;
         var profile = await _profileGenerator.CreateProfileAsync(keyPair, firstName);
         var agent = await CreateAgent(profile, keyPair, request);
-        var res = new CreateIdentityResponse
+        var res = new CreateAgentResponse
         {
             AgentId = agent.AgentId,
             Name = profile.Name
@@ -57,7 +57,7 @@ public class CreateIdentityService
         return res;
     }
 
-    private async Task<Agent> CreateAgent(NostrProfile profile, NostrKeyPair keyPair, CreateIdentityRequest request)
+    private async Task<Agent> CreateAgent(NostrProfile profile, NostrKeyPair keyPair, CreateAgentRequest request)
     {
         var agent = new Agent
         {
@@ -78,7 +78,7 @@ public class CreateIdentityService
         return agent;
     }
 
-    private async Task AddResponseMessage(string threadId, CreateIdentityResponse res)
+    private async Task AddResponseMessage(string threadId, CreateAgentResponse res)
     {
         var message = new ChatMessage
         {

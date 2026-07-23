@@ -1,7 +1,7 @@
 ﻿using Module.Agents.DTOs;
 using Module.Agents.Persistence;
 
-namespace Module.Agents.AI;
+namespace Module.Agents.Threads;
 
 public class GetThreadByIdService
 {

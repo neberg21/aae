@@ -49,7 +49,7 @@ public class ParkDelegationTests : IClassFixture<WebApplicationFactory<Program>>
         var parkResponse = await client.PostAsJsonAsync("/api/agents/park-delegation", parkRequest);
         Assert.Equal(HttpStatusCode.OK, parkResponse.StatusCode);
 
-        var createRequest = new CreateIdentityRequest
+        var createRequest = new CreateAgentRequest
         {
             ThreadId = "thread-resume-1",
             AgentId = "supervisor-finance",
@@ -64,7 +64,7 @@ public class ParkDelegationTests : IClassFixture<WebApplicationFactory<Program>>
         var createResponse = await client.PostAsJsonAsync("/api/agents/create-identity", createRequest);
         Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
 
-        var identity = await createResponse.Content.ReadFromJsonAsync<CreateIdentityResponse>();
+        var identity = await createResponse.Content.ReadFromJsonAsync<CreateAgentResponse>();
         Assert.NotNull(identity);
         Assert.Equal("supervisor-finance", identity.AgentId);
 
@@ -76,7 +76,7 @@ public class ParkDelegationTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task GetAsync_SearchByAgentId_FindsCreatedSupervisor()
     {
         var client = _factory.CreateClient();
-        var createRequest = new CreateIdentityRequest
+        var createRequest = new CreateAgentRequest
         {
             ThreadId = "thread-search-1",
             AgentId = "supervisor-qa",

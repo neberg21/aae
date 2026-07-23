@@ -19,7 +19,7 @@ public class CreateIdentityTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task PostAsync_CreateIdentity_CreatesNewIdentity()
     {
         var client = _factory.CreateClient();
-        var createIdentityRequest = new CreateIdentityRequest
+        var createIdentityRequest = new CreateAgentRequest
         {
             ThreadId = "thread-1",
             AgentId = "specialist-test-engineer",
@@ -32,7 +32,7 @@ public class CreateIdentityTests : IClassFixture<WebApplicationFactory<Program>>
             Tools = []
         };
         var response = await client.PostAsJsonAsync("/api/agents/create-identity", createIdentityRequest);
-        var identity = await response.Content.ReadFromJsonAsync<CreateIdentityResponse>();
+        var identity = await response.Content.ReadFromJsonAsync<CreateAgentResponse>();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(identity);
