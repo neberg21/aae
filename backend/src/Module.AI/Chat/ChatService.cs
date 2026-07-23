@@ -40,14 +40,32 @@ public class ChatService
         CreateVisionResponse CreateResponse(ChatHistory vision)
         {
             if (!_leoChatService.TryGetResponse(vision, out var response))
-                return new CreateVisionResponse(vision.ThreadId, vision.CurrentMessage);
+            {
+                return new CreateVisionResponse(vision.ThreadId, vision.CurrentMessage)
+                {
+                    ChatMessages = vision.Messages.Select(m => new ChatMessageDto
+                    {
+                        Content = m.Text,
+                        Sender = m.Role.ToString(),
+                        Receiver = m.Role == ChatRole.Assistant ? "User" : "Assistant",
+                        CreatedAt = m.CreatedAt.GetValueOrDefault().DateTime
+                    }).ToArray()
+                };
+            }
 
             var finalMessage = new ChatMessage(ChatRole.Assistant, $"Created vision: {response.UserVision}");
             vision.AddMessage(finalMessage);
             _visionChannel.Writer.TryWrite(response);
             return new CreateVisionResponse(vision.ThreadId, vision.CurrentMessage)
             {
-                Vision = response
+                Vision = response,
+                ChatMessages = vision.Messages.Select(m => new ChatMessageDto
+                {
+                    Content = m.Text,
+                    Sender = m.Role.ToString(),
+                    Receiver = m.Role == ChatRole.Assistant ? "User" : "Assistant",
+                    CreatedAt = m.CreatedAt.GetValueOrDefault().DateTime
+                }).ToArray()
             };
         }
     }

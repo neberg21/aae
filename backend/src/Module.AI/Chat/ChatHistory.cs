@@ -17,6 +17,8 @@ public class ChatHistory
 
     public string CurrentMessage => _messages.Last().Text;
 
+    public IEnumerable<ChatMessage> Messages => _messages;
+
     public ChatHistory AddChatResponse(ChatResponse response)
     {
         _messages.AddRange(response.Messages);
