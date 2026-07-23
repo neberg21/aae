@@ -24,6 +24,7 @@ COPY backend/src/Module.AI/*.csproj ./src/Module.AI/
 COPY backend/src/Module.Demo/*.csproj ./src/Module.Demo/
 COPY backend/tests/Core.Unit/*.csproj ./tests/Core.Unit/
 COPY backend/tests/Service.Unit/*.csproj ./tests/Service.Unit/
+COPY backend/tests/Service.Integration/*.csproj ./tests/Service.Integration/
 RUN dotnet restore Service.slnx
 
 COPY backend/ ./
