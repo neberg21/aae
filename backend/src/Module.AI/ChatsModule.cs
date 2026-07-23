@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Module.AI.Chat;
+using Module.AI.Chat.Jobs;
 using Module.AI.DTOs;
 
 namespace Module.AI;
@@ -18,13 +19,13 @@ public class ChatsModule : IModule
     {
         services.AddScoped<ChatHub>();
         services.AddHostedService<RecruitingJob>();
-        
+
         services.AddScoped<ChatService>();
         services.AddScoped<LeoChatService>();
         services.AddScoped<HelgaChatService>();
 
-        var channel = Channel.CreateUnbounded<Vision>();
-        services.AddSingleton(channel);
+        services.AddSingleton(Channel.CreateUnbounded<Vision>());
+        services.AddSingleton(Channel.CreateUnbounded<RecruitingResponse>());
 
         var httpClient = new HttpClient
         {

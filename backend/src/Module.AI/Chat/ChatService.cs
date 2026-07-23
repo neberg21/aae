@@ -12,17 +12,20 @@ public class ChatService
     private readonly LeoChatService _leoChatService;
     private readonly HelgaChatService _helgaChatService;
     private readonly Channel<Vision> _visionChannel;
+    private readonly Channel<RecruitingResponse> _recruitingChannel;
 
     public ChatService(
         AppDbContext dbContext,
         LeoChatService leoChatService,
         HelgaChatService helgaChatService,
-        Channel<Vision> visionChannel)
+        Channel<Vision> visionChannel,
+        Channel<RecruitingResponse> recruitingChannel)
     {
         _dbContext = dbContext;
         _leoChatService = leoChatService;
         _helgaChatService = helgaChatService;
         _visionChannel = visionChannel;
+        _recruitingChannel = recruitingChannel;
     }
 
     public async Task<CreateVisionResponse> CreateVision(CreateVisionRequest request)
@@ -85,6 +88,7 @@ public class ChatService
 
         var finalMessage = new ChatMessage(ChatRole.Assistant, $"Created agent: {response.Agent.AgentId}");
         chatHistory.AddMessage(finalMessage);
+        _recruitingChannel.Writer.TryWrite(response);
         return new RecruitEmployeeResponse(response.ThreadId, chatHistory.CurrentMessage)
         {
             Recruited = response
@@ -94,7 +98,6 @@ public class ChatService
     private ChatHistory GetChatHistory(string threadId)
     {
         var chatHistory = _dbContext.ChatHistories.FirstOrDefault(c => c.ThreadId == threadId);
-
         return chatHistory ?? throw new NotSupportedException($"Thread not found: {threadId}");
     }
 }
