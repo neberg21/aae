@@ -17,6 +17,8 @@ public class ChatsModule : IModule
     public void RegisterServices(IServiceCollection services)
     {
         services.AddScoped<ChatHub>();
+        services.AddHostedService<RecruitingJob>();
+        
         services.AddScoped<ChatService>();
         services.AddScoped<LeoChatService>();
         services.AddScoped<HelgaChatService>();
