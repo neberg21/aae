@@ -39,10 +39,11 @@ public class Leo
         ```json
         {
           "threadId": "...",
+          "agentId": "your name in lower case",
           "userVision: "...",
           "scopes": [
             {
-              "supervisor": "supervisor-finance",
+              "supervisorId": "supervisor-finance",
               "message": "..."
             }
           ]
@@ -50,7 +51,7 @@ public class Leo
         ```
         """;
 
-    public record Response(string ThreadId, string UserVision, IReadOnlyList<Scope> Scopes);
+    public record Response(string ThreadId, string AgentId, string UserVision, IReadOnlyList<Scope> Scopes);
 
-    public record Scope(string Supervisor, string Message);
+    public record Scope(string SupervisorId, string Message);
 }
