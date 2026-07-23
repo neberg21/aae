@@ -1,5 +1,4 @@
-﻿using System.Threading.Channels;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Module.AI.AI;
@@ -10,14 +9,13 @@ namespace Module.AI.Chat.Jobs;
 public class ExecuteRecruiting : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly Channel<RecruitingResponse> _channel;
+    private readonly ExecuteRecruitingChannel _channel;
     private readonly ILogger<ExecuteRecruiting> _logger;
-
 
     public ExecuteRecruiting(
         ILogger<ExecuteRecruiting> logger,
         IServiceProvider serviceProvider,
-        Channel<RecruitingResponse> channel)
+        ExecuteRecruitingChannel channel)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
@@ -30,11 +28,11 @@ public class ExecuteRecruiting : BackgroundService
         {
             try
             {
-                while (await _channel.Reader.WaitToReadAsync(stoppingToken))
+                while (await _channel.WaitToReadAsync(stoppingToken))
                 {
                     var serviceProvider = _serviceProvider.CreateScope().ServiceProvider;
                     var agentService = serviceProvider.GetRequiredService<CreateAgentService>();
-                    var vision = await _channel.Reader.ReadAsync(stoppingToken);
+                    var vision = await _channel.ReadAsync(stoppingToken);
                     await HandleRecruiting(vision, agentService);
                 }
             }

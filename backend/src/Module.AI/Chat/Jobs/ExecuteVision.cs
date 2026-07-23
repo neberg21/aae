@@ -9,12 +9,12 @@ namespace Module.AI.Chat.Jobs;
 public class RecruitingJob : BackgroundService
 {
     private readonly ILogger<RecruitingJob> _logger;
-    private readonly Channel<Vision> _channel;
+    private readonly ExecuteVisionChannel _channel;
     private readonly IServiceProvider _serviceProvider;
 
     public RecruitingJob(
         ILogger<RecruitingJob> logger,
-        Channel<Vision> channel,
+        ExecuteVisionChannel channel,
         IServiceProvider serviceProvider)
     {
         _logger = logger;
@@ -28,11 +28,11 @@ public class RecruitingJob : BackgroundService
         {
             try
             {
-                while (await _channel.Reader.WaitToReadAsync(stoppingToken))
+                while (await _channel.WaitToReadAsync(stoppingToken))
                 {
                     var serviceProvider = _serviceProvider.CreateScope().ServiceProvider;
                     var chatService = serviceProvider.GetRequiredService<ChatService>();
-                    var vision = await _channel.Reader.ReadAsync(stoppingToken);
+                    var vision = await _channel.ReadAsync(stoppingToken);
                     await HandleVision(vision, chatService);
                 }
             }

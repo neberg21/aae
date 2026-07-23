@@ -1,5 +1,4 @@
-﻿using System.Threading.Channels;
-using Core;
+﻿using Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -24,8 +23,8 @@ public class ChatsModule : IModule
         services.AddScoped<LeoChatService>();
         services.AddScoped<HelgaChatService>();
 
-        services.AddSingleton(Channel.CreateUnbounded<Vision>());
-        services.AddSingleton(Channel.CreateUnbounded<RecruitingResponse>());
+        services.AddSingleton<ExecuteVisionChannel>();
+        services.AddSingleton<ExecuteRecruitingChannel>();
 
         var httpClient = new HttpClient
         {

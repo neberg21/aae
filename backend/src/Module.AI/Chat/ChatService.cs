@@ -1,5 +1,5 @@
-﻿using System.Threading.Channels;
-using Microsoft.Extensions.AI;
+﻿using Microsoft.Extensions.AI;
+using Module.AI.Chat.Jobs;
 using Module.AI.DTOs;
 using Module.AI.Persistence;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
@@ -11,15 +11,15 @@ public class ChatService
     private readonly AppDbContext _dbContext;
     private readonly LeoChatService _leoChatService;
     private readonly HelgaChatService _helgaChatService;
-    private readonly Channel<Vision> _visionChannel;
-    private readonly Channel<RecruitingResponse> _recruitingChannel;
+    private readonly ExecuteVisionChannel _visionChannel;
+    private readonly ExecuteRecruitingChannel _recruitingChannel;
 
     public ChatService(
         AppDbContext dbContext,
         LeoChatService leoChatService,
         HelgaChatService helgaChatService,
-        Channel<Vision> visionChannel,
-        Channel<RecruitingResponse> recruitingChannel)
+        ExecuteVisionChannel visionChannel,
+        ExecuteRecruitingChannel recruitingChannel)
     {
         _dbContext = dbContext;
         _leoChatService = leoChatService;
@@ -58,7 +58,7 @@ public class ChatService
 
             var finalMessage = new ChatMessage(ChatRole.Assistant, $"Created vision: {response.UserVision}");
             vision.AddMessage(finalMessage);
-            _visionChannel.Writer.TryWrite(response);
+            _visionChannel.TryWrite(response);
             return new CreateVisionResponse(vision.ThreadId, vision.CurrentMessage)
             {
                 Vision = response,
@@ -88,7 +88,7 @@ public class ChatService
 
         var finalMessage = new ChatMessage(ChatRole.Assistant, $"Created agent: {response.Agent.AgentId}");
         chatHistory.AddMessage(finalMessage);
-        _recruitingChannel.Writer.TryWrite(response);
+        _recruitingChannel.TryWrite(response);
         return new RecruitEmployeeResponse(response.ThreadId, chatHistory.CurrentMessage)
         {
             Recruited = response
