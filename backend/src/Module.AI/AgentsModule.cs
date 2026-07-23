@@ -109,17 +109,17 @@ public class AgentsModule : IModule
         return Results.Ok(res);
     }
 
-    private async Task<IResult> AwaitRequestApproval()
+    private IResult AwaitRequestApproval()
     {
         throw new NotImplementedException();
     }
 
-    private Task ResolveRequestApproval(HttpContext context)
+    private IResult ResolveRequestApproval()
     {
         throw new NotImplementedException();
     }
 
-    private Task ExecuteTool(HttpContext context)
+    private IResult ExecuteTool()
     {
         throw new NotImplementedException();
     }

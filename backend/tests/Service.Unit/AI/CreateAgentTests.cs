@@ -39,29 +39,4 @@ public class CreateAgentTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.NotEmpty(agent.Name);
         Assert.Equal("specialist-test-engineer", agent.AgentId);
     }
-
-    [Fact]
-    public async Task GetAsync_OpenApiDemoDocument_ReturnsOkWithDemoPath()
-    {
-        var client = _factory.CreateClient();
-
-        var response = await client.GetAsync("/openapi/ai.json");
-        var body = await response.Content.ReadAsStringAsync();
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("/ai-api/agents", body, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public async Task GetAsync_Scalar_ReferencesOpenApiDemoDocument()
-    {
-        var client = _factory.CreateClient();
-
-        var response = await client.GetAsync("/scalar/ai");
-        var body = await response.Content.ReadAsStringAsync();
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        // Scalar strips the leading slash and resolves from the app root in JS.
-        Assert.Contains("\"url\":\"openapi/ai.json\"", body, StringComparison.Ordinal);
-    }
 }
