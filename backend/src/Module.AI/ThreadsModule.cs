@@ -28,15 +28,15 @@ public class ThreadsModule : IModule
             .Produces<GetThreadResponse>();
     }
 
-    private static IResult GetThread(string threadId, GetThreadByIdService threadService)
-    {
-        var thread = threadService.GetById(threadId);
-        return thread is null ? Results.NotFound() : Results.Ok(thread);
-    }
-
     private static IResult GetThreads(GetThreadsService threadService)
     {
         var page = threadService.GetThreads();
         return Results.Ok(page);
+    }
+
+    private static IResult GetThread(string threadId, GetThreadByIdService threadService)
+    {
+        var thread = threadService.GetById(threadId);
+        return thread is null ? Results.NotFound() : Results.Ok(thread);
     }
 }
