@@ -32,6 +32,7 @@ public class Helga
 
         ```json
         {
+            "threadId": "...",
             "status": "NEEDS_CLARIFICATION|READY",
             "clarificationQuestions": ["..."],
             "agent": {
@@ -40,7 +41,6 @@ public class Helga
                 "jobDescription": "...",
                 "department": "FRONTEND|BACKEND|OPERATIONS|QA",
                 "systemPrompt": "...",
-                "tools": [],
                 "guardrails": [],
                 "supervisorId": "leo|supervisor-..."
              }
@@ -50,7 +50,7 @@ public class Helga
 
     public record Request(string ThreadId, string SupervisorId, string AgentId, string Message);
 
-    public record Response(HelgaStatus Status, HelgaAgent Agent);
+    public record Response(string ThreadId, HelgaStatus Status, HelgaAgent Agent);
 
     public enum HelgaStatus
     {
@@ -64,7 +64,6 @@ public class Helga
         string JobDescription,
         string Department,
         string SystemPrompt,
-        string[] Tools,
         string[] Guardrails,
         string SupervisorId);
     

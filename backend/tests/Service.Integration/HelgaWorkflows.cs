@@ -34,6 +34,7 @@ public class HelgaWorkflows : IClassFixture<WebApplicationFactory<Program>>
 
             Assert.True(_helgaChatService.TryGetResponse(history, out var recruiting));
             Assert.Equal(Helga.HelgaStatus.Ready, recruiting.Status);
+            
         }
     }
 }
