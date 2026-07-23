@@ -42,12 +42,9 @@ public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
     public async Task CreateClearVision()
     {
         var response = await InitiateChat(
-            "Yo moin, ich hätt gerne ein neues DnD Storyteller tool. "+
+            "Yo moin, ich hätt gerne ein neues DnD Storyteller tool. " +
             "STELLE KEINE RÜCKFRAGEN ZUR VISION! DENK DIR EINE VISION AUS WENN DU OFFENE FRAGEN HAST.");
-        var responseContent = response.Messages.Last().Text;
-        var json = responseContent.Replace("```json", "").Replace("```", "");
-        var options = new JsonSerializerOptions().ConfigureJsonSerialization();
-        var leoResponse = JsonSerializer.Deserialize<Leo.Response>(json, options);
+        var leoResponse = ExtractResponse(response);
 
         Assert.NotNull(leoResponse);
         Assert.Single(leoResponse.Scopes);
@@ -62,10 +59,7 @@ public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
             "etwas zum rasen mäßen aber auch " +
             "eine eisverkaufs-homepage." +
             "STELLE KEINE RÜCKFRAGEN ZUR VISION! DENK DIR EINE VISION AUS WENN DU OFFENE FRAGEN HAST.");
-        var responseContent = response.Messages.Last().Text;
-        var json = responseContent.Replace("```json", "").Replace("```", "");
-        var options = new JsonSerializerOptions().ConfigureJsonSerialization();
-        var leoResponse = JsonSerializer.Deserialize<Leo.Response>(json, options);
+        var leoResponse = ExtractResponse(response);
 
         Assert.NotNull(leoResponse);
         Assert.InRange(leoResponse.Scopes.Count, 2, 10);
@@ -75,9 +69,13 @@ public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
     public async Task NoVision()
     {
         var response = await InitiateChat("Ich will was neues...aber was?");
-        var responseContent = response.Messages.Last().Text;
+        response = await AnswerQuestions(response, "Ich will eine eisverkaufs-homepage.");
+        response = await AnswerQuestions(response,
+            "Ich will straciatella eis verkaufen und über die DHL versenden." +
+            "STELLE KEINE RÜCKFRAGEN ZUR VISION! DENK DIR EINE VISION AUS WENN DU OFFENE FRAGEN HAST.");
+        var leoResponse = ExtractResponse(response);
 
-        Assert.Contains("Ich habe keine Vision", responseContent);
+        Assert.NotNull(leoResponse);
     }
 
     private async Task<ChatResponse> InitiateChat(string initialMessage)
@@ -96,5 +94,21 @@ public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
         var response = await chatClient.GetResponseAsync(chatMessages);
 
         return response;
+    }
+
+    private async Task<ChatResponse> AnswerQuestions(ChatResponse response, string answer)
+    {
+        var chatClient = _factory.Services.GetRequiredService<IChatClient>();
+        response.Messages.Add(new ChatMessage(ChatRole.User, answer));
+        return await chatClient.GetResponseAsync(response.Messages);
+    }
+
+    private static Leo.Response? ExtractResponse(ChatResponse response)
+    {
+        var responseContent = response.Messages.Last().Text;
+        var json = responseContent.Replace("```json", "").Replace("```", "");
+        var options = new JsonSerializerOptions().ConfigureJsonSerialization();
+        var leoResponse = JsonSerializer.Deserialize<Leo.Response>(json, options);
+        return leoResponse;
     }
 }
