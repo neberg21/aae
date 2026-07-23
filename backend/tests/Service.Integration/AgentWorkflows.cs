@@ -33,7 +33,10 @@ public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
         var response = await chatClient.GetResponseAsync(chatMessages);
         var responseContent = response.Messages.Last().Text;
         var json = responseContent.Replace("```json", "").Replace("```", "");
-        var leoResponse = JsonSerializer.Deserialize<Leo.Response>(json);
+        var options = new JsonSerializerOptions().ConfigureJsonSerialization();
+        var leoResponse = JsonSerializer.Deserialize<Leo.Response>(json, options);
+        
+        Assert.NotNull(leoResponse);
         
         
     }
