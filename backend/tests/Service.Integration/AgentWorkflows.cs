@@ -8,6 +8,31 @@ using Xunit;
 
 namespace Service.Integration;
 
+public class ChatHistory
+{
+    private readonly List<ChatMessage> _messages = [];
+
+    public ChatHistory(IEnumerable<ChatMessage> chatMessages, ChatResponse response)
+    {
+        _messages.AddRange(chatMessages);
+        _messages.AddRange(response.Messages);
+    }
+
+    public ChatMessage CurrentMessage => _messages.Last();
+
+    public ChatHistory AddChatResponse(ChatResponse response)
+    {
+        _messages.AddRange(response.Messages);
+        return this;
+    }
+
+    public IEnumerable<ChatMessage> AddMessage(ChatMessage chatMessage)
+    {
+        _messages.Add(chatMessage);
+        return _messages;
+    }
+}
+
 public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _factory;
@@ -78,7 +103,7 @@ public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
         Assert.NotNull(leoResponse);
     }
 
-    private async Task<ChatResponse> InitiateChat(string initialMessage)
+    private async Task<ChatHistory> InitiateChat(string initialMessage)
     {
         var agentService = _factory.Services.GetRequiredService<CoreAgentService>();
         var leo = await agentService.GetLeo();
@@ -93,19 +118,21 @@ public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
         };
         var response = await chatClient.GetResponseAsync(chatMessages);
 
-        return response;
+        return new ChatHistory(chatMessages, response);
     }
 
-    private async Task<ChatResponse> AnswerQuestions(ChatResponse response, string answer)
+    private async Task<ChatHistory> AnswerQuestions(ChatHistory history, string answer)
     {
         var chatClient = _factory.Services.GetRequiredService<IChatClient>();
-        response.Messages.Add(new ChatMessage(ChatRole.User, answer));
-        return await chatClient.GetResponseAsync(response.Messages);
+        var chatMessage = new ChatMessage(ChatRole.User, answer);
+        var messages = history.AddMessage(chatMessage);
+        var response = await chatClient.GetResponseAsync(messages);
+        return history.AddChatResponse(response);
     }
 
-    private static Leo.Response? ExtractResponse(ChatResponse response)
+    private static Leo.Response? ExtractResponse(ChatHistory history)
     {
-        var responseContent = response.Messages.Last().Text;
+        var responseContent = history.CurrentMessage.Text;
         var json = responseContent.Replace("```json", "").Replace("```", "");
         var options = new JsonSerializerOptions().ConfigureJsonSerialization();
         var leoResponse = JsonSerializer.Deserialize<Leo.Response>(json, options);
