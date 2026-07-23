@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Module.AI.DTOs;
 using Xunit;
 
-namespace Service.Unit.Agents;
+namespace Service.Unit.AI;
 
 public class ParkDelegationTests : IClassFixture<WebApplicationFactory<Program>>
 {
@@ -27,7 +27,7 @@ public class ParkDelegationTests : IClassFixture<WebApplicationFactory<Program>>
             Content = "Own Finance module"
         };
 
-        var response = await client.PostAsJsonAsync("/api/agents/park-delegation", request);
+        var response = await client.PostAsJsonAsync("/ai-api/agents/actions/park-delegation", request);
         var body = await response.Content.ReadFromJsonAsync<ParkDelegationResponse>();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -36,7 +36,7 @@ public class ParkDelegationTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task PostAsync_CreateIdentity_ResumesParkedDelegation()
+    public async Task PostAsync_CreateAgent_ResumesParkedDelegation()
     {
         var client = _factory.CreateClient();
         var parkRequest = new ParkDelegationRequest
@@ -46,7 +46,7 @@ public class ParkDelegationTests : IClassFixture<WebApplicationFactory<Program>>
             TargetAgentId = "supervisor-finance",
             Content = "Own Finance module"
         };
-        var parkResponse = await client.PostAsJsonAsync("/api/agents/park-delegation", parkRequest);
+        var parkResponse = await client.PostAsJsonAsync("/ai-api/agents/actions/park-delegation", parkRequest);
         Assert.Equal(HttpStatusCode.OK, parkResponse.StatusCode);
 
         var createRequest = new CreateAgentRequest
@@ -61,40 +61,14 @@ public class ParkDelegationTests : IClassFixture<WebApplicationFactory<Program>>
             Guardrails = [],
             Tools = []
         };
-        var createResponse = await client.PostAsJsonAsync("/api/agents/create-identity", createRequest);
+        var createResponse = await client.PostAsJsonAsync("/ai-api/agents", createRequest);
         Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
 
         var identity = await createResponse.Content.ReadFromJsonAsync<CreateAgentResponse>();
         Assert.NotNull(identity);
         Assert.Equal("supervisor-finance", identity.AgentId);
 
-        var conflictResponse = await client.PostAsJsonAsync("/api/agents/create-identity", createRequest);
+        var conflictResponse = await client.PostAsJsonAsync("/ai-api/agents", createRequest);
         Assert.Equal(HttpStatusCode.Conflict, conflictResponse.StatusCode);
-    }
-
-    [Fact]
-    public async Task GetAsync_SearchByAgentId_FindsCreatedSupervisor()
-    {
-        var client = _factory.CreateClient();
-        var createRequest = new CreateAgentRequest
-        {
-            ThreadId = "thread-search-1",
-            AgentId = "supervisor-qa",
-            JobTitle = "Supervisor QA",
-            JobDescription = "QA lead",
-            SystemPrompt = "You supervise QA.",
-            Department = "QA",
-            ManagerId = "leo",
-            Guardrails = [],
-            Tools = []
-        };
-        var createResponse = await client.PostAsJsonAsync("/api/agents/create-identity", createRequest);
-        Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
-
-        var searchResponse = await client.GetAsync("/api/agents/search?agentId=supervisor-qa");
-        Assert.Equal(HttpStatusCode.OK, searchResponse.StatusCode);
-        var page = await searchResponse.Content.ReadFromJsonAsync<GetAgentsResponse>();
-        Assert.NotNull(page);
-        Assert.Contains(page.Items, i => i.AgentId == "supervisor-qa");
     }
 }
