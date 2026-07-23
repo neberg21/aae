@@ -50,7 +50,7 @@ describe('LeoChatPage', () => {
     expect(await screen.findByText('Hallo, ich bin Leo.')).toBeInTheDocument()
   })
 
-  it('shows an error when the webhook call fails', async () => {
+  it('shows an error when the backend call fails', async () => {
     const user = userEvent.setup()
     sendLeoMessageMock.mockRejectedValue(new Error('Webhook unavailable'))
 

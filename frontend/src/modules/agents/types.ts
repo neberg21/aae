@@ -47,7 +47,7 @@ export type ThreadsPage = {
 
 export type ThreadMessage = {
   sender: string
-  receiver: string
+  receiver: string | null
   content: string
   createdAt: string
 }

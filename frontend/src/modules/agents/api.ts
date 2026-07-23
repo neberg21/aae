@@ -7,8 +7,9 @@ import type {
   ThreadsPage,
 } from './types'
 
-const n8nUrl = 'https://convenient-nonie-neberg-ad5744ad.koyeb.app/webhook'
-const leoWebhookUrl = `${n8nUrl}/leo-think`
+const apiBaseUrl = '/ai-api'
+const leoAgentId = 'leo'
+const defaultSenderAgentId = 'helga'
 
 export class ApiError extends Error {
   readonly status: number
@@ -27,62 +28,70 @@ async function readJson<T>(response: Response): Promise<T> {
   return (await response.json()) as T
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+function toNumber(value: number | string): number {
+  if (typeof value === 'number') {
+    return value
+  }
+
+  const parsed = Number.parseInt(value, 10)
+  return Number.isFinite(parsed) ? parsed : 0
 }
 
-function extractLeoResponseText(payload: unknown): string | null {
-  if (typeof payload === 'string') {
-    const value = payload.trim()
-    return value.length > 0 ? value : null
+function normalizeAgentsPage(page: {
+  items: AgentsPage['items']
+  totalCount: number | string
+  pageSize: number | string
+  pageNumber: number | string
+  totalPages: number | string
+}): AgentsPage {
+  return {
+    items: page.items,
+    totalCount: toNumber(page.totalCount),
+    pageSize: toNumber(page.pageSize),
+    pageNumber: toNumber(page.pageNumber),
+    totalPages: toNumber(page.totalPages),
   }
+}
 
-  if (typeof payload === 'number' || typeof payload === 'boolean') {
-    return String(payload)
+function normalizeThreadsPage(page: {
+  items: Array<{
+    threadId: string
+    createdAt: string
+    updatedAt: string
+    messageCount: number | string
+  }>
+  totalCount: number | string
+  pageSize: number | string
+  pageNumber: number | string
+  totalPages: number | string
+}): ThreadsPage {
+  return {
+    items: page.items.map((item) => ({
+      ...item,
+      messageCount: toNumber(item.messageCount),
+    })),
+    totalCount: toNumber(page.totalCount),
+    pageSize: toNumber(page.pageSize),
+    pageNumber: toNumber(page.pageNumber),
+    totalPages: toNumber(page.totalPages),
   }
+}
 
-  if (Array.isArray(payload)) {
-    const parts = payload
-      .map((item) => extractLeoResponseText(item))
-      .filter((item): item is string => Boolean(item))
-
-    return parts.length > 0 ? parts.join('\n\n') : null
-  }
-
-  if (!isRecord(payload)) {
-    return null
-  }
-
-  const preferredKeys = ['reply', 'response', 'message', 'output', 'text', 'content', 'answer']
-  for (const key of preferredKeys) {
-    const candidate = extractLeoResponseText(payload[key])
-    if (candidate) {
-      return candidate
-    }
-  }
-
-  const nestedKeys = ['data', 'result', 'body']
-  for (const key of nestedKeys) {
-    const candidate = extractLeoResponseText(payload[key])
-    if (candidate) {
-      return candidate
-    }
-  }
-
-  for (const value of Object.values(payload)) {
-    const candidate = extractLeoResponseText(value)
-    if (candidate) {
-      return candidate
-    }
-  }
-
-  return null
+function createThreadId() {
+  return `thread-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 }
 
 export async function getAgents(): Promise<AgentsPage> {
-  const url = '/api/agents';
+  const url = `${apiBaseUrl}/agents`
   const response = await fetch(url)
-  return readJson<AgentsPage>(response);
+  const page = await readJson<{
+    items: AgentsPage['items']
+    totalCount: number | string
+    pageSize: number | string
+    pageNumber: number | string
+    totalPages: number | string
+  }>(response)
+  return normalizeAgentsPage(page)
 }
 
 export async function searchAgents(filters: AgentSearchFilters): Promise<AgentsPage> {
@@ -92,23 +101,42 @@ export async function searchAgents(filters: AgentSearchFilters): Promise<AgentsP
   if (filters.jobTitle?.trim()) params.set('jobTitle', filters.jobTitle.trim())
 
   const query = params.toString()
-  const url = query ? `/api/agents/search?${query}` : '/api/agents/search'
+  const url = query ? `${apiBaseUrl}/agents/search?${query}` : `${apiBaseUrl}/agents/search`
   const response = await fetch(url)
-  return readJson<AgentsPage>(response)
+  const page = await readJson<{
+    items: AgentsPage['items']
+    totalCount: number | string
+    pageSize: number | string
+    pageNumber: number | string
+    totalPages: number | string
+  }>(response)
+  return normalizeAgentsPage(page)
 }
 
 export async function getAgent(id: string): Promise<AgentDetail> {
-  const response = await fetch(`/api/agents/${encodeURIComponent(id)}`)
+  const response = await fetch(`${apiBaseUrl}/agents/${encodeURIComponent(id)}`)
   return readJson<AgentDetail>(response)
 }
 
 export async function getThreads(): Promise<ThreadsPage> {
-  const response = await fetch('/api/agents/threads')
-  return readJson<ThreadsPage>(response)
+  const response = await fetch(`${apiBaseUrl}/threads`)
+  const page = await readJson<{
+    items: Array<{
+      threadId: string
+      createdAt: string
+      updatedAt: string
+      messageCount: number | string
+    }>
+    totalCount: number | string
+    pageSize: number | string
+    pageNumber: number | string
+    totalPages: number | string
+  }>(response)
+  return normalizeThreadsPage(page)
 }
 
 export async function getThread(threadId: string): Promise<ThreadDetail> {
-  const response = await fetch(`/api/agents/threads/${encodeURIComponent(threadId)}`)
+  const response = await fetch(`${apiBaseUrl}/threads/${encodeURIComponent(threadId)}`)
   return readJson<ThreadDetail>(response)
 }
 
@@ -122,40 +150,31 @@ export async function sendLeoMessage(
     throw new Error('Message is required')
   }
 
-  const transcript = [...history, { role: 'user' as const, content: trimmedMessage }]
-  const response = await fetch(leoWebhookUrl, {
+  const requestedThreadId = threadId ?? createThreadId()
+  const response = await fetch(`${apiBaseUrl}/agents/actions/route-chat-message`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Accept: 'application/json, text/plain;q=0.9, */*;q=0.8',
     },
     body: JSON.stringify({
-      agentId: 'leo',
-      threadId,
-      message: trimmedMessage,
-      input: trimmedMessage,
-      text: trimmedMessage,
-      prompt: trimmedMessage,
-      chatInput: trimmedMessage,
-      history,
-      messages: transcript,
+      threadId: requestedThreadId,
+      senderAgentId: defaultSenderAgentId,
+      targetAgentId: leoAgentId,
+      content: trimmedMessage,
     }),
   })
 
-  if (!response.ok) {
-    throw new ApiError(response.status, response.statusText || `HTTP ${response.status}`)
+  const routeResult = await readJson<{ threadId: string }>(response)
+  const resolvedThread = await getThread(routeResult.threadId)
+  const lastReply = [...resolvedThread.messages]
+    .reverse()
+    .find((entry) => entry.sender.toLowerCase() !== defaultSenderAgentId && entry.content.trim().length > 0)
+
+  if (lastReply) {
+    return lastReply.content
   }
 
-  const contentType = response.headers.get('content-type') ?? ''
-  const payload = contentType.includes('application/json')
-    ? ((await response.json()) as unknown)
-    : await response.text()
-
-  const reply = extractLeoResponseText(payload)
-  if (!reply) {
-    throw new Error('Leo returned an empty response')
-  }
-
-  return reply
+  const lastKnownMessage = history.at(-1)?.content
+  return lastKnownMessage ?? 'Message sent to Leo.'
 }
 

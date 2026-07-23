@@ -57,7 +57,7 @@ export default function LeoChatPage() {
         <p className="font-semibold">Leo is ready.</p>
         <p className="mt-1 text-violet-900/80 dark:text-violet-100/80">
           Ask questions, describe a task, or continue a thread. The page keeps the local
-          conversation history and sends it to the configured Leo webhook using a thread id.
+          conversation history and routes your message through the default backend using a thread id.
         </p>
       </section>
 

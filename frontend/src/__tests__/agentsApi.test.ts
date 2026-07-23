@@ -32,7 +32,7 @@ describe('agents api', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const url = String(fetchMock.mock.calls[0][0])
-    expect(url).toBe('/api/agents/search?name=Leo')
+    expect(url).toBe('/ai-api/agents/search?name=Leo')
   })
 
   it('getAgents calls the list endpoint', async () => {
@@ -51,7 +51,7 @@ describe('agents api', () => {
     await getAgents()
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(fetchMock).toHaveBeenCalledWith('/api/agents')
+    expect(fetchMock).toHaveBeenCalledWith('/ai-api/agents')
   })
 
   it('getAgent returns detail on success', async () => {
@@ -72,7 +72,7 @@ describe('agents api', () => {
 
     const agent = await getAgent('leo')
     expect(agent).toEqual(body)
-    expect(fetch).toHaveBeenCalledWith('/api/agents/leo')
+    expect(fetch).toHaveBeenCalledWith('/ai-api/agents/leo')
   })
 
   it('getAgent throws ApiError with status on failure', async () => {
@@ -116,7 +116,7 @@ describe('agents api', () => {
     )
 
     await expect(getThreads()).resolves.toEqual(body)
-    expect(fetch).toHaveBeenCalledWith('/api/agents/threads')
+    expect(fetch).toHaveBeenCalledWith('/ai-api/threads')
   })
 
   it('getThread calls the thread detail endpoint with encoding', async () => {
@@ -140,19 +140,38 @@ describe('agents api', () => {
     )
 
     await expect(getThread('thread/1')).resolves.toEqual(body)
-    expect(fetch).toHaveBeenCalledWith('/api/agents/threads/thread%2F1')
+    expect(fetch).toHaveBeenCalledWith('/ai-api/threads/thread%2F1')
   })
 
-  it('sendLeoMessage posts to the leo webhook with thread id and history', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      headers: {
-        get: () => 'application/json',
-      },
-      json: async () => ({
-        reply: 'Hello from Leo',
-      }),
-    })
+  it('sendLeoMessage routes via default backend and resolves Leo reply from thread messages', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          threadId: 'thread-123',
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          threadId: 'thread-123',
+          messages: [
+            {
+              sender: 'helga',
+              receiver: 'leo',
+              content: 'Hi Leo',
+              createdAt: '2026-07-23T08:00:00Z',
+            },
+            {
+              sender: 'leo',
+              receiver: 'helga',
+              content: 'Hello from Leo',
+              createdAt: '2026-07-23T08:00:01Z',
+            },
+          ],
+        }),
+      })
     vi.stubGlobal('fetch', fetchMock)
 
     const reply = await sendLeoMessage(
@@ -162,42 +181,19 @@ describe('agents api', () => {
     )
 
     expect(reply).toBe('Hello from Leo')
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(fetchMock).toHaveBeenCalledWith('https://convenient-nonie-neberg-ad5744ad.koyeb.app/webhook/leo-think', {
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/ai-api/agents/actions/route-chat-message', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Accept: 'application/json, text/plain;q=0.9, */*;q=0.8',
       },
       body: JSON.stringify({
-        agentId: 'leo',
         threadId: 'thread-123',
-        message: 'Hi Leo',
-        input: 'Hi Leo',
-        text: 'Hi Leo',
-        prompt: 'Hi Leo',
-        chatInput: 'Hi Leo',
-        history: [{ role: 'assistant', content: 'How can I help?' }],
-        messages: [
-          { role: 'assistant', content: 'How can I help?' },
-          { role: 'user', content: 'Hi Leo' },
-        ],
+        senderAgentId: 'helga',
+        targetAgentId: 'leo',
+        content: 'Hi Leo',
       }),
     })
-  })
-
-  it('sendLeoMessage falls back to plain text responses', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        headers: {
-          get: () => 'text/plain',
-        },
-        text: async () => 'Plain text from Leo',
-      }),
-    )
-
-    await expect(sendLeoMessage('Hi again')).resolves.toBe('Plain text from Leo')
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/ai-api/threads/thread-123')
   })
 })

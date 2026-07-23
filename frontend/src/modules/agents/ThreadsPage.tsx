@@ -191,7 +191,7 @@ export default function ThreadsPage() {
                             <span>
                               <span className="font-semibold text-gray-800 dark:text-gray-100">{message.sender}</span>
                               {' → '}
-                              <span className="font-semibold text-gray-800 dark:text-gray-100">{message.receiver}</span>
+                              <span className="font-semibold text-gray-800 dark:text-gray-100">{message.receiver ?? 'all'}</span>
                             </span>
                             <time dateTime={message.createdAt}>{formatDateTime(message.createdAt)}</time>
                           </div>
