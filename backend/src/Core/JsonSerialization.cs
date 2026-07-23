@@ -9,7 +9,7 @@ public static class JsonSerialization
     {
         options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         options.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
-        options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.KebabCaseUpper));
+        options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseUpper));
         return options;
     }
 }
