@@ -1,4 +1,5 @@
-﻿using Core;
+﻿using System.Threading.Channels;
+using Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,6 +20,9 @@ public class ChatsModule : IModule
         services.AddScoped<ChatService>();
         services.AddScoped<LeoChatService>();
         services.AddScoped<HelgaChatService>();
+
+        var channel = Channel.CreateUnbounded<Vision>();
+        services.AddSingleton(channel);
 
         var httpClient = new HttpClient
         {
@@ -49,6 +53,7 @@ public class ChatsModule : IModule
         var chat = await chatService.CreateVision(request);
         return Results.Ok(chat);
     }
+
     private async Task<IResult> RecruitEmployee(
         [FromBody] RecruitEmployeeRequest request, ChatService chatService)
     {

@@ -1,8 +1,8 @@
-﻿using System.Text.Json;
+﻿using Module.AI.Chat;
 
 namespace Module.AI.DTOs;
 
 public record RecruitEmployeeResponse(string ThreadId, string Content)
 {
-    public JsonElement? Object { get; init; }
+    public RecruitingResponse? Recruited { get; init; }
 }

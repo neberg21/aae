@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using Microsoft.Extensions.AI;
+﻿using Microsoft.Extensions.AI;
 using Module.AI.DTOs;
 using Module.AI.Persistence;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
@@ -40,7 +39,7 @@ public class ChatService
             vision.AddMessage(finalMessage);
             return new CreateVisionResponse(vision.ThreadId, vision.CurrentMessage)
             {
-                Object = response.ToJsonElement()
+                Vision = response
             };
         }
     }
@@ -62,7 +61,7 @@ public class ChatService
         chatHistory.AddMessage(finalMessage);
         return new RecruitEmployeeResponse(response.ThreadId, chatHistory.CurrentMessage)
         {
-            Object = response.ToJsonElement()
+            Recruited = response
         };
     }
 
