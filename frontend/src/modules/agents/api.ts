@@ -168,6 +168,7 @@ export async function sendLeoMessage(
     reply,
     done: payload.vision !== null && payload.vision !== undefined,
     vision: payload.vision ?? null,
+    chatMessages: payload.chatMessages ?? [],
   }
 }
 

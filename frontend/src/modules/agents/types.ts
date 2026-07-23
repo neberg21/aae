@@ -63,6 +63,7 @@ export type CreateVisionResponse = {
   threadId: string
   content: string
   vision?: VisionObject | null
+  chatMessages?: ThreadMessage[]
 }
 
 export type LeoChatResult = {
@@ -70,5 +71,6 @@ export type LeoChatResult = {
   reply: string
   done: boolean
   vision: VisionObject | null
+  chatMessages: ThreadMessage[]
 }
 

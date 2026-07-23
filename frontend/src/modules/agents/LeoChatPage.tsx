@@ -21,7 +21,6 @@ export default function LeoChatPage() {
     }
 
     const history = [...messages]
-    setMessages((current) => [...current, { role: 'user', content: message }])
     setDraft('')
     setError(null)
     setStatus('sending')
@@ -29,7 +28,15 @@ export default function LeoChatPage() {
     try {
       const result = await sendLeoMessage(message, history, threadIdRef.current ?? undefined)
       threadIdRef.current = result.threadId
-      setMessages((current) => [...current, { role: 'assistant', content: result.reply }])
+
+      // Convert chatMessages from API format to UI format
+      const convertedMessages: ChatMessage[] = result.chatMessages.map((msg) => ({
+        role: msg.sender === 'user' || msg.sender === 'You' ? 'user' : 'assistant',
+        content: msg.content,
+      }))
+
+      // Replace ALL messages with the ones from the API
+      setMessages(convertedMessages)
       setStatus(result.done ? 'done' : 'idle')
     } catch (err) {
       setStatus('error')
