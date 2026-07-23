@@ -35,9 +35,6 @@ public class AgentsModule : IModule
 
         endpoints.MapGet("", GetAgents)
             .Produces<GetAgentsResponse>();
-        endpoints.MapPost("", CreateAgent)
-            .Accepts<CreateAgentRequest>("application/json")
-            .Produces<CreateAgentResponse>();
         endpoints.MapGet("{agentId}", GetAgent)
             .Produces<GetAgentByIdResponse>();
         endpoints.MapGet("search", SearchAgents7)
@@ -79,19 +76,6 @@ public class AgentsModule : IModule
             agentId, name, department, jobTitle);
 
         return Results.Ok(page);
-    }
-
-    private static async Task<IResult> CreateAgent(
-        [FromBody] CreateAgentRequest request,
-        CreateAgentService agentService)
-    {
-        var res = await agentService.CreateAgent(request);
-        if (res is null)
-        {
-            return Results.Conflict();
-        }
-
-        return Results.Ok(res);
     }
 
     private static async Task<IResult> ParkDelegation(
