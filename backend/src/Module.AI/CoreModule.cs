@@ -17,7 +17,9 @@ public class CoreModule : IModule
     {
         services.AddSingleton<AppDbContext>();
         services.AddScoped<ChatHub>();
+
         services.AddScoped<NostrEventService>();
+        services.AddScoped<ProfileGenerator>();
 
         services.AddScoped<Faker>(_ => new Faker("de"));
     }

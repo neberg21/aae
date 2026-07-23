@@ -1,6 +1,6 @@
-﻿using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Module.AI.DTOs;
+﻿using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Module.AI.AI;
 using Xunit;
 
 namespace Service.Integration;
@@ -14,21 +14,14 @@ public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
         _factory = factory;
     }
 
+    [Fact]
     public async Task CreateEmployeeAsync()
     {
-        var agent = await GetLeo();
-        var leoPrompt = agent.SystemPrompt;
+        var agentService = _factory.Services.GetRequiredService<CoreAgentService>();
+        var leo = await agentService.GetLeo();
+        var leoPrompt = leo.SystemPrompt;
         const string url = "https://api.nano-gpt.com/api/v1";
         const string testApiKey = "sk-nano-1b0ff19f-026f-4775-a946-46254d6f8ebd";
-    }
-
-    private async Task<GetAgentByIdResponse> GetLeo()
-    {
-        var httpClient = _factory.CreateClient();
-        var response = await httpClient.GetAsync($"ai-api/agents/leo");
-        var agent = await response.Content.ReadFromJsonAsync<GetAgentByIdResponse>();
-
-        Assert.NotNull(agent);
-        return agent;
+        
     }
 }

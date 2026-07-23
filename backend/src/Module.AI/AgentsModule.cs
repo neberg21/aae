@@ -19,11 +19,12 @@ public class AgentsModule : IModule
         services.AddHostedService<SeedCoreAgents>();
         services.AddHostedService<ListenOnMessages>();
 
+        services.AddSingleton<CoreAgentService>();
+
         services.AddScoped<GetAgentByIdService>();
         services.AddScoped<SearchIdentityService>();
         services.AddScoped<CreateAgentService>();
         services.AddScoped<ParkDelegationService>();
-        services.AddScoped<ProfileGenerator>();
         services.AddHttpClient<RouteChatMessageService>();
         services.AddScoped<RouteChatMessageService>();
     }
