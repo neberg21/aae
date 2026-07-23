@@ -20,7 +20,7 @@ public class HelgaWorkflows : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task GetResponse_SingleScope_ReturnsSingleScope()
     {
-        var chatHistory = await _leoChatService.InitiateChat(
+        var chatHistory = await _leoChatService.CreateVision(
             "Yo moin, ich hätt gerne ein neues DnD Storyteller tool. " +
             "STELLE KEINE RÜCKFRAGEN ZUR VISION! DENK DIR EINE VISION AUS WENN DU OFFENE FRAGEN HAST.");
 

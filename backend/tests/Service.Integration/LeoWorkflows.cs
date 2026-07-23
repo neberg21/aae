@@ -40,7 +40,7 @@ public class LeoWorkflows : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task GetResponse_SingleScope_ReturnsSingleScope()
     {
-        var chatHistory = await _leoChatService.InitiateChat(
+        var chatHistory = await _leoChatService.CreateVision(
             "Yo moin, ich hätt gerne ein neues DnD Storyteller tool. " +
             "STELLE KEINE RÜCKFRAGEN ZUR VISION! DENK DIR EINE VISION AUS WENN DU OFFENE FRAGEN HAST.");
 
@@ -51,7 +51,7 @@ public class LeoWorkflows : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task GetResponse_MultipleScopes_ReturnsMultipleScopes()
     {
-        var chatHistory = await _leoChatService.InitiateChat(
+        var chatHistory = await _leoChatService.CreateVision(
             "Yo moin, ich hätt gerne " +
             "ein neues DnD Storyteller tool und " +
             "etwas zum rasen mäßen aber auch " +
@@ -65,7 +65,7 @@ public class LeoWorkflows : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task GetResponse_NoVision_ConversationResultsInVision()
     {
-        var chatHistory = await _leoChatService.InitiateChat("Ich will was neues...aber was?");
+        var chatHistory = await _leoChatService.CreateVision("Ich will was neues...aber was?");
         chatHistory = await _leoChatService.AnswerQuestions(chatHistory, "Ich will eine eisverkaufs-homepage.");
         chatHistory = await _leoChatService.AnswerQuestions(chatHistory,
             "Ich will straciatella eis verkaufen und über die DHL versenden." +

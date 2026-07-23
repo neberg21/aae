@@ -16,7 +16,7 @@ public partial class LeoChatService
         _chatClient = chatClient;
     }
 
-    public async Task<ChatHistory> InitiateChat(string initialMessage)
+    public async Task<ChatHistory> CreateVision(string initialMessage)
     {
         var leo = await _coreAgentService.GetLeo();
         var leoPrompt = leo.SystemPrompt;
