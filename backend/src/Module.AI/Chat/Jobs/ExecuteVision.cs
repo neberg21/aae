@@ -1,5 +1,4 @@
-﻿using System.Threading.Channels;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Module.AI.DTOs;
