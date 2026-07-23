@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.AI;
+﻿using System.Threading.Channels;
+using Microsoft.Extensions.AI;
 using Module.AI.DTOs;
 using Module.AI.Persistence;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
@@ -10,12 +11,18 @@ public class ChatService
     private readonly AppDbContext _dbContext;
     private readonly LeoChatService _leoChatService;
     private readonly HelgaChatService _helgaChatService;
+    private readonly Channel<Vision> _visionChannel;
 
-    public ChatService(AppDbContext dbContext, LeoChatService leoChatService, HelgaChatService helgaChatService)
+    public ChatService(
+        AppDbContext dbContext,
+        LeoChatService leoChatService,
+        HelgaChatService helgaChatService,
+        Channel<Vision> visionChannel)
     {
         _dbContext = dbContext;
         _leoChatService = leoChatService;
         _helgaChatService = helgaChatService;
+        _visionChannel = visionChannel;
     }
 
     public async Task<CreateVisionResponse> CreateVision(CreateVisionRequest request)
@@ -37,6 +44,7 @@ public class ChatService
 
             var finalMessage = new ChatMessage(ChatRole.Assistant, $"Created vision: {response.UserVision}");
             vision.AddMessage(finalMessage);
+            _visionChannel.Writer.TryWrite(response);
             return new CreateVisionResponse(vision.ThreadId, vision.CurrentMessage)
             {
                 Vision = response
