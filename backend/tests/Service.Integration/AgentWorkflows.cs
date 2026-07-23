@@ -18,18 +18,19 @@ public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task DeserializeLeoResponse()
+    public void Deserialize_HrRequest_ReturnsLeoResponse()
     {
         const string example =
             """
             {
-              "threadId" : "019f8e6ed90b",
-              "delegations" : [ {
-                "targetAgentId" : "helga",
-                "intent" : "HR_REQUEST",
-                "message" : "We need a supervisor for the Gaming module to handle a new DnD Storyteller tool vision.",
-                "moduleScope" : "Module.Gaming"
-              } ]
+              "threadId": "019f8e7e13c9",
+              "userVision": "Yo moin, ich hätt gerne ein neues DnD Storyteller tool",
+              "scopes": [
+                {
+                  "supervisor": "supervisor-gaming",
+                  "message": "The user would like to create a new DnD Storyteller tool. Please consider how to approach building a tool that supports storytelling within the Dungeons and Dragons gaming context, focusing on features that enhance user experience and creativity."
+                }
+              ]
             }
             """;
         var options = new JsonSerializerOptions().ConfigureJsonSerialization();
