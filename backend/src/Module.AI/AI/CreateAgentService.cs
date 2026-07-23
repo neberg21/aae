@@ -69,7 +69,7 @@ public class CreateAgentService
             JobDescription = request.JobDescription,
             SystemPrompt = request.SystemPrompt,
             Department = request.Department,
-            ManagerId = request.ManagerId,
+            ManagerId = request.SupervisorId,
             Guardrails = request.Guardrails
         };
 

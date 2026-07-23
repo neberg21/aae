@@ -27,7 +27,7 @@ public class SearchAgentTests : IClassFixture<WebApplicationFactory<Program>>
             JobDescription = "QA lead",
             SystemPrompt = "You supervise QA.",
             Department = "QA",
-            ManagerId = "leo",
+            SupervisorId = "leo",
             Guardrails = [],
             Tools = []
         };

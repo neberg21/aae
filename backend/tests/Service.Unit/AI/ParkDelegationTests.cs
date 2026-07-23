@@ -57,7 +57,7 @@ public class ParkDelegationTests : IClassFixture<WebApplicationFactory<Program>>
             JobDescription = "Hire finance supervisor",
             SystemPrompt = "You supervise Finance.",
             Department = "Operations",
-            ManagerId = "leo",
+            SupervisorId = "leo",
             Guardrails = [],
             Tools = []
         };

@@ -27,7 +27,7 @@ public class CreateAgentTests : IClassFixture<WebApplicationFactory<Program>>
             JobDescription = "I am a software engineer",
             SystemPrompt = "You are a helpful assistant.",
             Department = "Development",
-            ManagerId = null,
+            SupervisorId = null,
             Guardrails = [],
             Tools = []
         };

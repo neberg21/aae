@@ -2,7 +2,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Module.AI.AI;
 using Module.AI.DTOs;
+using Module.AI.Persistence;
 
 namespace Module.AI.Chat;
 
@@ -30,8 +32,9 @@ public class RecruitingJob : BackgroundService
                 {
                     var serviceProvider = _serviceProvider.CreateScope().ServiceProvider;
                     var chatService = serviceProvider.GetRequiredService<ChatService>();
+                    var agentService = serviceProvider.GetRequiredService<CreateAgentService>();
                     var vision = await _channel.Reader.ReadAsync(stoppingToken);
-                    await HandleVision(vision, chatService);
+                    await HandleVision(vision, chatService, agentService);
                 }
             }
             catch (Exception exception)
@@ -41,7 +44,7 @@ public class RecruitingJob : BackgroundService
         }
     }
 
-    private async Task HandleVision(Vision vision, ChatService chatService)
+    private async Task HandleVision(Vision vision, ChatService chatService, CreateAgentService agentService)
     {
         _logger.LogInformation("Processing vision: {Vision}", vision);
 
@@ -65,8 +68,7 @@ public class RecruitingJob : BackgroundService
 
             if (recruited.Status == RecruitingStatus.Ready)
             {
-                _logger.LogInformation("Recruited agent: {AgentId} in {ThreadId}", recruited.Agent.AgentId,
-                    vision.ThreadId);
+                await CreateNewAgent(vision, agentService, recruited);
             }
             else
             {
@@ -74,5 +76,26 @@ public class RecruitingJob : BackgroundService
                     recruited.Status);
             }
         }
+    }
+
+    private async Task CreateNewAgent(Vision vision, CreateAgentService agentService, RecruitingResponse recruited)
+    {
+        var recruitingAgent = recruited.Agent;
+        var createAgentRequest = new CreateAgentRequest
+        {
+            ThreadId = recruited.ThreadId,
+            AgentId = recruitingAgent.AgentId,
+            JobTitle = recruitingAgent.JobTitle,
+            JobDescription = recruitingAgent.JobDescription,
+            Department = recruitingAgent.Department,
+            SupervisorId = recruitingAgent.SupervisorId,
+            SystemPrompt = recruitingAgent.SystemPrompt,
+            Guardrails = [],
+            Tools = []
+        };
+        await agentService.CreateAgent(createAgentRequest);
+
+        _logger.LogInformation("Recruited agent: {AgentId} in {ThreadId}", recruitingAgent.AgentId,
+            vision.ThreadId);
     }
 }
