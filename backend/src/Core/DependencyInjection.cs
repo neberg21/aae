@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -27,7 +26,7 @@ public static class DependencyInjection
 
         var mvcBuilder = services
             .AddControllers()
-            .AddJsonOptions(options => ConfigureJsonSerialization(options.JsonSerializerOptions));
+            .AddJsonOptions(options => options.JsonSerializerOptions.ConfigureJsonSerialization());
         mvcBuilder.ConfigureApplicationPartManager(manager =>
         {
             foreach (var part in GetModuleParts(modules))
@@ -43,7 +42,7 @@ public static class DependencyInjection
             }
         });
 
-        services.ConfigureHttpJsonOptions(options => ConfigureJsonSerialization(options.SerializerOptions));
+        services.ConfigureHttpJsonOptions(options => options.SerializerOptions.ConfigureJsonSerialization());
         services.AddSignalR();
 
         return services;
@@ -92,12 +91,5 @@ public static class DependencyInjection
             var part = new AssemblyPart(assembly);
             yield return part;
         }
-    }
-
-    private static void ConfigureJsonSerialization(JsonSerializerOptions options)
-    {
-        options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        options.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
-        options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.KebabCaseUpper));
     }
 }

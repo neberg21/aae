@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc.Testing;
+﻿using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Module.AI.AI;
+using Module.AI.AI.Personas;
 using Xunit;
 
 namespace Service.Integration;
@@ -20,8 +23,18 @@ public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
         var agentService = _factory.Services.GetRequiredService<CoreAgentService>();
         var leo = await agentService.GetLeo();
         var leoPrompt = leo.SystemPrompt;
-        const string url = "https://api.nano-gpt.com/api/v1";
-        const string testApiKey = "sk-nano-1b0ff19f-026f-4775-a946-46254d6f8ebd";
+        var chatClient = _factory.Services.GetRequiredService<IChatClient>();
+
+        var chatMessages = new List<ChatMessage>
+        {
+            new(ChatRole.System, leoPrompt),
+            new(ChatRole.User, "Yo moin, ich hätt gerne ein neues DnD Storyteller tool")
+        };
+        var response = await chatClient.GetResponseAsync(chatMessages);
+        var responseContent = response.Messages.Last().Text;
+        var json = responseContent.Replace("```json", "").Replace("```", "");
+        var leoResponse = JsonSerializer.Deserialize<Leo.Response>(json);
+        
         
     }
 }

@@ -22,6 +22,16 @@ public class CoreModule : IModule
         services.AddScoped<ProfileGenerator>();
 
         services.AddScoped<Faker>(_ => new Faker("de"));
+
+        var httpClient = new HttpClient
+        {
+            BaseAddress = new Uri("https://api.nano-gpt.com/v1/")
+        };
+        services.AddOpenAIChatClient(
+            "gpt-4o",
+            "sk-nano-1b0ff19f-026f-4775-a946-46254d6f8ebd",
+            httpClient: httpClient
+        );
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
