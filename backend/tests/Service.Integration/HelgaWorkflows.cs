@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Module.AI.AI.Personas;
 using Module.AI.Chat;
 using Xunit;
 
@@ -29,12 +28,11 @@ public class HelgaWorkflows : IClassFixture<WebApplicationFactory<Program>>
 
         foreach (var scope in response.Scopes)
         {
-            var request = new Helga.Request(response.ThreadId, response.AgentId, scope.SupervisorId, scope.Message);
+            var request = new RecruitingRequest(response.ThreadId, response.AgentId, scope.SupervisorId, scope.Message);
             var history = await _helgaChatService.Recruit(request);
 
             Assert.True(_helgaChatService.TryGetResponse(history, out var recruiting));
-            Assert.Equal(Helga.HelgaStatus.Ready, recruiting.Status);
-            
+            Assert.Equal(RecruitingStatus.Ready, recruiting.Status);
         }
     }
 }

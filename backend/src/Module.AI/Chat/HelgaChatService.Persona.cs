@@ -1,6 +1,33 @@
-﻿namespace Module.AI.AI.Personas;
+﻿namespace Module.AI.Chat;
 
-public class Helga
+public record RecruitingRequest(string ThreadId, string SupervisorId, string AgentId, string Message);
+
+public record RecruitingResponse(string ThreadId, RecruitingStatus Status, RecruitingAgent Agent);
+
+public enum RecruitingStatus
+{
+    NeedsClarification,
+    Ready
+}
+
+public record RecruitingAgent(
+    string AgentId,
+    string JobTitle,
+    string JobDescription,
+    string Department,
+    string SystemPrompt,
+    string[] Guardrails,
+    string SupervisorId);
+
+public enum HelgaDepartment
+{
+    Frontend,
+    Backend,
+    Operations,
+    Qa
+}
+
+public partial class HelgaChatService
 {
     public const string SystemPrompt =
         """
@@ -27,7 +54,7 @@ public class Helga
         - Use `supervisor-*` and `specialist-*` agent ids.
         - Infer sensible defaults from module scope + role when details are missing but still sufficient to create.
         - Reply with JSON only. No markdown fences. No prose outside JSON.
-        
+
         ## Output schema
 
         ```json
@@ -47,31 +74,4 @@ public class Helga
         }
         ```
         """;
-
-    public record Request(string ThreadId, string SupervisorId, string AgentId, string Message);
-
-    public record Response(string ThreadId, HelgaStatus Status, HelgaAgent Agent);
-
-    public enum HelgaStatus
-    {
-        NeedsClarification,
-        Ready
-    }
-
-    public record HelgaAgent(
-        string AgentId,
-        string JobTitle,
-        string JobDescription,
-        string Department,
-        string SystemPrompt,
-        string[] Guardrails,
-        string SupervisorId);
-    
-    public enum HelgaDepartment
-    {
-        Frontend,
-        Backend,
-        Operations,
-        Qa
-    }
 }

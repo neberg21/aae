@@ -1,6 +1,10 @@
-﻿namespace Module.AI.AI.Personas;
+﻿namespace Module.AI.Chat;
 
-public class Leo
+public record Vision(string ThreadId, string AgentId, string UserVision, IReadOnlyList<VisionScope> Scopes);
+
+public record VisionScope(string SupervisorId, string Message);
+
+public partial class LeoChatService
 {
     public const string SystemPrompt =
         """
@@ -33,7 +37,7 @@ public class Leo
         - Do not ask more than 5 questions per scope per chat session.
         - Ask one question after another.
         - If the user asks you to come up with a vision or to stop asking them question, do so - create a vision and stop asking questions.
-        
+
         ## Output schema
 
         ```json
@@ -50,8 +54,4 @@ public class Leo
         }
         ```
         """;
-
-    public record Response(string ThreadId, string AgentId, string UserVision, IReadOnlyList<Scope> Scopes);
-
-    public record Scope(string SupervisorId, string Message);
 }

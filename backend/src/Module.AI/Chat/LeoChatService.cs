@@ -2,11 +2,10 @@
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Module.AI.AI;
-using Module.AI.AI.Personas;
 
 namespace Module.AI.Chat;
 
-public class LeoChatService
+public partial class LeoChatService
 {
     private readonly CoreAgentService _coreAgentService;
     private readonly IChatClient _chatClient;
@@ -41,14 +40,14 @@ public class LeoChatService
         return history.AddChatResponse(response);
     }
 
-    public bool TryGetResponse(ChatHistory history, [NotNullWhen(true)] out Leo.Response? response)
+    public bool TryGetResponse(ChatHistory history, [NotNullWhen(true)] out Vision? response)
     {
         try
         {
             var responseContent = history.CurrentMessage.Text;
             var json = responseContent.Replace("```json", "").Replace("```", "");
             var options = new JsonSerializerOptions().ConfigureJsonSerialization();
-            response = JsonSerializer.Deserialize<Leo.Response>(json, options);
+            response = JsonSerializer.Deserialize<Vision>(json, options);
             return response is not null;
         }
         catch

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Module.AI.AI.Personas;
+using Module.AI.Chat;
 using Module.AI.Nostr;
 using Module.AI.Persistence;
 
@@ -52,7 +52,7 @@ public class SeedCoreAgents : BackgroundService
             Department = "Core",
             ManagerId = null,
             Guardrails = [],
-            SystemPrompt = Leo.SystemPrompt
+            SystemPrompt = LeoChatService.SystemPrompt
         };
     }
 
@@ -71,7 +71,7 @@ public class SeedCoreAgents : BackgroundService
             Department = "Core",
             ManagerId = "leo",
             Guardrails = [],
-            SystemPrompt = Helga.SystemPrompt
+            SystemPrompt = HelgaChatService.SystemPrompt
         };
     }
 }

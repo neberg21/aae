@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Module.AI.AI.Personas;
 using Module.AI.Chat;
 using Xunit;
 
@@ -34,7 +33,7 @@ public class LeoWorkflows : IClassFixture<WebApplicationFactory<Program>>
             }
             """;
         var options = new JsonSerializerOptions().ConfigureJsonSerialization();
-        var leoResponse = JsonSerializer.Deserialize<Leo.Response>(example, options);
+        var leoResponse = JsonSerializer.Deserialize<Vision>(example, options);
         Assert.NotNull(leoResponse);
     }
 
