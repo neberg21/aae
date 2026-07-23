@@ -17,16 +17,12 @@ public class AgentsModule : IModule
     public void RegisterServices(IServiceCollection services)
     {
         services.AddHostedService<SeedCoreAgents>();
-        services.AddHostedService<ListenOnMessages>();
 
         services.AddSingleton<CoreAgentService>();
 
         services.AddScoped<GetAgentByIdService>();
         services.AddScoped<SearchIdentityService>();
         services.AddScoped<CreateAgentService>();
-        services.AddScoped<ParkDelegationService>();
-        services.AddHttpClient<RouteChatMessageService>();
-        services.AddScoped<RouteChatMessageService>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -37,20 +33,13 @@ public class AgentsModule : IModule
             .Produces<GetAgentsResponse>();
         endpoints.MapGet("{agentId}", GetAgent)
             .Produces<GetAgentByIdResponse>();
-        endpoints.MapGet("search", SearchAgents7)
+        endpoints.MapGet("search", SearchAgents)
             .Produces<GetAgentsResponse>();
 
         var actions = endpoints.MapGroup("actions");
 
-        actions.MapPost("park-delegation", ParkDelegation)
-            .Accepts<ParkDelegationRequest>("application/json")
-            .Produces<ParkDelegationResponse>();
-        actions.MapPost("route-chat-message", RouteChatMessage)
-            .Accepts<RouteChatMessageRequest>("application/json")
-            .Produces<RouteChatMessageResponse>();
         actions.MapPost("await-request-approval", AwaitRequestApproval);
         actions.MapPost("resolve-request-approval", ResolveRequestApproval);
-        actions.MapPost("execute-tool", ExecuteTool);
     }
 
     private IResult GetAgents(SearchIdentityService searchIdentityService)
@@ -65,7 +54,7 @@ public class AgentsModule : IModule
         return result is null ? Results.NotFound() : Results.Ok(result);
     }
 
-    private IResult SearchAgents7(
+    private IResult SearchAgents(
         [FromQuery] string? agentId,
         [FromQuery] string? name,
         [FromQuery] string? department,
@@ -78,33 +67,12 @@ public class AgentsModule : IModule
         return Results.Ok(page);
     }
 
-    private static async Task<IResult> ParkDelegation(
-        [FromBody] ParkDelegationRequest request,
-        ParkDelegationService parkDelegationService)
-    {
-        var res = await parkDelegationService.Park(request);
-        return Results.Ok(res);
-    }
-
-    private static async Task<IResult> RouteChatMessage(
-        [FromBody] RouteChatMessageRequest request,
-        RouteChatMessageService routeChatMessageService)
-    {
-        var res = await routeChatMessageService.RouteChatMessage(request);
-        return Results.Ok(res);
-    }
-
     private IResult AwaitRequestApproval()
     {
         throw new NotImplementedException();
     }
 
     private IResult ResolveRequestApproval()
-    {
-        throw new NotImplementedException();
-    }
-
-    private IResult ExecuteTool()
     {
         throw new NotImplementedException();
     }

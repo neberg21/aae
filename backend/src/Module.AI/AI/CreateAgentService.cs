@@ -12,32 +12,26 @@ public class CreateAgentService
     private readonly Faker _faker;
     private readonly AppDbContext _dbContext;
     private readonly ProfileGenerator _profileGenerator;
-    private readonly ParkDelegationService _parkDelegationService;
-    private readonly RouteChatMessageService _routeChatMessageService;
 
     public CreateAgentService(
         ILogger<CreateAgentService> logger,
         Faker faker,
         AppDbContext dbContext,
-        ProfileGenerator profileGenerator,
-        ParkDelegationService parkDelegationService,
-        RouteChatMessageService routeChatMessageService)
+        ProfileGenerator profileGenerator)
     {
         _logger = logger;
         _faker = faker;
         _dbContext = dbContext;
         _profileGenerator = profileGenerator;
-        _parkDelegationService = parkDelegationService;
-        _routeChatMessageService = routeChatMessageService;
     }
 
-    public async Task<CreateAgentResponse?> CreateAgent(CreateAgentRequest request)
+    public async Task CreateAgent(CreateAgentRequest request)
     {
         var existing = _dbContext.Agents.FirstOrDefault(a =>
             a.AgentId.Equals(request.AgentId, StringComparison.OrdinalIgnoreCase));
         if (existing is not null)
         {
-            return null;
+            return;
         }
 
         var keyPair = NostrKeyPair.GenerateKeyPair();
@@ -50,11 +44,7 @@ public class CreateAgentService
             Name = profile.Name
         };
 
-        _logger.LogInformation("Identity created: {AgentId}, {Name}", res.AgentId, res.Name);
-        await AddResponseMessage(request.ThreadId, res);
-        await ExecuteParkedEntries(agent);
-
-        return res;
+        _logger.LogInformation("Agent created: {AgentId}, {Name}", res.AgentId, res.Name);
     }
 
     private async Task<Agent> CreateAgent(NostrProfile profile, NostrKeyPair keyPair, CreateAgentRequest request)
@@ -76,40 +66,5 @@ public class CreateAgentService
         _dbContext.Agents.Add(agent);
         await _dbContext.SaveChangesAsync();
         return agent;
-    }
-
-    private async Task AddResponseMessage(string threadId, CreateAgentResponse res)
-    {
-        var message = new ChatMessage
-        {
-            Receiver = "leo",
-            Sender = "helga",
-            ThreadId = threadId,
-            Content = $"Identity created successfully. AgentId: {res.AgentId}, Name: {res.Name}"
-        };
-        _dbContext.ChatMessages.Add(message);
-        await _dbContext.SaveChangesAsync();
-    }
-
-    private async Task ExecuteParkedEntries(Agent agent)
-    {
-        var parked = _parkDelegationService.DequeueByTargetAgentId(agent.AgentId);
-        foreach (var item in parked)
-        {
-            var routeRequest = new RouteChatMessageRequest
-            {
-                ThreadId = item.ThreadId,
-                SenderAgentId = item.SenderAgentId,
-                TargetAgentId = item.TargetAgentId,
-                Content = item.Content
-            };
-
-            await _routeChatMessageService.RouteChatMessage(routeRequest);
-            _logger.LogInformation(
-                "Parked entry executed: {ThreadId}, {SenderAgentId}, {TargetAgentId}",
-                item.ThreadId,
-                item.SenderAgentId,
-                item.TargetAgentId);
-        }
     }
 }

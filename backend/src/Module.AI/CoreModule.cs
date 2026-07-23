@@ -20,6 +20,8 @@ public class CoreModule : IModule
 
     private static void AddNostrServices(IServiceCollection services)
     {
+        services.AddHostedService<ListenOnMessages>();
+        
         services.AddScoped<NostrEventService>();
         services.AddScoped<ProfileGenerator>();
         services.AddScoped<Faker>(_ => new Faker("de"));
