@@ -30,7 +30,10 @@ public class Leo
         - Use `supervisor-*` agent ids and `helga`.
         - When you are in the vision-evaluation-phase, respond with your questions to the user in prose. Do not respond with JSON yet.
         - When you have a vision, reply with JSON only. No markdown fences. No prose outside JSON.
-
+        - Do not ask more than 5 questions per scope per chat session.
+        - Ask one question after another.
+        - If the user asks you to come up with a vision or to stop asking them question, do so - create a vision and stop asking questions.
+        
         ## Output schema
 
         ```json

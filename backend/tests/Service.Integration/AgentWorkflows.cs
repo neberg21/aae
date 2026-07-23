@@ -41,7 +41,9 @@ public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task CreateClearVision()
     {
-        var response = await InitiateChat("Yo moin, ich hätt gerne ein neues DnD Storyteller tool");
+        var response = await InitiateChat(
+            "Yo moin, ich hätt gerne ein neues DnD Storyteller tool. "+
+            "STELLE KEINE RÜCKFRAGEN ZUR VISION! DENK DIR EINE VISION AUS WENN DU OFFENE FRAGEN HAST.");
         var responseContent = response.Messages.Last().Text;
         var json = responseContent.Replace("```json", "").Replace("```", "");
         var options = new JsonSerializerOptions().ConfigureJsonSerialization();
@@ -58,7 +60,8 @@ public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
             "Yo moin, ich hätt gerne " +
             "ein neues DnD Storyteller tool und " +
             "etwas zum rasen mäßen aber auch " +
-            "eine eisverkaufs-homepage");
+            "eine eisverkaufs-homepage." +
+            "STELLE KEINE RÜCKFRAGEN ZUR VISION! DENK DIR EINE VISION AUS WENN DU OFFENE FRAGEN HAST.");
         var responseContent = response.Messages.Last().Text;
         var json = responseContent.Replace("```json", "").Replace("```", "");
         var options = new JsonSerializerOptions().ConfigureJsonSerialization();
@@ -73,7 +76,7 @@ public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
     {
         var response = await InitiateChat("Ich will was neues...aber was?");
         var responseContent = response.Messages.Last().Text;
-        
+
         Assert.Contains("Ich habe keine Vision", responseContent);
     }
 
