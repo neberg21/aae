@@ -20,7 +20,7 @@ WORKDIR /app/backend
 COPY backend/Service.slnx ./
 COPY backend/src/Core/*.csproj ./src/Core/
 COPY backend/src/Service/*.csproj ./src/Service/
-COPY backend/src/Module.Agents/*.csproj ./src/Module.Agents/
+COPY backend/src/Module.AI/*.csproj ./src/Module.AI/
 COPY backend/src/Module.Demo/*.csproj ./src/Module.Demo/
 COPY backend/tests/Core.Unit/*.csproj ./tests/Core.Unit/
 COPY backend/tests/Service.Unit/*.csproj ./tests/Service.Unit/
