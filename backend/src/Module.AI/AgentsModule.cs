@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Module.AI.AI;
 using Module.AI.DTOs;
-using Module.AI.Nostr;
 
 namespace Module.AI;
 
