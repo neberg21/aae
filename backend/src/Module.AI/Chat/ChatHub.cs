@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 
-namespace Module.Agents.Chat;
+namespace Module.AI.Chat;
 
 public class ChatHub : Hub;

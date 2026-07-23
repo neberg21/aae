@@ -3,12 +3,11 @@ using Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Module.Agents.AI;
-using Module.Agents.Chat;
-using Module.Agents.Nostr;
-using Module.Agents.Persistence;
+using Module.AI.Chat;
+using Module.AI.Nostr;
+using Module.AI.Persistence;
 
-namespace Module.Agents;
+namespace Module.AI;
 
 public class CoreModule : IModule
 {

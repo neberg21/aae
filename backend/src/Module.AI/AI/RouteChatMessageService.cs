@@ -1,11 +1,11 @@
-﻿using Module.Agents.DTOs;
+﻿using System.Net.Http.Json;
 using Microsoft.AspNetCore.SignalR;
-using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
-using Module.Agents.Chat;
-using Module.Agents.Persistence;
+using Module.AI.Chat;
+using Module.AI.DTOs;
+using Module.AI.Persistence;
 
-namespace Module.Agents.AI;
+namespace Module.AI.AI;
 
 public class RouteChatMessageService
 {

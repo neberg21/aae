@@ -1,7 +1,7 @@
-﻿using Module.Agents.DTOs;
-using Module.Agents.Persistence;
+﻿using Module.AI.DTOs;
+using Module.AI.Persistence;
 
-namespace Module.Agents.AI;
+namespace Module.AI.AI;
 
 public class SearchIdentityService
 {

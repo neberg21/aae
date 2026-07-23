@@ -2,7 +2,7 @@
 using NBitcoin.Secp256k1;
 using NNostr.Client;
 
-namespace Module.Agents.Nostr;
+namespace Module.AI.Nostr;
 
 public class NostrEventService
 {

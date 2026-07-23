@@ -1,4 +1,4 @@
-﻿namespace Module.Agents.Persistence;
+﻿namespace Module.AI.Persistence;
 
 public record Agent
 {

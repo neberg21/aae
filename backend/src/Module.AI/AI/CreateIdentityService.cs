@@ -1,10 +1,10 @@
 ﻿using Bogus;
 using Microsoft.Extensions.Logging;
-using Module.Agents.DTOs;
-using Module.Agents.Nostr;
-using Module.Agents.Persistence;
+using Module.AI.DTOs;
+using Module.AI.Nostr;
+using Module.AI.Persistence;
 
-namespace Module.Agents.AI;
+namespace Module.AI.AI;
 
 public class CreateIdentityService
 {

@@ -1,4 +1,4 @@
-﻿namespace Module.Agents.Nostr;
+﻿namespace Module.AI.Nostr;
 
 public class ProfileGenerator
 {

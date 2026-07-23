@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Module.Agents.AI;
-using Module.Agents.DTOs;
-using Module.Agents.Nostr;
+using Module.AI.AI;
+using Module.AI.DTOs;
+using Module.AI.Nostr;
 
-namespace Module.Agents;
+namespace Module.AI;
 
 public class AgentsModule : IModule
 {

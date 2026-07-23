@@ -1,6 +1,6 @@
 ﻿using Core;
 
-namespace Module.Agents.DTOs;
+namespace Module.AI.DTOs;
 
 public record GetThreadsResponse : PageDto<ThreadDto>;
 

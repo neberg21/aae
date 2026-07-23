@@ -1,10 +1,9 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using System.Net.WebSockets;
+using System.Text;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Module.Agents.Nostr;
-
-using System.Net.WebSockets;
-using System.Text;
+namespace Module.AI.Nostr;
 
 public class ListenOnMessages : BackgroundService
 {

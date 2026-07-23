@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Module.Agents.Nostr;
-using Module.Agents.Persistence;
+using Module.AI.Nostr;
+using Module.AI.Persistence;
 
-namespace Module.Agents.AI;
+namespace Module.AI.AI;
 
 public class SeedCoreAgents : BackgroundService
 {

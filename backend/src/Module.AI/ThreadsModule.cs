@@ -3,11 +3,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Module.Agents.AI;
-using Module.Agents.DTOs;
-using Module.Agents.Threads;
+using Module.AI.DTOs;
+using Module.AI.Threads;
 
-namespace Module.Agents;
+namespace Module.AI;
 
 public class ThreadsModule : IModule
 {

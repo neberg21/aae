@@ -1,4 +1,4 @@
-﻿namespace Module.Agents.DTOs;
+﻿namespace Module.AI.DTOs;
 
 public record RouteChatMessageResponse
 {

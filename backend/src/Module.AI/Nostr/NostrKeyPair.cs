@@ -1,7 +1,7 @@
 ﻿using System.Security.Cryptography;
 using NBitcoin.Secp256k1;
 
-namespace Module.Agents.Nostr;
+namespace Module.AI.Nostr;
 
 public class NostrKeyPair
 {

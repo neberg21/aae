@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Module.Agents.DTOs;
+using Module.AI.DTOs;
 using Xunit;
 
 namespace Service.Unit.Agents;
