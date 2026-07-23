@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace Core;
@@ -35,7 +36,7 @@ public static class WebUiHostExtensions
 
         app.MapFallback(async context =>
         {
-            if (!IsSpaFallbackCandidate(context.Request.Path))
+            if (!IsSpaFallbackCandidate(app.Services.GetRequiredService<IModuleCollection>(), context.Request.Path))
             {
                 context.Response.StatusCode = StatusCodes.Status404NotFound;
                 return;
@@ -48,9 +49,15 @@ public static class WebUiHostExtensions
         return app;
     }
 
-    private static bool IsSpaFallbackCandidate(PathString path)
+    private static bool IsSpaFallbackCandidate(IModuleCollection moduleCollection, PathString path)
     {
-        if (path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase))
+        var segments = moduleCollection
+            .Select(m => m.GroupName)
+            .Distinct()
+            .Select(groupName => $"/{ApiGroupName.Build(groupName)}")
+            .ToArray();
+
+        if (segments.Any(segment => path.StartsWithSegments(segment, StringComparison.OrdinalIgnoreCase)))
         {
             return false;
         }

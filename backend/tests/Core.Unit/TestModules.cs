@@ -7,7 +7,7 @@ namespace Core.Unit;
 
 public sealed class ValidTestModule : IModule
 {
-    public string Name => "test";
+    public string GroupName => "test";
 
     public void RegisterServices(IServiceCollection services)
     {
@@ -26,7 +26,7 @@ public sealed class ValidTestModuleMarker
 
 public abstract class AbstractTestModule : IModule
 {
-    public string Name => "abstract";
+    public string GroupName => "abstract";
 
     public void RegisterServices(IServiceCollection services)
     {
@@ -44,7 +44,7 @@ public sealed class BrokenTestModule : IModule
         _ = required;
     }
 
-    public string Name => "broken";
+    public string GroupName => "broken";
 
     public void RegisterServices(IServiceCollection services)
     {

@@ -5,7 +5,7 @@ namespace Core;
 
 public interface IModule
 {
-    string Name { get; }
+    string GroupName { get; }
 
     void RegisterServices(IServiceCollection services);
 

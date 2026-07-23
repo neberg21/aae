@@ -12,10 +12,14 @@ public static class DependencyInjection
         var modules = ModuleDiscovery.DiscoverLoadedModules();
         EnsureDistinctModuleNames(modules);
 
-        foreach (var module in modules)
+        foreach (var group in modules.GroupBy(m => m.GroupName))
         {
-            module.RegisterServices(services);
-            services.RegisterModuleOpenApi(module);
+            foreach (var module in group)
+            {
+                module.RegisterServices(services);
+            }
+
+            services.RegisterModuleOpenApi(group.Key);
         }
 
         var moduleCollection = new ModuleCollection(modules);
@@ -48,18 +52,11 @@ public static class DependencyInjection
     private static void EnsureDistinctModuleNames(IReadOnlyList<IModule> modules)
     {
         var blankNames = modules
-            .Where(static module => string.IsNullOrWhiteSpace(module.Name))
+            .Where(static module => string.IsNullOrWhiteSpace(module.GroupName))
             .Select(static module => module.GetType().FullName ?? module.GetType().Name)
             .ToList();
 
-        var duplicateNames = modules
-            .Where(static module => !string.IsNullOrWhiteSpace(module.Name))
-            .GroupBy(static module => module.Name, StringComparer.Ordinal)
-            .Where(static group => group.Count() > 1)
-            .Select(static group => group.Key)
-            .ToList();
-
-        if (blankNames.Count == 0 && duplicateNames.Count == 0)
+        if (blankNames.Count == 0)
         {
             return;
         }
@@ -70,21 +67,15 @@ public static class DependencyInjection
             details.Add($"blank Name on: {string.Join(", ", blankNames)}");
         }
 
-        if (duplicateNames.Count > 0)
-        {
-            details.Add($"duplicates: {string.Join(", ", duplicateNames.Select(static name => $"'{name}'"))}");
-        }
-
         throw new InvalidOperationException(
             $"Module names must be non-empty and unique. {string.Join("; ", details)}.");
     }
 
-    private static void RegisterModuleOpenApi(this IServiceCollection services, IModule module)
+    private static void RegisterModuleOpenApi(this IServiceCollection services, string groupName)
     {
-        var name = module.Name;
-        var pathPrefix = $"api/{name}";
+        var pathPrefix = ApiGroupName.Build(groupName);
 
-        services.AddOpenApi(name, options =>
+        services.AddOpenApi(groupName, options =>
         {
             options.ShouldInclude = description =>
                 description.RelativePath is not null

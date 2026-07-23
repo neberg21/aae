@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Module.Agents.AI;
-using Module.Agents.Chat;
 using Module.Agents.DTOs;
 using Module.Agents.Nostr;
 
@@ -13,13 +12,14 @@ namespace Module.Agents;
 
 public class AgentsModule : IModule
 {
-    public string Name => "agents";
+    public string GroupName => "agents";
 
     public void RegisterServices(IServiceCollection services)
     {
         services.AddHostedService<SeedCoreAgents>();
         services.AddHostedService<ListenOnMessages>();
 
+        services.AddScoped<GetAgentByIdService>();
         services.AddScoped<SearchIdentityService>();
         services.AddScoped<CreateIdentityService>();
         services.AddScoped<ParkDelegationService>();

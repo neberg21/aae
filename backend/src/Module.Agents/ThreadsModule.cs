@@ -11,7 +11,7 @@ namespace Module.Agents;
 
 public class ThreadsModule : IModule
 {
-    public string Name => "threads";
+    public string GroupName => "agents";
 
     public void RegisterServices(IServiceCollection services)
     {

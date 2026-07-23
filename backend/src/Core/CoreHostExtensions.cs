@@ -27,18 +27,22 @@ public static class CoreHostExtensions
         });
 
         var modules = app.Services.GetRequiredService<IModuleCollection>();
-        var api = app.MapGroup("/api");
-        foreach (var module in modules)
+        foreach (var module in modules.GroupBy(m => m.GroupName))
         {
-            var moduleApi = api.MapGroup($"/{module.Name}");
-            module.MapEndpoints(moduleApi);
-            var moduleName = module.Name;
+            var groupName = module.Key;
+            var api = app.MapGroup($"/{ApiGroupName.Build(groupName)}");
+
+            foreach (var m in module)
+            {
+                m.MapEndpoints(api);
+            }
+
             app.MapScalarApiReference(
-                $"/scalar/{moduleName}",
+                $"/scalar/{groupName}",
                 options =>
                 {
-                    options.Title = $"Scalar API Reference for {moduleName}";
-                    options.AddDocument(moduleName);
+                    options.Title = $"Scalar API Reference for {groupName}";
+                    options.AddDocument(groupName);
                 });
         }
 

@@ -12,7 +12,7 @@ namespace Module.Agents;
 
 public class CoreModule : IModule
 {
-    public string Name { get; } = "";
+    public string GroupName => "agents";
 
     public void RegisterServices(IServiceCollection services)
     {

@@ -7,7 +7,7 @@ namespace Module.Demo;
 
 public sealed class DemoModule : IModule
 {
-    public string Name => "demo";
+    public string GroupName => "demo";
 
     public void RegisterServices(IServiceCollection services)
     {
