@@ -6,17 +6,17 @@ using Module.AI.Persistence;
 
 namespace Module.AI.AI;
 
-public class CreateIdentityService
+public class CreateAgentService
 {
-    private readonly ILogger<CreateIdentityService> _logger;
+    private readonly ILogger<CreateAgentService> _logger;
     private readonly Faker _faker;
     private readonly AppDbContext _dbContext;
     private readonly ProfileGenerator _profileGenerator;
     private readonly ParkDelegationService _parkDelegationService;
     private readonly RouteChatMessageService _routeChatMessageService;
 
-    public CreateIdentityService(
-        ILogger<CreateIdentityService> logger,
+    public CreateAgentService(
+        ILogger<CreateAgentService> logger,
         Faker faker,
         AppDbContext dbContext,
         ProfileGenerator profileGenerator,
@@ -31,7 +31,7 @@ public class CreateIdentityService
         _routeChatMessageService = routeChatMessageService;
     }
 
-    public async Task<CreateAgentResponse?> CreateIdentity(CreateAgentRequest request)
+    public async Task<CreateAgentResponse?> CreateAgent(CreateAgentRequest request)
     {
         var existing = _dbContext.Agents.FirstOrDefault(a =>
             a.AgentId.Equals(request.AgentId, StringComparison.OrdinalIgnoreCase));

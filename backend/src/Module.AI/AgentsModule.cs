@@ -21,7 +21,7 @@ public class AgentsModule : IModule
 
         services.AddScoped<GetAgentByIdService>();
         services.AddScoped<SearchIdentityService>();
-        services.AddScoped<CreateIdentityService>();
+        services.AddScoped<CreateAgentService>();
         services.AddScoped<ParkDelegationService>();
         services.AddScoped<ProfileGenerator>();
         services.AddHttpClient<RouteChatMessageService>();
@@ -82,9 +82,9 @@ public class AgentsModule : IModule
 
     private static async Task<IResult> CreateAgent(
         [FromBody] CreateAgentRequest request,
-        CreateIdentityService createIdentityService)
+        CreateAgentService agentService)
     {
-        var res = await createIdentityService.CreateIdentity(request);
+        var res = await agentService.CreateAgent(request);
         if (res is null)
         {
             return Results.Conflict();

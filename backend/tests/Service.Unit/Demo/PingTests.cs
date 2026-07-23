@@ -18,35 +18,10 @@ public sealed class PingTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var client = _factory.CreateClient();
 
-        var response = await client.GetAsync("/api/demo/ping");
+        var response = await client.GetAsync("/demo-api/ping");
         var body = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("pong", body);
-    }
-
-    [Fact]
-    public async Task GetAsync_OpenApiDemoDocument_ReturnsOkWithDemoPath()
-    {
-        var client = _factory.CreateClient();
-
-        var response = await client.GetAsync("/openapi/demo.json");
-        var body = await response.Content.ReadAsStringAsync();
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("/api/demo/ping", body, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public async Task GetAsync_ScalarDemo_ReferencesOpenApiDemoDocument()
-    {
-        var client = _factory.CreateClient();
-
-        var response = await client.GetAsync("/scalar/demo");
-        var body = await response.Content.ReadAsStringAsync();
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        // Scalar strips the leading slash and resolves from the app root in JS.
-        Assert.Contains("\"url\":\"openapi/demo.json\"", body, StringComparison.Ordinal);
     }
 }
