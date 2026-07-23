@@ -39,7 +39,45 @@ public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task CreateEmployeeAsync()
+    public async Task CreateClearVision()
+    {
+        var response = await InitiateChat("Yo moin, ich hätt gerne ein neues DnD Storyteller tool");
+        var responseContent = response.Messages.Last().Text;
+        var json = responseContent.Replace("```json", "").Replace("```", "");
+        var options = new JsonSerializerOptions().ConfigureJsonSerialization();
+        var leoResponse = JsonSerializer.Deserialize<Leo.Response>(json, options);
+
+        Assert.NotNull(leoResponse);
+        Assert.Single(leoResponse.Scopes);
+    }
+
+    [Fact]
+    public async Task MultipleClearVisions()
+    {
+        var response = await InitiateChat(
+            "Yo moin, ich hätt gerne " +
+            "ein neues DnD Storyteller tool und " +
+            "etwas zum rasen mäßen aber auch " +
+            "eine eisverkaufs-homepage");
+        var responseContent = response.Messages.Last().Text;
+        var json = responseContent.Replace("```json", "").Replace("```", "");
+        var options = new JsonSerializerOptions().ConfigureJsonSerialization();
+        var leoResponse = JsonSerializer.Deserialize<Leo.Response>(json, options);
+
+        Assert.NotNull(leoResponse);
+        Assert.InRange(leoResponse.Scopes.Count, 2, 10);
+    }
+
+    [Fact]
+    public async Task NoVision()
+    {
+        var response = await InitiateChat("Ich will was neues...aber was?");
+        var responseContent = response.Messages.Last().Text;
+        
+        Assert.Contains("Ich habe keine Vision", responseContent);
+    }
+
+    private async Task<ChatResponse> InitiateChat(string initialMessage)
     {
         var agentService = _factory.Services.GetRequiredService<CoreAgentService>();
         var leo = await agentService.GetLeo();
@@ -50,14 +88,10 @@ public class AgentWorkflows : IClassFixture<WebApplicationFactory<Program>>
         {
             new(ChatRole.System, leoPrompt),
             new(ChatRole.Assistant, $"This is the thread id: {threadId}"),
-            new(ChatRole.User, "Yo moin, ich hätt gerne ein neues DnD Storyteller tool")
+            new(ChatRole.User, initialMessage)
         };
         var response = await chatClient.GetResponseAsync(chatMessages);
-        var responseContent = response.Messages.Last().Text;
-        var json = responseContent.Replace("```json", "").Replace("```", "");
-        var options = new JsonSerializerOptions().ConfigureJsonSerialization();
-        var leoResponse = JsonSerializer.Deserialize<Leo.Response>(json, options);
 
-        Assert.NotNull(leoResponse);
+        return response;
     }
 }
