@@ -20,7 +20,7 @@ public class ChatService
         LeoChatService leoChatService,
         HelgaChatService helgaChatService,
         ExecuteVisionChannel visionChannel,
-        ExecuteRecruitmentChannel recruitmentChannel, 
+        ExecuteRecruitmentChannel recruitmentChannel,
         SupervisorChatService supervisorChatService)
     {
         _dbContext = dbContext;
@@ -96,6 +96,11 @@ public class ChatService
         {
             Recruited = response
         };
+    }
+
+    public DefineEmployeesResponse DefineEmployees(DefineEmployeesRequest request)
+    {
+        throw new NotImplementedException();
     }
 
     private ChatHistory GetChatHistory(string threadId)

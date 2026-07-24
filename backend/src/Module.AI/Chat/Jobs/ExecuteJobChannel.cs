@@ -7,7 +7,7 @@ public class ExecuteVisionChannel : ExecuteJobChannel<Vision>;
 
 public class ExecuteRecruitmentChannel : ExecuteJobChannel<Recruitment>;
 
-public class ExecuteOnboardingChannel : ExecuteJobChannel<Agent>;
+public class ExecuteOnboardingChannel : ExecuteJobChannel<Onboarding>;
 
 public abstract class ExecuteJobChannel<T>
 {
