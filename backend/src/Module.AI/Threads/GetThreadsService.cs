@@ -14,9 +14,10 @@ public class GetThreadsService
 
     public GetThreadsResponse GetThreads()
     {
-        var threads = _dbContext.ChatMessages
+        var threads = _dbContext.ChatHistories
             .GroupBy(c => c.ThreadId)
-            .Select(g => new ThreadDto(g.Key, g.First().CreatedAt, g.Last().CreatedAt, g.Count()))
+            .Select(g =>
+                new ThreadDto(g.Key, g.First().CreatedAt, g.Last().CreatedAt, g.SelectMany(h => h.Messages).Count()))
             .ToArray();
         var page = new GetThreadsResponse
         {

@@ -1,4 +1,5 @@
-﻿using Module.AI.DTOs;
+﻿using Microsoft.Extensions.AI;
+using Module.AI.DTOs;
 using Module.AI.Persistence;
 
 namespace Module.AI.Threads;
@@ -14,29 +15,27 @@ public class GetThreadByIdService
 
     public GetThreadResponse? GetById(string threadId)
     {
-        var chatMessages = _dbContext.ChatMessages
-            .Where(m => m.ThreadId == threadId)
-            .Select(m => new ChatMessageDto
-            {
-                Sender = _dbContext.Agents.FirstOrDefault(a => a.Id == m.Sender)?.Name ?? m.Sender,
-                Receiver = _dbContext.Agents.FirstOrDefault(a => a.Id == m.Receiver)?.Name ?? m.Receiver,
-                Content = m.Content,
-                CreatedAt = m.CreatedAt
-            }).ToArray();
-        var parking = _dbContext.ParkedDelegations
-            .Where(p => p.ThreadId == threadId)
-            .Select(p => new ChatMessageDto
-            {
-                Sender = _dbContext.Agents.FirstOrDefault(a => a.Id == p.SenderAgentId)?.Name ?? p.SenderAgentId,
-                Receiver = _dbContext.Agents.FirstOrDefault(a => a.Id == p.TargetAgentId)?.Name ?? p.TargetAgentId,
-                Content = p.Content,
-                CreatedAt = p.CreatedAt
-            })
-            .ToArray();
+        var histories = _dbContext.ChatHistories
+            .Where(m => m.ThreadId == threadId);
 
-        var allMessages = chatMessages.Concat(parking).OrderBy(m => m.CreatedAt).ToArray();
+        var allMessages = new List<ChatMessageDto>();
+        foreach (var history in histories)
+        {
+            foreach (var message in history.Messages)
+            {
+                var dto = new ChatMessageDto
+                {
+                    Sender = message.Role == ChatRole.User ? "User" : history.Sender,
+                    Receiver = message.Role == ChatRole.User ? history.Sender : "User",
+                    Content = message.Text,
+                    CreatedAt = message.CreatedAt?.DateTime ?? DateTime.UtcNow
+                };
 
-        if (allMessages.Length == 0)
+                allMessages.Add(dto);
+            }
+        }
+
+        if (allMessages.Count == 0)
         {
             return null;
         }

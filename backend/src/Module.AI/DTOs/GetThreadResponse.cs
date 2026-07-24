@@ -3,7 +3,7 @@
 public record GetThreadResponse
 {
     public required string ThreadId { get; init; }
-    public required ChatMessageDto[] Messages { get; init; }
+    public required IReadOnlyCollection<ChatMessageDto> Messages { get; init; }
 }
 
 public record ChatMessageDto

@@ -29,7 +29,7 @@ public partial class HelgaChatService
             new(ChatRole.User, jobApplication.Message)
         };
         var response = await _chatClient.GetResponseAsync(chatMessages);
-        return new ChatHistory(jobApplication.ThreadId, chatMessages, response);
+        return new ChatHistory(jobApplication.ThreadId, helga.Name, chatMessages, response);
     }
 
     public bool TryGetResponse(ChatHistory history, [NotNullWhen(true)] out Recruitment? response)
