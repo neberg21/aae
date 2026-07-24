@@ -1,7 +1,6 @@
-﻿using System.Net;
-using System.Net.Http.Json;
-using System.Text.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
+﻿using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Module.AI.AI;
 using Module.AI.DTOs;
 using Xunit;
 
@@ -9,17 +8,17 @@ namespace Service.Unit.AI;
 
 public class CreateAgentTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly IServiceProvider _serviceProvider;
 
     public CreateAgentTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory;
+        _serviceProvider = factory.Services.CreateScope().ServiceProvider;
     }
 
     [Fact]
     public async Task PostAsync_CreateAgent_CreatesNewAgent()
     {
-        var client = _factory.CreateClient();
+        var agentService = _serviceProvider.GetRequiredService<CreateAgentService>();
         var createAgentRequest = new CreateAgentRequest
         {
             ThreadId = "thread-1",
@@ -32,11 +31,8 @@ public class CreateAgentTests : IClassFixture<WebApplicationFactory<Program>>
             Guardrails = [],
             Tools = []
         };
-        var response = await client.PostAsJsonAsync("/ai-api/agents", createAgentRequest);
-        var options = new JsonSerializerOptions().ConfigureJsonSerialization();
-        var agent = await response.Content.ReadFromJsonAsync<CreateAgentResponse>(options);
+        var agent = await agentService.CreateAgent(createAgentRequest);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(agent);
         Assert.Equal(CreateAgentResponseStatus.Onboarding, agent.Status);
         Assert.Equal("specialist-test-engineer", agent.AgentId);

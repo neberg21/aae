@@ -21,14 +21,14 @@ public class CreateAgentService
         _onboardingChannel = onboardingChannel;
     }
 
-    public async Task CreateAgent(CreateAgentRequest request)
+    public async Task<CreateAgentResponse?> CreateAgent(CreateAgentRequest request)
     {
         var existing = _dbContext.Agents.FirstOrDefault(a =>
             a.AgentId.Equals(request.AgentId, StringComparison.OrdinalIgnoreCase));
 
         if (existing is not null)
         {
-            return;
+            return null;
         }
 
         var agent = await CreateAgentCore(request);
@@ -41,6 +41,7 @@ public class CreateAgentService
         };
 
         _logger.LogInformation("Agent created: {AgentId}, {Status}", res.AgentId, res.Status);
+        return res;
     }
 
     private async Task<Agent> CreateAgentCore(CreateAgentRequest request)
