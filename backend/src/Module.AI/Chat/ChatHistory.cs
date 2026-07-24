@@ -6,17 +6,17 @@ public class ChatHistory
 {
     private readonly List<ChatMessage> _messages = [];
 
-    public ChatHistory(string threadId, string sender, IEnumerable<ChatMessage> chatMessages, ChatResponse response)
+    public ChatHistory(string threadId, string senderName, IEnumerable<ChatMessage> chatMessages, ChatResponse response)
     {
         ThreadId = threadId;
-        Sender = sender;
+        SenderName = senderName;
 
         _messages.AddRange(chatMessages);
         _messages.AddRange(response.Messages);
     }
 
     public string ThreadId { get; }
-    public string Sender { get; }
+    public string SenderName { get; }
     public DateTime CreatedAt { get; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
 

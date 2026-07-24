@@ -25,8 +25,8 @@ public class GetThreadByIdService
             {
                 var dto = new ChatMessageDto
                 {
-                    Sender = message.Role == ChatRole.User ? "User" : history.Sender,
-                    Receiver = message.Role == ChatRole.User ? history.Sender : "User",
+                    Sender = message.Role == ChatRole.User ? "User" : history.SenderName,
+                    Receiver = message.Role == ChatRole.User ? history.SenderName : "User",
                     Content = message.Text,
                     CreatedAt = message.CreatedAt?.DateTime ?? DateTime.UtcNow
                 };
