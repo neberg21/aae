@@ -44,7 +44,7 @@ public sealed class WebUiHostTests : IClassFixture<WebUiWebApplicationFactory>
     {
         var client = _factory.CreateClient();
 
-        var response = await client.GetAsync("/api/demo/ping");
+        var response = await client.GetAsync("/demo-api/ping");
         var body = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -56,7 +56,7 @@ public sealed class WebUiHostTests : IClassFixture<WebUiWebApplicationFactory>
     {
         var client = _factory.CreateClient();
 
-        var response = await client.GetAsync("/api/does-not-exist");
+        var response = await client.GetAsync("/demo-api/does-not-exist");
         var body = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
