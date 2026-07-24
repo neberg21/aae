@@ -4,14 +4,14 @@ namespace Module.AI.Chat.Jobs;
 
 public class ExecuteRecruitingChannel
 {
-    private readonly Channel<RecruitingResponse> _channel = Channel.CreateUnbounded<RecruitingResponse>();
+    private readonly Channel<Recruitment> _channel = Channel.CreateUnbounded<Recruitment>();
     
-    public void TryWrite(RecruitingResponse response)
+    public void TryWrite(Recruitment response)
     {
         _channel.Writer.TryWrite(response);
     }
 
-    public async Task<RecruitingResponse> ReadAsync(CancellationToken cancellationToken)
+    public async Task<Recruitment> ReadAsync(CancellationToken cancellationToken)
     {
         return await _channel.Reader.ReadAsync(cancellationToken);
     }

@@ -16,30 +16,30 @@ public partial class HelgaChatService
         _chatClient = chatClient;
     }
 
-    public async Task<ChatHistory> Recruit(RecruitingRequest recruitingRequest)
+    public async Task<ChatHistory> Recruit(JobApplication jobApplication)
     {
         var helga = await _coreAgentService.GetHelga();
         var leoPrompt = helga.SystemPrompt;
         var chatMessages = new List<ChatMessage>
         {
             new(ChatRole.System, leoPrompt),
-            new(ChatRole.Assistant, $"This is the thread id: {recruitingRequest.ThreadId}"),
-            new(ChatRole.Assistant, $"This is the supervisor id: {recruitingRequest.SupervisorId}"),
-            new(ChatRole.Assistant, $"This is the agent id: {recruitingRequest.AgentId}"),
-            new(ChatRole.User, recruitingRequest.Message)
+            new(ChatRole.Assistant, $"This is the thread id: {jobApplication.ThreadId}"),
+            new(ChatRole.Assistant, $"This is the supervisor id: {jobApplication.SupervisorId}"),
+            new(ChatRole.Assistant, $"This is the agent id: {jobApplication.AgentId}"),
+            new(ChatRole.User, jobApplication.Message)
         };
         var response = await _chatClient.GetResponseAsync(chatMessages);
-        return new ChatHistory(recruitingRequest.ThreadId, chatMessages, response);
+        return new ChatHistory(jobApplication.ThreadId, chatMessages, response);
     }
 
-    public bool TryGetResponse(ChatHistory history, [NotNullWhen(true)] out RecruitingResponse? response)
+    public bool TryGetResponse(ChatHistory history, [NotNullWhen(true)] out Recruitment? response)
     {
         try
         {
             var responseContent = history.CurrentMessage;
             var json = responseContent.Replace("```json", "").Replace("```", "");
             var options = new JsonSerializerOptions().ConfigureJsonSerialization();
-            response = JsonSerializer.Deserialize<RecruitingResponse>(json, options);
+            response = JsonSerializer.Deserialize<Recruitment>(json, options);
             return response is not null;
         }
         catch

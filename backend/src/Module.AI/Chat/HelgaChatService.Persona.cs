@@ -1,8 +1,8 @@
 ﻿namespace Module.AI.Chat;
 
-public record RecruitingRequest(string ThreadId, string SupervisorId, string AgentId, string Message);
+public record JobApplication(string ThreadId, string SupervisorId, string AgentId, string Message);
 
-public record RecruitingResponse(string ThreadId, RecruitingStatus Status, RecruitingAgent Agent);
+public record Recruitment(string ThreadId, RecruitingStatus Status, AgentToRecruit AgentToRecruit);
 
 public enum RecruitingStatus
 {
@@ -10,16 +10,16 @@ public enum RecruitingStatus
     Ready
 }
 
-public record RecruitingAgent(
+public record AgentToRecruit(
     string AgentId,
     string JobTitle,
     string JobDescription,
-    string Department,
+    Department Department,
     string SystemPrompt,
     string[] Guardrails,
     string SupervisorId);
 
-public enum HelgaDepartment
+public enum Department
 {
     Frontend,
     Backend,

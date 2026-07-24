@@ -23,13 +23,13 @@ public class HelgaWorkflows : IClassFixture<WebApplicationFactory<Program>>
 
         foreach (var scope in response.Scopes)
         {
-            var request = new RecruitingRequest(response.ThreadId, response.AgentId, scope.SupervisorId, scope.Message);
+            var request = new JobApplication(response.ThreadId, response.AgentId, scope.SupervisorId, scope.Message);
             var history = await _helgaChatService.Recruit(request);
 
             Assert.True(_helgaChatService.TryGetResponse(history, out var recruiting));
             Assert.Equal(RecruitingStatus.Ready, recruiting.Status);
-            Assert.StartsWith("supervisor-", recruiting.Agent.AgentId);
-            Assert.StartsWith(response.AgentId, recruiting.Agent.SupervisorId);
+            Assert.StartsWith("supervisor-", recruiting.AgentToRecruit.AgentId);
+            Assert.StartsWith(response.AgentId, recruiting.AgentToRecruit.SupervisorId);
         }
     }
 

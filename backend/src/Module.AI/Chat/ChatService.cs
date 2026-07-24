@@ -76,7 +76,7 @@ public class ChatService
     public async Task<RecruitEmployeeResponse> RecruitEmployee(RecruitEmployeeRequest request)
     {
         var chatHistory = GetChatHistory(request.ThreadId);
-        var recruitingRequest = new RecruitingRequest(
+        var recruitingRequest = new JobApplication(
             chatHistory.ThreadId,
             request.SupervisorId,
             request.AgentId,
@@ -86,7 +86,7 @@ public class ChatService
         if (!_helgaChatService.TryGetResponse(chatHistory, out var response))
             return new RecruitEmployeeResponse(chatHistory.ThreadId, chatHistory.CurrentMessage);
 
-        var finalMessage = new ChatMessage(ChatRole.Assistant, $"Created agent: {response.Agent.AgentId}");
+        var finalMessage = new ChatMessage(ChatRole.Assistant, $"Created agent: {response.AgentToRecruit.AgentId}");
         chatHistory.AddMessage(finalMessage);
         _recruitingChannel.TryWrite(response);
         return new RecruitEmployeeResponse(response.ThreadId, chatHistory.CurrentMessage)

@@ -4,5 +4,5 @@ namespace Module.AI.DTOs;
 
 public record RecruitEmployeeResponse(string ThreadId, string Content)
 {
-    public RecruitingResponse? Recruited { get; init; }
+    public Recruitment? Recruited { get; init; }
 }

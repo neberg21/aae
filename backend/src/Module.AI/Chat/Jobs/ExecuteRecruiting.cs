@@ -44,7 +44,7 @@ public class ExecuteRecruiting : BackgroundService
     }
 
     private async Task HandleRecruiting(
-        RecruitingResponse recruited,
+        Recruitment recruited,
         CreateAgentService agentService)
     {
         if (recruited.Status == RecruitingStatus.Ready)
@@ -56,20 +56,20 @@ public class ExecuteRecruiting : BackgroundService
             _logger.LogWarning("Recruiting incomplete. status: {Status}, thread {ThreadId}, {AgentId}",
                 recruited.Status,
                 recruited.ThreadId,
-                recruited.Agent.AgentId);
+                recruited.AgentToRecruit.AgentId);
         }
     }
 
-    private async Task CreateNewAgent(RecruitingResponse recruited, CreateAgentService agentService)
+    private async Task CreateNewAgent(Recruitment recruited, CreateAgentService agentService)
     {
-        var recruitingAgent = recruited.Agent;
+        var recruitingAgent = recruited.AgentToRecruit;
         var createAgentRequest = new CreateAgentRequest
         {
             ThreadId = recruited.ThreadId,
             AgentId = recruitingAgent.AgentId,
             JobTitle = recruitingAgent.JobTitle,
             JobDescription = recruitingAgent.JobDescription,
-            Department = recruitingAgent.Department,
+            Department = recruitingAgent.Department.ToString(),
             SupervisorId = recruitingAgent.SupervisorId,
             SystemPrompt = recruitingAgent.SystemPrompt,
             Guardrails = [],
