@@ -39,6 +39,7 @@ describe('LeoChatPage', () => {
       reply: 'Hallo, ich bin Leo.',
       done: false,
       vision: null,
+      chatMessages: [],
     })
 
     renderPage()
@@ -74,6 +75,7 @@ describe('LeoChatPage', () => {
       reply: 'Vision is complete.',
       done: true,
       vision: { threadId: 'thread-77' },
+      chatMessages: [],
     })
 
     renderPage()
@@ -85,4 +87,3 @@ describe('LeoChatPage', () => {
     expect(screen.getByRole('textbox', { name: /your message/i })).toBeDisabled()
   })
 })
-
