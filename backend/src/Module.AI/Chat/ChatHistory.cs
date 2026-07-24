@@ -17,7 +17,8 @@ public class ChatHistory
 
     public string CurrentMessage => _messages.Last().Text;
 
-    public IEnumerable<ChatMessage> Messages => _messages;
+    public IEnumerable<ChatMessage> Messages =>
+        _messages.Where(m => m.Role == ChatRole.User || m.Role == ChatRole.Assistant);
 
     public ChatHistory AddChatResponse(ChatResponse response)
     {

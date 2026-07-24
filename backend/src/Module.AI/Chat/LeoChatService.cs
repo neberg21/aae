@@ -28,7 +28,7 @@ public partial class LeoChatService
         var chatMessages = new List<ChatMessage>
         {
             new(ChatRole.System, leoPrompt),
-            new(ChatRole.Assistant, $"This is the thread id: {threadId}"),
+            new(ChatRole.System, $"This is the thread id: {threadId}"),
             new(ChatRole.User, initialMessage)
         };
         var response = await _chatClient.GetResponseAsync(chatMessages);

@@ -23,9 +23,9 @@ public partial class HelgaChatService
         var chatMessages = new List<ChatMessage>
         {
             new(ChatRole.System, leoPrompt),
-            new(ChatRole.Assistant, $"This is the thread id: {jobApplication.ThreadId}"),
-            new(ChatRole.Assistant, $"This is the supervisor id: {jobApplication.SupervisorId}"),
-            new(ChatRole.Assistant, $"This is the agent id: {jobApplication.AgentId}"),
+            new(ChatRole.System, $"This is the thread id: {jobApplication.ThreadId}"),
+            new(ChatRole.System, $"This is the supervisor id: {jobApplication.SupervisorId}"),
+            new(ChatRole.System, $"This is the agent id: {jobApplication.AgentId}"),
             new(ChatRole.User, jobApplication.Message)
         };
         var response = await _chatClient.GetResponseAsync(chatMessages);
