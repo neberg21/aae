@@ -61,6 +61,12 @@ public class ExecuteOnboarding : ExecuteJob<Onboarding>
 
         foreach (var employee in response.Team)
         {
+            _logger.LogInformation(
+                "Recruiting agent {Agent} in thread {ThreadId}, reason: {Reason}",
+                employee.AgentId,
+                onboarding.ThreadId,
+                employee.ReasonForAssignment);
+
             var recruitEmployeeRequest = new RecruitEmployeeRequest(
                 response.ThreadId,
                 onboarding.Agent.Id,

@@ -112,7 +112,7 @@ public class ChatService
             return new DefineEmployeesResponse(chatHistory.ThreadId, []);
 
         var finalMessage = new ChatMessage(ChatRole.Assistant,
-            $"Defined {response.Length} employees for {request.Supervisor.Id}.");
+            $"Defined {response.Length} employees for {request.Supervisor.Id}");
         chatHistory.AddMessage(finalMessage);
         return new DefineEmployeesResponse(chatHistory.ThreadId, response);
     }
