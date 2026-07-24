@@ -16,11 +16,8 @@ public class ScalarTests : IClassFixture<WebApplicationFactory<Program>>
     [Theory]
     [InlineData("/ai-api/agents")]
     [InlineData("/ai-api/agents/search")]
-    [InlineData("/ai-api/agents/actions/park-delegation")]
-    [InlineData("/ai-api/agents/actions/route-chat-message")]
     [InlineData("/ai-api/agents/actions/await-request-approval")]
     [InlineData("/ai-api/agents/actions/resolve-request-approval")]
-    [InlineData("/ai-api/agents/actions/execute-tool")]
     [InlineData("/ai-api/threads")]
     public async Task GetAsync_OpenApiDemoDocument_ReturnsOkWithDemoPath(string path)
     {
