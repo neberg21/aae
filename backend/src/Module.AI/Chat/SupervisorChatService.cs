@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
-using Module.AI.DTOs;
 using Module.AI.Persistence;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 
@@ -44,14 +43,15 @@ public partial class SupervisorChatService
         return chatHistory;
     }
 
-    public bool TryGetResponse(ChatHistory history, [NotNullWhen(true)] out CreateAgentResponse[]? response)
+    public bool TryGetResponse(ChatHistory history, [NotNullWhen(true)] out Employee[]? response)
     {
         try
         {
             var responseContent = history.CurrentMessage;
             var json = responseContent.Replace("```json", "").Replace("```", "");
             var options = new JsonSerializerOptions().ConfigureJsonSerialization();
-            response = JsonSerializer.Deserialize<CreateAgentResponse[]>(json, options);
+            var employees = JsonSerializer.Deserialize<Employees>(json, options);
+            response = employees?.Team;
             return response is not null;
         }
         catch

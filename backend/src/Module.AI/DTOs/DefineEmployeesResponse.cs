@@ -1,3 +1,5 @@
-﻿namespace Module.AI.DTOs;
+﻿using Module.AI.Chat;
 
-public record DefineEmployeesResponse(string ThreadId, IEnumerable<CreateAgentResponse> Employees);
+namespace Module.AI.DTOs;
+
+public record DefineEmployeesResponse(string ThreadId, IEnumerable<Employee> Team);
