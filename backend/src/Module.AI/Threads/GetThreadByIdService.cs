@@ -24,7 +24,6 @@ public class GetThreadByIdService
                 var sender = history.GetSender(message);
                 var receiver = history.GetReceiver(message);
 
-                // todo: Id and AgentId are something differnet, right?!?!
                 sender = _dbContext.Agents.FirstOrDefault(a => a.Id == sender)?.Name ?? sender;
                 receiver = _dbContext.Agents.FirstOrDefault(a => a.Id == receiver)?.Name ?? receiver;
 
