@@ -23,10 +23,10 @@ public partial class HelgaChatService
     public async Task<ChatHistory> Recruit(JobApplication jobApplication)
     {
         var helga = await _coreAgentService.GetHelga();
-        var leoPrompt = helga.SystemPrompt;
+        var systemPrompt = helga.SystemPrompt;
         var chatMessages = new List<ChatMessage>
         {
-            new(ChatRole.System, leoPrompt),
+            new(ChatRole.System, systemPrompt),
             new(ChatRole.System, $"This is the thread id: {jobApplication.ThreadId}"),
             new(ChatRole.System, $"This is the supervisor id: {jobApplication.SupervisorId}"),
             new(ChatRole.System, $"This is the agent id: {jobApplication.AgentId}"),
