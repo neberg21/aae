@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Module.AI.DTOs;
 using Xunit;
@@ -32,7 +33,8 @@ public class CreateAgentTests : IClassFixture<WebApplicationFactory<Program>>
             Tools = []
         };
         var response = await client.PostAsJsonAsync("/ai-api/agents", createAgentRequest);
-        var agent = await response.Content.ReadFromJsonAsync<CreateAgentResponse>();
+        var options = new JsonSerializerOptions().ConfigureJsonSerialization();
+        var agent = await response.Content.ReadFromJsonAsync<CreateAgentResponse>(options);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(agent);
