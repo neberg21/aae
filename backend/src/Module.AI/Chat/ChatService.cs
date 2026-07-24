@@ -103,10 +103,18 @@ public class ChatService
         var chatHistory = GetChatHistory(request.ThreadId);
         var define = new AnalyzeTask(
             chatHistory.ThreadId,
+            request.Supervisor.SupervisorId,
             request.Supervisor.Id,
             request.Supervisor.SystemPrompt);
-        var employees = await _supervisorChatService.DefineEmployees(define);
-        return new DefineEmployeesResponse(chatHistory.ThreadId, employees);
+        chatHistory = await _supervisorChatService.DefineEmployees(define);
+
+        if (!_supervisorChatService.TryGetResponse(chatHistory, out var response))
+            return new DefineEmployeesResponse(chatHistory.ThreadId, []);
+
+        var finalMessage = new ChatMessage(ChatRole.Assistant,
+            $"Defined {response.Length} employees for {request.Supervisor.Id}.");
+        chatHistory.AddMessage(finalMessage);
+        return new DefineEmployeesResponse(chatHistory.ThreadId, response);
     }
 
     private ChatHistory GetChatHistory(string threadId)

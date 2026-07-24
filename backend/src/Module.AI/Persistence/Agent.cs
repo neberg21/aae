@@ -11,7 +11,7 @@ public record Agent
     public required string SystemPrompt { get; set; }
     public required string PrivateKeyHex { get; set; }
     public required string Department { get; set; }
-    public required string? SupervisorId { get; set; }
+    public required string SupervisorId { get; set; }
     public required string[] Guardrails { get; set; }
     public required AgentStatus Status { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

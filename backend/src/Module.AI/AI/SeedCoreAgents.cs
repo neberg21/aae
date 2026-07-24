@@ -50,7 +50,7 @@ public class SeedCoreAgents : BackgroundService
             JobDescription =
                 "The CEO is responsible for creating a vision, managing overall operations, and ensuring success.",
             Department = "Core",
-            SupervisorId = null,
+            SupervisorId = "",
             Guardrails = [],
             Status = AgentStatus.Working,
             SystemPrompt = LeoChatService.SystemPrompt

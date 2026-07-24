@@ -23,10 +23,12 @@ public class SupervisorWorkflows : IClassFixture<WebApplicationFactory<Program>>
     {
         var onboarding = GetSupervisorOnboarding();
         var supervisor = onboarding.Agent;
-        var analyzeTask = new AnalyzeTask(onboarding.ThreadId, supervisor.AgentId, supervisor.SystemPrompt);
-        var response = await _supervisorChatService.DefineEmployees(analyzeTask);
+        var analyzeTask = new AnalyzeTask(onboarding.ThreadId, supervisor.SupervisorId, supervisor.AgentId,
+            supervisor.SystemPrompt);
+        var chatHistory = await _supervisorChatService.DefineEmployees(analyzeTask);
 
-        Assert.InRange(response.Count, 1, 10);
+        Assert.True(_supervisorChatService.TryGetResponse(chatHistory, out var response));
+        Assert.InRange(response.Length, 1, 10);
     }
 
     private Onboarding GetSupervisorOnboarding()
