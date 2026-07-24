@@ -89,7 +89,7 @@ public class ExecuteOnboarding : ExecuteJob<Onboarding>
     private static async Task SetAgentInfo(ExecuteJobContext<Onboarding> context)
     {
         var agent = context.Item.Agent;
-        var faker = context.Services.GetRequiredService<Faker>();
+        var faker = GetFaker(context);
         var profileGenerator = context.Services.GetRequiredService<ProfileGenerator>();
         var keyPair = NostrKeyPair.GenerateKeyPair();
         var firstName = faker.Person.FirstName;
@@ -102,5 +102,21 @@ public class ExecuteOnboarding : ExecuteJob<Onboarding>
 
         var dbContext = context.Services.GetRequiredService<AppDbContext>();
         await dbContext.SaveChangesAsync();
+    }
+
+    private static Faker GetFaker(ExecuteJobContext<Onboarding> context)
+    {
+        var agent = context.Item.Agent;
+        var faker = context.Services.GetRequiredService<Faker>();
+
+        faker.Name.Locale = Enum.Parse<Department>(agent.Department, true) switch
+        {
+            Department.Backend => "en",
+            Department.Frontend => "en",
+            Department.Operations => "de",
+            Department.Qa => "es",
+            _ => "en"
+        };
+        return faker;
     }
 }

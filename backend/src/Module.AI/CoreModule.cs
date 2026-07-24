@@ -24,7 +24,7 @@ public class CoreModule : IModule
         
         services.AddScoped<NostrEventService>();
         services.AddScoped<ProfileGenerator>();
-        services.AddScoped<Faker>(_ => new Faker("de"));
+        services.AddScoped<Faker>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
