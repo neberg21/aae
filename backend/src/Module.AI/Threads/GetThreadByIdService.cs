@@ -22,10 +22,16 @@ public class GetThreadByIdService
         {
             foreach (var message in history.Messages)
             {
+                var sender = history.GetSender(message);
+                var receiver = history.GetReceiver(message);
+
+                sender = _dbContext.Agents.FirstOrDefault(a => a.Id == sender)?.Name ?? sender;
+                receiver = _dbContext.Agents.FirstOrDefault(a => a.Id == receiver)?.Name ?? receiver;
+
                 var dto = new ChatMessageDto
                 {
-                    Sender = history.GetSender(message),
-                    Receiver = history.GetReceiver(message),
+                    Sender = sender,
+                    Receiver = receiver,
                     Content = message.Text,
                     CreatedAt = message.CreatedAt?.DateTime ?? DateTime.UtcNow
                 };
