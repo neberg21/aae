@@ -42,17 +42,15 @@ public class ExecuteOnboarding : ExecuteJob<Agent>
 
     private static async Task OnboardSupervisor(ExecuteJobContext<Agent> context)
     {
-        var dbContext = context.Services.GetRequiredService<AppDbContext>();
-        await SetAgentInfo(context, dbContext);
+        await SetAgentInfo(context);
     }
 
     private async Task OnboardSpecialist(ExecuteJobContext<Agent> context)
     {
-        var dbContext = context.Services.GetRequiredService<AppDbContext>();
-        await SetAgentInfo(context, dbContext);
+        await SetAgentInfo(context);
     }
 
-    private static async Task SetAgentInfo(ExecuteJobContext<Agent> context, AppDbContext dbContext)
+    private static async Task SetAgentInfo(ExecuteJobContext<Agent> context)
     {
         var agent = context.Item;
         var faker = context.Services.GetRequiredService<Faker>();
@@ -66,6 +64,7 @@ public class ExecuteOnboarding : ExecuteJob<Agent>
         agent.PrivateKeyHex = keyPair.PrivateKeyHex;
         agent.Status = AgentStatus.Working;
 
+        var dbContext = context.Services.GetRequiredService<AppDbContext>();
         await dbContext.SaveChangesAsync();
     }
 }
