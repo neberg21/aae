@@ -43,7 +43,7 @@ public class SeedCoreAgents : BackgroundService
         return new Agent
         {
             AgentId = "leo",
-            Name = "leo",
+            Name = "Leo",
             PrivateKeyHex = keyPair.PrivateKeyHex,
             PublicKeyHex = keyPair.PublicKeyHex,
             JobTitle = "CEO",
@@ -64,7 +64,7 @@ public class SeedCoreAgents : BackgroundService
         return new Agent
         {
             AgentId = "helga",
-            Name = "helga",
+            Name = "Helga",
             PrivateKeyHex = keyPair.PrivateKeyHex,
             PublicKeyHex = keyPair.PublicKeyHex,
             JobTitle = "HR Recruiter",
