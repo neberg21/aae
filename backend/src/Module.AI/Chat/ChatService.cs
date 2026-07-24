@@ -98,9 +98,15 @@ public class ChatService
         };
     }
 
-    public DefineEmployeesResponse DefineEmployees(DefineEmployeesRequest request)
+    public async Task<DefineEmployeesResponse> DefineEmployees(DefineEmployeesRequest request)
     {
-        throw new NotImplementedException();
+        var chatHistory = GetChatHistory(request.ThreadId);
+        var define = new AnalyzeTask(
+            chatHistory.ThreadId,
+            request.Supervisor.Id,
+            request.Supervisor.SystemPrompt);
+        var employees = await _supervisorChatService.DefineEmployees(define);
+        return new DefineEmployeesResponse(chatHistory.ThreadId, employees);
     }
 
     private ChatHistory GetChatHistory(string threadId)

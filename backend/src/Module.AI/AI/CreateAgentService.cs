@@ -60,10 +60,11 @@ public class CreateAgentService
             PrivateKeyHex = "",
             Status = AgentStatus.Onboarding
         };
+        var onboarding = new Onboarding(request.ThreadId, Agent: agent);
 
         _dbContext.Agents.Add(agent);
         await _dbContext.SaveChangesAsync();
-        _onboardingChannel.TryWrite(agent);
+        _onboardingChannel.TryWrite(onboarding);
 
         return agent;
     }

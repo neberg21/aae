@@ -47,16 +47,17 @@ public class ExecuteOnboarding : ExecuteJob<Onboarding>
         var onboarding = context.Item;
         var defineEmployeesRequest = new DefineEmployeesRequest(onboarding.ThreadId, onboarding.Agent);
         var chatService = context.Services.GetRequiredService<ChatService>();
-        var response = chatService.DefineEmployees(defineEmployeesRequest);
+        var response = await chatService.DefineEmployees(defineEmployeesRequest);
 
         foreach (var employee in response.Employees)
         {
-            var recruitEmployeeRequest = new RecruitEmployeeRequest(
-                response.ThreadId,
-                onboarding.Agent.Id,
-                employee.AgentId,
-                employee.SystemPrompt);
-            await chatService.RecruitEmployee(recruitEmployeeRequest);
+            throw new NotImplementedException();
+            // var recruitEmployeeRequest = new RecruitEmployeeRequest(
+            //     response.ThreadId,
+            //     onboarding.Agent.Id,
+            //     employee.AgentId,
+            //     employee.Content);
+            // await chatService.RecruitEmployee(recruitEmployeeRequest);
         }
 
         await SetAgentInfo(context);

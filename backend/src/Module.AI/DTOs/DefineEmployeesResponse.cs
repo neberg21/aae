@@ -1,9 +1,3 @@
-﻿using Module.AI.Persistence;
+﻿namespace Module.AI.DTOs;
 
-namespace Module.AI.DTOs;
-
-public record DefineEmployeesResponse()
-{
-    public IEnumerable<Agent> Employees { get; set; }
-    public string ThreadId { get; set; }
-}
+public record DefineEmployeesResponse(string ThreadId, IEnumerable<CreateAgentResponse> Employees);

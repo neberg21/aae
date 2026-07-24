@@ -1,6 +1,5 @@
-﻿namespace Module.AI.DTOs;
+﻿using Module.AI.Persistence;
 
-public record DefineEmployeesRequest
-{
-    
-}
+namespace Module.AI.DTOs;
+
+public record DefineEmployeesRequest(string ThreadId, Agent Supervisor);
