@@ -27,6 +27,8 @@ public class ExecuteOnboarding : ExecuteJob<Onboarding>
         if (onboarding.Agent.Status == AgentStatus.Working)
             return;
 
+        await SetAgentInfo(context);
+
         if (onboarding.Agent.Id.StartsWith("supervisor-"))
         {
             await OnboardSupervisor(context);
@@ -45,10 +47,14 @@ public class ExecuteOnboarding : ExecuteJob<Onboarding>
         }
     }
 
-    private static async Task OnboardSupervisor(ExecuteJobContext<Onboarding> context)
+    private async Task OnboardSupervisor(ExecuteJobContext<Onboarding> context)
     {
         var onboarding = context.Item;
-        await SetAgentInfo(context);
+        _logger.LogInformation(
+            "Onboarding supervisor: {Agent} in thread {ThreadId}",
+            context.Item.Agent,
+            context.Item.ThreadId);
+
         var defineEmployeesRequest = new DefineEmployeesRequest(onboarding.ThreadId, onboarding.Agent);
         var chatService = context.Services.GetRequiredService<ChatService>();
         var response = await chatService.DefineEmployees(defineEmployeesRequest);
@@ -64,9 +70,14 @@ public class ExecuteOnboarding : ExecuteJob<Onboarding>
         }
     }
 
-    private async Task OnboardSpecialist(ExecuteJobContext<Onboarding> context)
+    private Task OnboardSpecialist(ExecuteJobContext<Onboarding> context)
     {
-        await SetAgentInfo(context);
+        _logger.LogInformation(
+            "Onboarding specialist: {Agent} in thread {ThreadId}",
+            context.Item.Agent,
+            context.Item.ThreadId);
+
+        return Task.CompletedTask;
     }
 
     private static async Task SetAgentInfo(ExecuteJobContext<Onboarding> context)
