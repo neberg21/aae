@@ -36,7 +36,7 @@ public partial class HelgaChatService
         var chatHistory = new ChatHistory(
             jobApplication.ThreadId,
             helga.Name,
-            jobApplication.AgentId,
+            jobApplication.SupervisorId,
             chatMessages,
             response);
         _dbContext.ChatHistories.Add(chatHistory);
