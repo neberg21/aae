@@ -21,12 +21,31 @@ public class ExecuteOnboarding : ExecuteJob<Agent>
     protected override async Task HandleItem(ExecuteJobContext<Agent> context, CancellationToken cancellationToken)
     {
         var agent = context.Item;
-        var dbContext = context.Services.GetRequiredService<AppDbContext>();
-
         _logger.LogInformation("Onboarding agent: {Agent}", agent);
 
+        if (agent.Id.StartsWith("supervisor-"))
+        {
+            await OnboardSupervisor(context);
+        }
+        else if (agent.Id.StartsWith("specialist-"))
+        {
+            await OnboardSpecialist(context);
+        }
+        else
+        {
+            _logger.LogError(
+                new NotSupportedException("Invalid agent type"),
+                "Invalid agent type: {AgentId}",
+                agent.Id);
+        }
+    }
+
+    private static async Task OnboardSupervisor(ExecuteJobContext<Agent> context)
+    {
+        var agent = context.Item;
         var faker = context.Services.GetRequiredService<Faker>();
         var profileGenerator = context.Services.GetRequiredService<ProfileGenerator>();
+        var dbContext = context.Services.GetRequiredService<AppDbContext>();
         var keyPair = NostrKeyPair.GenerateKeyPair();
         var firstName = faker.Person.FirstName;
         var profile = await profileGenerator.CreateProfileAsync(keyPair, firstName);
@@ -34,7 +53,14 @@ public class ExecuteOnboarding : ExecuteJob<Agent>
         agent.Name = profile.Name;
         agent.PublicKeyHex = keyPair.PublicKeyHex;
         agent.PrivateKeyHex = keyPair.PrivateKeyHex;
+        agent.Status = AgentStatus.Working;
 
         await dbContext.SaveChangesAsync();
+    }
+
+    private async Task OnboardSpecialist(ExecuteJobContext<Agent> context)
+    {
+        var agent = context.Item;
+        
     }
 }
