@@ -26,10 +26,10 @@ public class HelgaWorkflows : IClassFixture<WebApplicationFactory<Program>>
             var request = new JobApplication(response.ThreadId, response.AgentId, scope.SupervisorId, scope.Message);
             var history = await _helgaChatService.Recruit(request);
 
-            Assert.True(_helgaChatService.TryGetResponse(history, out var recruiting));
-            Assert.Equal(RecruitingStatus.Ready, recruiting.Status);
-            Assert.StartsWith("supervisor-", recruiting.AgentToRecruit.AgentId);
-            Assert.StartsWith(response.AgentId, recruiting.AgentToRecruit.SupervisorId);
+            Assert.True(_helgaChatService.TryGetResponse(history, out var recruitment));
+            Assert.Equal(RecruitingStatus.Ready, recruitment.Status);
+            Assert.StartsWith("supervisor-", recruitment.AgentToRecruit.AgentId);
+            Assert.StartsWith(response.AgentId, recruitment.AgentToRecruit.SupervisorId);
         }
     }
 
