@@ -62,7 +62,7 @@ public partial class HelgaChatService
             "threadId": "...",
             "status": "NEEDS_CLARIFICATION|READY",
             "clarificationQuestions": ["..."],
-            "agent": {
+            "agentToRecruit": {
                 "agentId": "kebab-case",
                 "jobTitle": "...",
                 "jobDescription": "...",
