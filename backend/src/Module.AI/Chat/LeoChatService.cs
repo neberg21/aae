@@ -32,10 +32,10 @@ public partial class LeoChatService
             new(ChatRole.User, initialMessage)
         };
         var response = await _chatClient.GetResponseAsync(chatMessages);
-        var hostory = new ChatHistory(threadId, leo.Name, chatMessages, response);
-        _dbContext.ChatHistories.Add(hostory);
+        var history = new ChatHistory(threadId, leo.Id, "User", chatMessages, response);
+        _dbContext.ChatHistories.Add(history);
         await _dbContext.SaveChangesAsync();
-        return hostory;
+        return history;
     }
 
     public async Task<ChatHistory> AnswerQuestions(ChatHistory history, string answer)

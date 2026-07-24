@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.AI;
-using Module.AI.DTOs;
+﻿using Module.AI.DTOs;
 using Module.AI.Persistence;
 
 namespace Module.AI.Threads;
@@ -25,8 +24,8 @@ public class GetThreadByIdService
             {
                 var dto = new ChatMessageDto
                 {
-                    Sender = message.Role == ChatRole.User ? "User" : history.SenderName,
-                    Receiver = message.Role == ChatRole.User ? history.SenderName : "User",
+                    Sender = history.GetSender(message),
+                    Receiver = history.GetReceiver(message),
                     Content = message.Text,
                     CreatedAt = message.CreatedAt?.DateTime ?? DateTime.UtcNow
                 };

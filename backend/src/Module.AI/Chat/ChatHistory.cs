@@ -5,18 +5,25 @@ namespace Module.AI.Chat;
 public class ChatHistory
 {
     private readonly List<ChatMessage> _messages = [];
+    private readonly string _agentId;
+    private readonly string _chatPartner;
 
-    public ChatHistory(string threadId, string senderName, IEnumerable<ChatMessage> chatMessages, ChatResponse response)
+    public ChatHistory(
+        string threadId,
+        string agentId,
+        string chatPartner,
+        IEnumerable<ChatMessage> chatMessages,
+        ChatResponse response)
     {
         ThreadId = threadId;
-        SenderName = senderName;
+        _agentId = agentId;
+        _chatPartner = chatPartner;
 
         _messages.AddRange(chatMessages);
         _messages.AddRange(response.Messages);
     }
 
     public string ThreadId { get; }
-    public string SenderName { get; }
     public DateTime CreatedAt { get; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
 
@@ -38,4 +45,8 @@ public class ChatHistory
         UpdatedAt = DateTime.UtcNow;
         return _messages;
     }
+
+    public string GetSender(ChatMessage message) => message.Role == ChatRole.User ? _chatPartner : _agentId;
+
+    public string GetReceiver(ChatMessage message) => message.Role == ChatRole.User ? _agentId : _chatPartner;
 }
