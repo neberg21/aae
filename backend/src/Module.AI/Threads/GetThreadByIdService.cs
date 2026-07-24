@@ -16,7 +16,6 @@ public class GetThreadByIdService
     {
         var histories = _dbContext.ChatHistories
             .Where(m => m.ThreadId == threadId);
-
         var allMessages = new List<ChatMessageDto>();
         foreach (var history in histories)
         {
