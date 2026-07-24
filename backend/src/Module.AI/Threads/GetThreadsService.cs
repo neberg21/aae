@@ -1,4 +1,5 @@
-﻿using Module.AI.DTOs;
+﻿using Module.AI.Chat;
+using Module.AI.DTOs;
 using Module.AI.Persistence;
 
 namespace Module.AI.Threads;
@@ -16,8 +17,7 @@ public class GetThreadsService
     {
         var threads = _dbContext.ChatHistories
             .GroupBy(c => c.ThreadId)
-            .Select(g =>
-                new ThreadDto(g.Key, g.First().CreatedAt, g.Last().CreatedAt, g.SelectMany(h => h.Messages).Count()))
+            .Select(CreateThread)
             .ToArray();
         var page = new GetThreadsResponse
         {
@@ -29,5 +29,13 @@ public class GetThreadsService
         };
 
         return page;
+    }
+
+    private static ThreadDto CreateThread(IGrouping<string, ChatHistory> thread)
+    {
+        var first = thread.First();
+        var latest = thread.Last();
+        var messageCount = thread.SelectMany(h => h.Messages).Count();
+        return new ThreadDto(thread.Key, first.CreatedAt, latest.CreatedAt, messageCount);
     }
 }
