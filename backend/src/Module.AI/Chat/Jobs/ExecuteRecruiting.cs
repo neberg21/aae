@@ -72,7 +72,7 @@ public class ExecuteRecruiting : BackgroundService
             Department = recruitingAgent.Department.ToString(),
             SupervisorId = recruitingAgent.SupervisorId,
             SystemPrompt = recruitingAgent.SystemPrompt,
-            Guardrails = [],
+            Guardrails = recruitingAgent.Guardrails,
             Tools = []
         };
         await agentService.CreateAgent(createAgentRequest);
