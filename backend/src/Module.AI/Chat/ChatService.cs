@@ -11,6 +11,7 @@ public class ChatService
     private readonly AppDbContext _dbContext;
     private readonly LeoChatService _leoChatService;
     private readonly HelgaChatService _helgaChatService;
+    private readonly SupervisorChatService _supervisorChatService;
     private readonly ExecuteVisionChannel _visionChannel;
     private readonly ExecuteRecruitmentChannel _recruitmentChannel;
 
@@ -19,13 +20,15 @@ public class ChatService
         LeoChatService leoChatService,
         HelgaChatService helgaChatService,
         ExecuteVisionChannel visionChannel,
-        ExecuteRecruitmentChannel recruitmentChannel)
+        ExecuteRecruitmentChannel recruitmentChannel, 
+        SupervisorChatService supervisorChatService)
     {
         _dbContext = dbContext;
         _leoChatService = leoChatService;
         _helgaChatService = helgaChatService;
         _visionChannel = visionChannel;
         _recruitmentChannel = recruitmentChannel;
+        _supervisorChatService = supervisorChatService;
     }
 
     public async Task<CreateVisionResponse> CreateVision(CreateVisionRequest request)

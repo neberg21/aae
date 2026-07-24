@@ -1,6 +1,7 @@
 ﻿using Bogus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Module.AI.DTOs;
 using Module.AI.Nostr;
 using Module.AI.Persistence;
 
@@ -42,6 +43,14 @@ public class ExecuteOnboarding : ExecuteJob<Agent>
 
     private static async Task OnboardSupervisor(ExecuteJobContext<Agent> context)
     {
+        var agent = context.Item;
+        var chatService = context.Services.GetRequiredService<ChatService>();
+        var recruitEmployeeRequest = new RecruitEmployeeRequest(
+            "",
+            agent.SupervisorId ?? "leo",
+            agent.AgentId,
+            agent.SystemPrompt);
+        var newAgent = await chatService.RecruitEmployee(recruitEmployeeRequest);
         await SetAgentInfo(context);
     }
 

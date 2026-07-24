@@ -28,6 +28,7 @@ public class ChatsModule : IModule
         services.AddScoped<ChatService>();
         services.AddScoped<LeoChatService>();
         services.AddScoped<HelgaChatService>();
+        services.AddScoped<SupervisorChatService>();
 
         var httpClient = new HttpClient
         {

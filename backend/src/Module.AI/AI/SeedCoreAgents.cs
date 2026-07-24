@@ -50,7 +50,7 @@ public class SeedCoreAgents : BackgroundService
             JobDescription =
                 "The CEO is responsible for creating a vision, managing overall operations, and ensuring success.",
             Department = "Core",
-            ManagerId = null,
+            SupervisorId = null,
             Guardrails = [],
             Status = AgentStatus.Working,
             SystemPrompt = LeoChatService.SystemPrompt
@@ -70,7 +70,7 @@ public class SeedCoreAgents : BackgroundService
             JobTitle = "HR Recruiter",
             JobDescription = "The HR Recruiter is responsible for recruiting and hiring new employees.",
             Department = "Core",
-            ManagerId = "leo",
+            SupervisorId = "leo",
             Guardrails = [],
             Status = AgentStatus.Working,
             SystemPrompt = HelgaChatService.SystemPrompt
