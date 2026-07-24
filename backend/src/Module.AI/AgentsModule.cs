@@ -34,11 +34,6 @@ public class AgentsModule : IModule
             .Produces<GetAgentByIdResponse>();
         endpoints.MapGet("search", SearchAgents)
             .Produces<GetAgentsResponse>();
-
-        var actions = endpoints.MapGroup("actions");
-
-        actions.MapPost("await-request-approval", AwaitRequestApproval);
-        actions.MapPost("resolve-request-approval", ResolveRequestApproval);
     }
 
     private IResult GetAgents(SearchIdentityService searchIdentityService)
@@ -64,15 +59,5 @@ public class AgentsModule : IModule
             agentId, name, department, jobTitle);
 
         return Results.Ok(page);
-    }
-
-    private IResult AwaitRequestApproval()
-    {
-        throw new NotImplementedException();
-    }
-
-    private IResult ResolveRequestApproval()
-    {
-        throw new NotImplementedException();
     }
 }
