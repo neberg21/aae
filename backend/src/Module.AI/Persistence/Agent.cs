@@ -2,7 +2,7 @@
 
 public record Agent
 {
-    public string Id => AgentId;
+    public string Id => $"{PublicKeyHex[..6]}-{AgentId}";
     public required string AgentId { get; set; }
     public required string Name { get; set; }
     public required string PublicKeyHex { get; set; }
