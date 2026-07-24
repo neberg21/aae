@@ -5,19 +5,19 @@ namespace Module.AI.Chat;
 public class ChatHistory
 {
     private readonly List<ChatMessage> _messages = [];
-    private readonly string _agentId;
-    private readonly string _chatPartner;
+    private readonly string _chattingWith;
+    private readonly string _initiator;
 
     public ChatHistory(
         string threadId,
-        string agentId,
-        string chatPartner,
+        string initiator,
+        string chattingWith,
         IEnumerable<ChatMessage> chatMessages,
         ChatResponse response)
     {
         ThreadId = threadId;
-        _agentId = agentId;
-        _chatPartner = chatPartner;
+        _initiator = initiator;
+        _chattingWith = chattingWith;
 
         _messages.AddRange(chatMessages);
         _messages.AddRange(response.Messages);
@@ -46,7 +46,7 @@ public class ChatHistory
         return _messages;
     }
 
-    public string GetSender(ChatMessage message) => message.Role == ChatRole.User ? _chatPartner : _agentId;
+    public string GetSender(ChatMessage message) => message.Role == ChatRole.User ? _initiator : _chattingWith;
 
-    public string GetReceiver(ChatMessage message) => message.Role == ChatRole.User ? _agentId : _chatPartner;
+    public string GetReceiver(ChatMessage message) => message.Role == ChatRole.User ? _chattingWith : _initiator;
 }

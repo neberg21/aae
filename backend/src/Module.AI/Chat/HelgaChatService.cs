@@ -35,8 +35,8 @@ public partial class HelgaChatService
         var response = await _chatClient.GetResponseAsync(chatMessages);
         var chatHistory = new ChatHistory(
             jobApplication.ThreadId,
-            helga.Name,
             jobApplication.SupervisorId,
+            helga.Id,
             chatMessages,
             response);
         _dbContext.ChatHistories.Add(chatHistory);
