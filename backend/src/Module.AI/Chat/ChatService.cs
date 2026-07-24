@@ -12,20 +12,20 @@ public class ChatService
     private readonly LeoChatService _leoChatService;
     private readonly HelgaChatService _helgaChatService;
     private readonly ExecuteVisionChannel _visionChannel;
-    private readonly ExecuteRecruitingChannel _recruitingChannel;
+    private readonly ExecuteRecruitmentChannel _recruitmentChannel;
 
     public ChatService(
         AppDbContext dbContext,
         LeoChatService leoChatService,
         HelgaChatService helgaChatService,
         ExecuteVisionChannel visionChannel,
-        ExecuteRecruitingChannel recruitingChannel)
+        ExecuteRecruitmentChannel recruitmentChannel)
     {
         _dbContext = dbContext;
         _leoChatService = leoChatService;
         _helgaChatService = helgaChatService;
         _visionChannel = visionChannel;
-        _recruitingChannel = recruitingChannel;
+        _recruitmentChannel = recruitmentChannel;
     }
 
     public async Task<CreateVisionResponse> CreateVision(CreateVisionRequest request)
@@ -88,7 +88,7 @@ public class ChatService
 
         var finalMessage = new ChatMessage(ChatRole.Assistant, $"Created agent: {response.AgentToRecruit.AgentId}");
         chatHistory.AddMessage(finalMessage);
-        _recruitingChannel.TryWrite(response);
+        _recruitmentChannel.TryWrite(response);
         return new RecruitEmployeeResponse(response.ThreadId, chatHistory.CurrentMessage)
         {
             Recruited = response

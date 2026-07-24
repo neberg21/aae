@@ -36,7 +36,7 @@ public class CreateAgentTests : IClassFixture<WebApplicationFactory<Program>>
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(agent);
-        Assert.NotEmpty(agent.Name);
+        Assert.Equal(CreateAgentResponseStatus.Onboarding, agent.Status);
         Assert.Equal("specialist-test-engineer", agent.AgentId);
     }
 }

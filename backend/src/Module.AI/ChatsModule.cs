@@ -18,14 +18,16 @@ public class ChatsModule : IModule
     {
         services.AddScoped<ChatHub>();
         services.AddHostedService<RecruitingJob>();
-        services.AddHostedService<ExecuteRecruiting>();
+        services.AddHostedService<ExecuteRecruitment>();
+        services.AddHostedService<ExecuteOnboarding>();
+
+        services.AddSingleton<ExecuteVisionChannel>();
+        services.AddSingleton<ExecuteRecruitmentChannel>();
+        services.AddSingleton<ExecuteOnboardingChannel>();
 
         services.AddScoped<ChatService>();
         services.AddScoped<LeoChatService>();
         services.AddScoped<HelgaChatService>();
-
-        services.AddSingleton<ExecuteVisionChannel>();
-        services.AddSingleton<ExecuteRecruitingChannel>();
 
         var httpClient = new HttpClient
         {

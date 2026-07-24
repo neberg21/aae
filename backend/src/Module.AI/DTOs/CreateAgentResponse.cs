@@ -3,5 +3,10 @@
 public record CreateAgentResponse
 {
     public required string AgentId { get; init; }
-    public required string Name { get; init; }
+    public required CreateAgentResponseStatus Status { get; init; }
+}
+
+public enum CreateAgentResponseStatus
+{
+    Onboarding
 }

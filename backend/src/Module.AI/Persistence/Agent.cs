@@ -13,5 +13,6 @@ public record Agent
     public required string Department { get; set; }
     public required string? ManagerId { get; set; }
     public required string[] Guardrails { get; set; }
+    public required AgentStatus Status { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -52,6 +52,7 @@ public class SeedCoreAgents : BackgroundService
             Department = "Core",
             ManagerId = null,
             Guardrails = [],
+            Status = AgentStatus.Working,
             SystemPrompt = LeoChatService.SystemPrompt
         };
     }
@@ -71,6 +72,7 @@ public class SeedCoreAgents : BackgroundService
             Department = "Core",
             ManagerId = "leo",
             Guardrails = [],
+            Status = AgentStatus.Working,
             SystemPrompt = HelgaChatService.SystemPrompt
         };
     }
