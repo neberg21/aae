@@ -30,6 +30,7 @@ public partial class SupervisorChatService
         - Infer sensible defaults from module scope + role when details are missing but still sufficient to create.
         - Reply with JSON only. No markdown fences. No prose outside JSON.
         - Max hierarchy depth is 3. (0) leo >  (1) supervisor >  (2) supervisor >  (3) specialist
+        - Do not create any supervisor when level is 3 or higher. Instead, create a specialist for that task.
         
         ## Output schema
 

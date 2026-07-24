@@ -59,6 +59,7 @@ public class SupervisorWorkflows : IClassFixture<WebApplicationFactory<Program>>
             Name = "",
             PublicKeyHex = "",
             JobTitle = toRecruit.JobTitle,
+            Level = 1,
             JobDescription = toRecruit.JobDescription,
             SystemPrompt = toRecruit.SystemPrompt,
             PrivateKeyHex = "",

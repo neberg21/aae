@@ -23,12 +23,14 @@ public partial class SupervisorChatService
         var supervisorId = define.SupervisorId;
         var agentId = define.AgentId;
         var systemPrompt = define.SystemPrompt;
+        var supervisor = _dbContext.Agents.First(a => a.SupervisorId == supervisorId).Level++;
         var chatMessages = new List<ChatMessage>
         {
             new(ChatRole.System, systemPrompt),
             new(ChatRole.System, $"This is the thread id: {threadId}"),
             new(ChatRole.System, $"This is the supervisor id: {supervisorId}"),
             new(ChatRole.System, $"This is the agent id: {agentId}"),
+            new(ChatRole.System, $"This is the hierarchy current level: {supervisor + 1}"),
             new(ChatRole.User, InitialMessage)
         };
         var response = await _chatClient.GetResponseAsync(chatMessages);

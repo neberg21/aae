@@ -47,6 +47,7 @@ public class SeedCoreAgents : BackgroundService
             PrivateKeyHex = keyPair.PrivateKeyHex,
             PublicKeyHex = keyPair.PublicKeyHex,
             JobTitle = "CEO",
+            Level = 0,
             JobDescription =
                 "The CEO is responsible for creating a vision, managing overall operations, and ensuring success.",
             Department = "Core",
@@ -68,6 +69,7 @@ public class SeedCoreAgents : BackgroundService
             PrivateKeyHex = keyPair.PrivateKeyHex,
             PublicKeyHex = keyPair.PublicKeyHex,
             JobTitle = "HR Recruiter",
+            Level = 1,
             JobDescription = "The HR Recruiter is responsible for recruiting and hiring new employees.",
             Department = "Core",
             SupervisorId = "leo",
