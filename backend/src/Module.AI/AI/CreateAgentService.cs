@@ -47,7 +47,7 @@ public class CreateAgentService
     private async Task<Agent> CreateAgentCore(CreateAgentRequest request)
     {
         var supervisor = _dbContext.Agents
-            .First(a => a.AgentId.Equals(request.AgentId, StringComparison.OrdinalIgnoreCase));
+            .First(a => a.AgentId.Equals(request.SupervisorId, StringComparison.OrdinalIgnoreCase));
         var agent = new Agent
         {
             AgentId = request.AgentId,
