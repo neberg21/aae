@@ -31,10 +31,11 @@ public class AgentChatService
     private ChatMessage CreateSystemPrompt(Agent agent)
     {
         var message = new StringBuilder();
-        message.AppendLine("Dein Name ist: " + agent.Name);
+        message.AppendLine("Your name is " + agent.Name);
         message.AppendLine(
-            "Wenn dich jemand etwas über sich fragt, sag ihm, wer du bist und was du machst. " +
-            "Antworte nicht genrisch. Antworte mit extrahierten Details aus deinen Systemprompts.");
+            "If someone asks you about yourself, tell them who you are and what you do. " +
+            "Do not answer generically. Answer with extracted details from your system prompts. "+
+            "Answer questions always in the context of the thread in your identified system prompt.");
         message.AppendLine(agent.SystemPrompt);
         return new ChatMessage(ChatRole.System, message.ToString());
     }
