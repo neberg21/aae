@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using Microsoft.Extensions.AI;
 using Module.AI.Persistence;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
@@ -21,16 +22,10 @@ public partial class SupervisorChatService
         var threadId = define.ThreadId;
         var supervisorId = define.SupervisorId;
         var agentId = define.AgentId;
-        var systemPrompt = define.SupervisorTasks;
-        var supervisor = _dbContext.Agents.First(a => a.SupervisorId == supervisorId).Level++;
         var chatMessages = new List<ChatMessage>
         {
-            new(ChatRole.System, SystemPrompt),
-            new(ChatRole.System, $"This is the thread id: {threadId}"),
-            new(ChatRole.System, $"This is the supervisor id: {supervisorId}"),
-            new(ChatRole.System, $"This is the agent id: {agentId}"),
-            new(ChatRole.System, $"This is the hierarchy current level: {supervisor + 1}"),
-            new(ChatRole.User, "Definiere deine Teammitglieder anhand deiner Aufgaben: " + systemPrompt),
+            CreateSystemPrompt(define),
+            new(ChatRole.User, "Definiere deine Teammitglieder anhand deiner Aufgaben: " + define.SupervisorTasks),
         };
         var response = await _chatClient.GetResponseAsync(chatMessages);
         var chatHistory = new ChatHistory(
@@ -42,6 +37,22 @@ public partial class SupervisorChatService
         _dbContext.ChatHistories.Add(chatHistory);
         await _dbContext.SaveChangesAsync();
         return chatHistory;
+    }
+
+    private ChatMessage CreateSystemPrompt(AnalyzeTask define)
+    {
+        var message = new StringBuilder(SystemPrompt);
+        var threadId = define.ThreadId;
+        var supervisorId = define.SupervisorId;
+        var agentId = define.AgentId;
+        var supervisor = _dbContext.Agents.First(a => a.SupervisorId == supervisorId).Level++;
+
+        message.AppendLine($"This is the thread id: {threadId}");
+        message.AppendLine($"This is the supervisor id: {supervisorId}");
+        message.AppendLine($"This is the agent id: {agentId}");
+        message.AppendLine($"This is the hierarchy current level: {supervisor}");
+
+        return new ChatMessage(ChatRole.System, message.ToString());
     }
 
     public bool TryGetResponse(ChatHistory history, [NotNullWhen(true)] out Employee[]? response)
