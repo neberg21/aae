@@ -30,6 +30,7 @@ public class ChatsModule : IModule
         services.AddScoped<LeoChatService>();
         services.AddScoped<HelgaChatService>();
         services.AddScoped<SupervisorChatService>();
+        services.AddScoped<AgentChatService>();
 
         var httpClient = new HttpClient
         {
