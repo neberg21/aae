@@ -13,14 +13,18 @@ public class ChatHistory
         string initiator,
         string chattingWith,
         IEnumerable<ChatMessage> chatMessages,
-        ChatResponse response)
+        ChatResponse? response = null)
     {
         ThreadId = threadId;
         _initiator = initiator;
         _chattingWith = chattingWith;
 
         _messages.AddRange(chatMessages);
-        _messages.AddRange(response.Messages);
+
+        if (response is not null)
+        {
+            _messages.AddRange(response.Messages);
+        }
     }
 
     public string ThreadId { get; }

@@ -11,6 +11,7 @@ public class ChatService
     private readonly AppDbContext _dbContext;
     private readonly LeoChatService _leoChatService;
     private readonly HelgaChatService _helgaChatService;
+    private readonly AgentChatService _agentChatService;
     private readonly SupervisorChatService _supervisorChatService;
     private readonly ExecuteVisionChannel _visionChannel;
     private readonly ExecuteRecruitmentChannel _recruitmentChannel;
@@ -19,6 +20,7 @@ public class ChatService
         AppDbContext dbContext,
         LeoChatService leoChatService,
         HelgaChatService helgaChatService,
+        AgentChatService agentChatService,
         ExecuteVisionChannel visionChannel,
         ExecuteRecruitmentChannel recruitmentChannel,
         SupervisorChatService supervisorChatService)
@@ -26,6 +28,7 @@ public class ChatService
         _dbContext = dbContext;
         _leoChatService = leoChatService;
         _helgaChatService = helgaChatService;
+        _agentChatService = agentChatService;
         _visionChannel = visionChannel;
         _recruitmentChannel = recruitmentChannel;
         _supervisorChatService = supervisorChatService;
@@ -49,13 +52,7 @@ public class ChatService
             {
                 return new CreateVisionResponse(vision.ThreadId, vision.CurrentMessage)
                 {
-                    ChatMessages = vision.Messages.Select(m => new ChatMessageDto
-                    {
-                        Content = m.Text,
-                        Sender = m.Role.ToString(),
-                        Receiver = m.Role == ChatRole.Assistant ? "User" : "Assistant",
-                        CreatedAt = m.CreatedAt.GetValueOrDefault().DateTime
-                    }).ToArray()
+                    ChatMessages = vision.Messages.Select(CreateChatMessageDto).ToArray()
                 };
             }
 
@@ -65,15 +62,20 @@ public class ChatService
             return new CreateVisionResponse(vision.ThreadId, vision.CurrentMessage)
             {
                 Vision = response,
-                ChatMessages = vision.Messages.Select(m => new ChatMessageDto
-                {
-                    Content = m.Text,
-                    Sender = m.Role.ToString(),
-                    Receiver = m.Role == ChatRole.Assistant ? "User" : "Assistant",
-                    CreatedAt = m.CreatedAt.GetValueOrDefault().DateTime
-                }).ToArray()
+                ChatMessages = vision.Messages.Select(CreateChatMessageDto).ToArray()
             };
         }
+    }
+
+    private static ChatMessageDto CreateChatMessageDto(ChatMessage m)
+    {
+        return new ChatMessageDto
+        {
+            Content = m.Text,
+            Sender = m.Role.ToString(),
+            Receiver = m.Role == ChatRole.Assistant ? "User" : "Assistant",
+            CreatedAt = m.CreatedAt.GetValueOrDefault().DateTime
+        };
     }
 
     public async Task<RecruitEmployeeResponse> RecruitEmployee(RecruitEmployeeRequest request)
@@ -115,6 +117,19 @@ public class ChatService
             $"Defined {response.Length} employees for {request.Supervisor.Id}");
         chatHistory.AddMessage(finalMessage);
         return new DefineEmployeesResponse(chatHistory.ThreadId, response);
+    }
+
+    public async Task<CreateAgentChatResponse> CreateChatMessage(CreateAgentChatRequest request)
+    {
+        var threadId = Guid.CreateVersion7().ToString("N")[..12];
+        var chatHistory = string.IsNullOrEmpty(request.ThreadId)
+            ? new ChatHistory(threadId, "User", request.AgentId, [])
+            : GetChatHistory(request.ThreadId);
+
+        chatHistory = _agentChatService.CreateChatMessage(chatHistory, request.Message);
+        return new CreateAgentChatResponse(
+            chatHistory.ThreadId,
+            chatHistory.Messages.Select(CreateChatMessageDto).ToArray());
     }
 
     private ChatHistory GetChatHistory(string threadId)
