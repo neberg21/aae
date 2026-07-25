@@ -48,6 +48,7 @@ public class ChatsModule : IModule
 
         endpoints = endpoints.MapGroup("chats");
 
+        endpoints.MapGet("/dashboard", (ChannelDashboard dashboard) => Results.Ok((object?)dashboard));
         endpoints.MapPost("/actions/create-vision", CreateVision)
             .Produces<CreateVisionResponse>();
         endpoints.MapPost("/actions/recruit-employee", RecruitEmployee)
