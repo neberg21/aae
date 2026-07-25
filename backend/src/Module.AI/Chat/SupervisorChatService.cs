@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Module.AI.Persistence;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
@@ -47,19 +46,11 @@ public partial class SupervisorChatService
 
     public bool TryGetResponse(ChatHistory history, [NotNullWhen(true)] out Employee[]? response)
     {
-        try
-        {
-            var responseContent = history.CurrentMessage;
-            var json = responseContent.Replace("```json", "").Replace("```", "");
-            var options = new JsonSerializerOptions().ConfigureJsonSerialization();
-            var employees = JsonSerializer.Deserialize<Employees>(json, options);
-            response = employees?.Team;
-            return response is not null;
-        }
-        catch
-        {
-            response = null;
+        response = null;
+        if (!ChatResponseJsonParser.TryDeserialize<Employees>(history.CurrentMessage, out var employees))
             return false;
-        }
+
+        response = employees.Team;
+        return true;
     }
 }

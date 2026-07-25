@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Module.AI.AI;
 using Module.AI.Persistence;
@@ -44,20 +43,6 @@ public partial class HelgaChatService
         return chatHistory;
     }
 
-    public bool TryGetResponse(ChatHistory history, [NotNullWhen(true)] out Recruitment? response)
-    {
-        try
-        {
-            var responseContent = history.CurrentMessage;
-            var json = responseContent.Replace("```json", "").Replace("```", "");
-            var options = new JsonSerializerOptions().ConfigureJsonSerialization();
-            response = JsonSerializer.Deserialize<Recruitment>(json, options);
-            return response is not null;
-        }
-        catch
-        {
-            response = null;
-            return false;
-        }
-    }
+    public bool TryGetResponse(ChatHistory history, [NotNullWhen(true)] out Recruitment? response) =>
+        ChatResponseJsonParser.TryDeserialize(history.CurrentMessage, out response);
 }
