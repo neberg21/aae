@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.AI;
+﻿using System.Text;
+using Microsoft.Extensions.AI;
+using Module.AI.DTOs;
 using Module.AI.Persistence;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 
@@ -15,19 +17,30 @@ public class AgentChatService
         _dbContext = dbContext;
     }
 
-    public async Task<ChatHistory> CreateChatMessage(ChatHistory chatHistory, string message)
+    public ChatHistory CreateChatHistory(CreateAgentChatRequest request)
     {
-        if (!chatHistory.Messages.Any())
-        {
-            var agent = _dbContext.Agents.First(a => a.AgentId == chatHistory.ChattingWith);
-            chatHistory.AddMessage(new ChatMessage(ChatRole.System, agent.SystemPrompt));
-            chatHistory.AddMessage(new ChatMessage(ChatRole.System, "Dein Name ist: " + agent.Name));
-            chatHistory.AddMessage(new ChatMessage(ChatRole.System,
-                "Wenn dich jemand etwas über sich fragt, sag ihm, wer du bist und was du machst. Antworte nicht genrisch. Antworte mit extrahierten Details aus deinen Systemprompts."));
+        var threadId = Guid.CreateVersion7().ToString("N")[..12];
+        var chatHistory = new ChatHistory(threadId, "User", request.AgentId, []);
+        var agent = _dbContext.Agents.First(a => a.AgentId == chatHistory.ChattingWith);
+        chatHistory.AddMessage(CreateSystemPrompt(agent));
+        _dbContext.ChatHistories.Add(chatHistory);
 
-            _dbContext.ChatHistories.Add(chatHistory);
-        }
+        return chatHistory;
+    }
 
+    private ChatMessage CreateSystemPrompt(Agent agent)
+    {
+        var message = new StringBuilder();
+        message.AppendLine("Dein Name ist: " + agent.Name);
+        message.AppendLine(
+            "Wenn dich jemand etwas über sich fragt, sag ihm, wer du bist und was du machst. " +
+            "Antworte nicht genrisch. Antworte mit extrahierten Details aus deinen Systemprompts.");
+        message.AppendLine(agent.SystemPrompt);
+        return new ChatMessage(ChatRole.System, message.ToString());
+    }
+
+    public async Task<ChatHistory> AddChatMessage(ChatHistory chatHistory, string message)
+    {
         chatHistory.AddMessage(new ChatMessage(ChatRole.User, message));
         var response = await _chatClient.GetResponseAsync(chatHistory.Messages);
         chatHistory.AddChatResponse(response);

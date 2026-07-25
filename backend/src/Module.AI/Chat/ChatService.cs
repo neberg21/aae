@@ -121,12 +121,10 @@ public class ChatService
 
     public async Task<CreateAgentChatResponse> CreateChatMessage(CreateAgentChatRequest request)
     {
-        var threadId = Guid.CreateVersion7().ToString("N")[..12];
         var chatHistory = string.IsNullOrEmpty(request.ThreadId)
-            ? new ChatHistory(threadId, "User", request.AgentId, [])
+            ? _agentChatService.CreateChatHistory(request)
             : GetChatHistory(request.ThreadId);
-
-        chatHistory = await _agentChatService.CreateChatMessage(chatHistory, request.Message);
+        chatHistory = await _agentChatService.AddChatMessage(chatHistory, request.Message);
         return new CreateAgentChatResponse(
             chatHistory.ThreadId,
             chatHistory.Messages.Select(CreateChatMessageDto).ToArray());
