@@ -1,6 +1,6 @@
 ﻿namespace Module.AI.Chat;
 
-public record AnalyzeTask(string ThreadId, string SupervisorId, string AgentId, string SystemPrompt);
+public record AnalyzeTask(string ThreadId, string SupervisorId, string AgentId, string SupervisorTasks);
 
 public record Employees(string ThreadId, Employee[] Team);
 
@@ -8,7 +8,7 @@ public record Employee(string AgentId, string Message, string ReasonForAssignmen
 
 public partial class SupervisorChatService
 {
-    private const string InitialMessage =
+    private const string SystemPrompt =
         """
         Create a JSON response that defines the optimal team for the provided task.
         
