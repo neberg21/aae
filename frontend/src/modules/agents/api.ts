@@ -5,6 +5,7 @@ import type {
   ChatMessage,
   CreateVisionResponse,
   LeoChatResult,
+  AgentChatResult,
   ThreadDetail,
   ThreadsPage,
 } from './types'
@@ -168,6 +169,36 @@ export async function sendLeoMessage(
     reply,
     done: payload.vision !== null && payload.vision !== undefined,
     vision: payload.vision ?? null,
+    chatMessages: payload.chatMessages ?? [],
+  }
+}
+
+export async function sendAgentChatMessage(
+  agentId: string,
+  message: string,
+  threadId?: string,
+): Promise<AgentChatResult> {
+  const trimmedMessage = message.trim()
+  if (!trimmedMessage) {
+    throw new Error('Message is required')
+  }
+
+  const response = await fetch(`${apiBaseUrl}/chats`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      agentId: agentId,
+      message: trimmedMessage,
+      threadId: threadId ?? null,
+    }),
+  })
+
+  const payload = await readJson<AgentChatResult>(response)
+
+  return {
+    threadId: payload.threadId,
     chatMessages: payload.chatMessages ?? [],
   }
 }

@@ -126,6 +126,7 @@ export default function AgentsListPage() {
               <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold dark:border-gray-700">Department</th>
               <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold dark:border-gray-700">Job title</th>
               <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold dark:border-gray-700">Id</th>
+              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold dark:border-gray-700">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -142,6 +143,14 @@ export default function AgentsListPage() {
                 <td className="border-b border-gray-200 px-3 py-2 align-top dark:border-gray-700">{agent.department}</td>
                 <td className="border-b border-gray-200 px-3 py-2 align-top dark:border-gray-700">{agent.jobTitle}</td>
                 <td className="border-b border-gray-200 px-3 py-2 align-top dark:border-gray-700">{agent.agentId}</td>
+                <td className="border-b border-gray-200 px-3 py-2 align-top dark:border-gray-700">
+                  <Link
+                    to={`/module/agents/chat/${agent.agentId}`}
+                    className="inline-block rounded-md bg-violet-600 px-3 py-1 text-sm font-medium text-white transition hover:bg-violet-500"
+                  >
+                    Chat
+                  </Link>
+                </td>
               </tr>
             ))}
           </tbody>

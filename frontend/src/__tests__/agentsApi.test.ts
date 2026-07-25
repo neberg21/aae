@@ -7,6 +7,7 @@ import {
   getThreads,
   searchAgents,
   sendLeoMessage,
+  sendAgentChatMessage,
 } from '../modules/agents/api'
 
 describe('agents api', () => {
@@ -150,6 +151,7 @@ describe('agents api', () => {
         threadId: 'thread-123',
         content: 'Hello from Leo',
         vision: { threadId: 'thread-123' },
+        chatMessages: [],
       }),
     })
     vi.stubGlobal('fetch', fetchMock)
@@ -165,6 +167,7 @@ describe('agents api', () => {
       reply: 'Hello from Leo',
       done: true,
       vision: { threadId: 'thread-123' },
+      chatMessages: [],
     })
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock).toHaveBeenCalledWith('/ai-api/chats/actions/create-vision', {
@@ -178,4 +181,107 @@ describe('agents api', () => {
       }),
     })
   })
+
+  it('sendAgentChatMessage sends message to agent endpoint with agentId', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        threadId: 'thread-agent-1',
+        chatMessages: [
+          {
+            sender: 'user',
+            receiver: 'agent-1',
+            content: 'Hi Agent',
+            createdAt: '2026-07-25T10:00:00Z',
+          },
+          {
+            sender: 'agent-1',
+            receiver: 'user',
+            content: 'Hello, how can I help?',
+            createdAt: '2026-07-25T10:00:01Z',
+          },
+        ],
+      }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await sendAgentChatMessage('agent-1', 'Hi Agent')
+
+    expect(result).toEqual({
+      threadId: 'thread-agent-1',
+      chatMessages: [
+        {
+          sender: 'user',
+          receiver: 'agent-1',
+          content: 'Hi Agent',
+          createdAt: '2026-07-25T10:00:00Z',
+        },
+        {
+          sender: 'agent-1',
+          receiver: 'user',
+          content: 'Hello, how can I help?',
+          createdAt: '2026-07-25T10:00:01Z',
+        },
+      ],
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith('/ai-api/chats', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        agentId: 'agent-1',
+        message: 'Hi Agent',
+        threadId: null,
+      }),
+    })
+  })
+
+  it('sendAgentChatMessage includes threadId when provided', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        threadId: 'thread-agent-1',
+        chatMessages: [],
+      }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await sendAgentChatMessage('agent-1', 'Follow-up message', 'thread-agent-1')
+
+    const callArgs = fetchMock.mock.calls[0]
+    const body = JSON.parse(callArgs[1].body)
+    expect(body.threadId).toBe('thread-agent-1')
+  })
+
+  it('sendAgentChatMessage throws error on empty message', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({}),
+      }),
+    )
+
+    await expect(sendAgentChatMessage('agent-1', '')).rejects.toThrow('Message is required')
+    await expect(sendAgentChatMessage('agent-1', '   ')).rejects.toThrow('Message is required')
+  })
+
+  it('sendAgentChatMessage throws ApiError on failure', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+      }),
+    )
+
+    await expect(sendAgentChatMessage('agent-1', 'Test message')).rejects.toBeInstanceOf(ApiError)
+    await expect(sendAgentChatMessage('agent-1', 'Test message')).rejects.toMatchObject({
+      status: 500,
+    })
+  })
 })
+

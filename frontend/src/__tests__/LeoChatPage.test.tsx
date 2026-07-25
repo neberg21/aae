@@ -39,7 +39,20 @@ describe('LeoChatPage', () => {
       reply: 'Hallo, ich bin Leo.',
       done: false,
       vision: null,
-      chatMessages: [],
+      chatMessages: [
+        {
+          sender: 'user',
+          receiver: null,
+          content: 'Hi Leo',
+          createdAt: '2026-07-25T10:00:00Z',
+        },
+        {
+          sender: 'leo',
+          receiver: null,
+          content: 'Hallo, ich bin Leo.',
+          createdAt: '2026-07-25T10:00:01Z',
+        },
+      ],
     })
 
     renderPage()

@@ -74,3 +74,8 @@ export type LeoChatResult = {
   chatMessages: ThreadMessage[]
 }
 
+export type AgentChatResult = {
+  threadId: string
+  chatMessages: ThreadMessage[]
+}
+

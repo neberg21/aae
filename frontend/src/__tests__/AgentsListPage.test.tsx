@@ -121,4 +121,28 @@ describe('AgentsListPage', () => {
     expect(screen.getByText('Ops')).toBeInTheDocument()
     expect(screen.getByText('Orchestrator')).toBeInTheDocument()
   })
+
+  it('renders a chat button for each agent', async () => {
+    renderPage()
+
+    await waitFor(() => {
+      expect(getAgentsMock).toHaveBeenCalledTimes(1)
+    })
+
+    const table = await screen.findByRole('table')
+    const chatButton = await within(table).findByRole('link', { name: /chat/i })
+    expect(chatButton).toHaveAttribute('href', '/module/agents/chat/default')
+  })
+
+  it('chat button navigates to agent chat page', async () => {
+    renderPage()
+
+    await waitFor(() => {
+      expect(getAgentsMock).toHaveBeenCalledTimes(1)
+    })
+
+    const table = await screen.findByRole('table')
+    const chatButton = await within(table).findByRole('link', { name: /chat/i })
+    expect(chatButton).toHaveAttribute('href', '/module/agents/chat/default')
+  })
 })
