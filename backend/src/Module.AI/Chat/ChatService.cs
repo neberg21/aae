@@ -126,7 +126,7 @@ public class ChatService
             ? new ChatHistory(threadId, "User", request.AgentId, [])
             : GetChatHistory(request.ThreadId);
 
-        chatHistory = _agentChatService.CreateChatMessage(chatHistory, request.Message);
+        chatHistory = await _agentChatService.CreateChatMessage(chatHistory, request.Message);
         return new CreateAgentChatResponse(
             chatHistory.ThreadId,
             chatHistory.Messages.Select(CreateChatMessageDto).ToArray());

@@ -28,6 +28,9 @@ public class ChatHistory
     }
 
     public string ThreadId { get; }
+
+    public string ChattingWith => _chattingWith;
+
     public DateTime CreatedAt { get; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
 
