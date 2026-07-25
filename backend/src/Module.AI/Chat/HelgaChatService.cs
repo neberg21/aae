@@ -23,7 +23,7 @@ public partial class HelgaChatService
     public async Task<ChatHistory> Recruit(JobApplication jobApplication)
     {
         var helga = await _coreAgentService.GetHelga();
-        var systemPrompt = helga.AgentTask;
+        var systemPrompt = helga.SystemPrompt;
         var chatMessages = new List<ChatMessage>
         {
             CreateSystemPrompt(systemPrompt, jobApplication),

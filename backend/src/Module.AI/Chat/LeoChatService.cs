@@ -23,7 +23,7 @@ public partial class LeoChatService
     public async Task<ChatHistory> CreateVision(string initialMessage)
     {
         var leo = await _coreAgentService.GetLeo();
-        var systemPrompt = leo.AgentTask;
+        var systemPrompt = leo.SystemPrompt;
         var threadId = Guid.CreateVersion7().ToString("N")[..12];
         var chatMessages = new List<ChatMessage>
         {

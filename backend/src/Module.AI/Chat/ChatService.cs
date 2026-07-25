@@ -107,7 +107,7 @@ public class ChatService
             chatHistory.ThreadId,
             request.Supervisor.SupervisorId,
             request.Supervisor.Id,
-            request.Supervisor.AgentTask);
+            request.Supervisor.SystemPrompt);
         chatHistory = await _supervisorChatService.DefineEmployees(define);
 
         if (!_supervisorChatService.TryGetResponse(chatHistory, out var response))

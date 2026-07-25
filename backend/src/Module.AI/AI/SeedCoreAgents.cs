@@ -54,7 +54,7 @@ public class SeedCoreAgents : BackgroundService
             SupervisorId = "",
             Guardrails = [],
             Status = AgentStatus.Working,
-            AgentTask = LeoChatService.SystemPrompt
+            SystemPrompt = LeoChatService.SystemPrompt
         };
     }
 
@@ -75,7 +75,7 @@ public class SeedCoreAgents : BackgroundService
             SupervisorId = "leo",
             Guardrails = [],
             Status = AgentStatus.Working,
-            AgentTask = HelgaChatService.SystemPrompt
+            SystemPrompt = HelgaChatService.SystemPrompt
         };
     }
 }

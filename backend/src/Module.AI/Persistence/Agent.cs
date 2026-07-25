@@ -8,7 +8,7 @@ public record Agent
     public required string PublicKeyHex { get; set; }
     public required string JobTitle { get; set; }
     public required string JobDescription { get; set; }
-    public required string AgentTask { get; set; }
+    public required string SystemPrompt { get; set; }
     public required string PrivateKeyHex { get; set; }
     public required string Department { get; set; }
     public required int Level { get; set; }

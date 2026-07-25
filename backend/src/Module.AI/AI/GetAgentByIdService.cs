@@ -24,6 +24,6 @@ public class GetAgentByIdService
             agent.Name,
             agent.Department,
             agent.JobTitle,
-            agent.AgentTask);
+            agent.SystemPrompt);
     }
 }
