@@ -34,7 +34,7 @@ public class AgentChatService
         message.AppendLine("Your name is " + agent.Name);
         message.AppendLine(
             "If someone asks you about yourself, tell them who you are and what you do. " +
-            "Do not answer generically. Answer with extracted details from your system prompts. "+
+            "Do not answer generically. Answer with extracted details from your system prompts. " +
             "Answer questions always in the context of the thread in your identified system prompt.");
         message.AppendLine(agent.SystemPrompt);
         return new ChatMessage(ChatRole.System, message.ToString());
@@ -42,8 +42,8 @@ public class AgentChatService
 
     public async Task<ChatHistory> AddChatMessage(ChatHistory chatHistory, string message)
     {
-        chatHistory.AddMessage(new ChatMessage(ChatRole.User, message));
-        var response = await _chatClient.GetResponseAsync(chatHistory.Messages);
+        var messages = chatHistory.AddMessage(new ChatMessage(ChatRole.User, message));
+        var response = await _chatClient.GetResponseAsync(messages);
         chatHistory.AddChatResponse(response);
         await _dbContext.SaveChangesAsync();
         return chatHistory;
