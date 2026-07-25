@@ -24,7 +24,7 @@ public class SupervisorWorkflows : IClassFixture<WebApplicationFactory<Program>>
         var onboarding = GetSupervisorOnboarding();
         var supervisor = onboarding.Agent;
         var analyzeTask = new AnalyzeTask(onboarding.ThreadId, supervisor.SupervisorId, supervisor.AgentId,
-            supervisor.SystemPrompt);
+            supervisor.AgentTask);
         var chatHistory = await _supervisorChatService.DefineEmployees(analyzeTask);
 
         Assert.True(_supervisorChatService.TryGetResponse(chatHistory, out var response));
@@ -61,7 +61,7 @@ public class SupervisorWorkflows : IClassFixture<WebApplicationFactory<Program>>
             JobTitle = toRecruit.JobTitle,
             Level = 1,
             JobDescription = toRecruit.JobDescription,
-            SystemPrompt = toRecruit.SystemPrompt,
+            AgentTask = toRecruit.SystemPrompt,
             PrivateKeyHex = "",
             Department = toRecruit.Department.ToString(),
             SupervisorId = toRecruit.SupervisorId,

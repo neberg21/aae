@@ -20,7 +20,7 @@ public class AgentChatService
         if (!chatHistory.Messages.Any())
         {
             var agent = _dbContext.Agents.First(a => a.AgentId == chatHistory.ChattingWith);
-            chatHistory.AddMessage(new ChatMessage(ChatRole.System, agent.SystemPrompt));
+            chatHistory.AddMessage(new ChatMessage(ChatRole.System, agent.AgentTask));
             chatHistory.AddMessage(new ChatMessage(ChatRole.System, "Dein Name ist: " + agent.Name));
             chatHistory.AddMessage(new ChatMessage(ChatRole.System,
                 "Wenn dich jemand etwas über sich fragt, sag ihm, wer du bist und was du machst. Antworte nicht genrisch. Antworte mit extrahierten Details aus deinen Systemprompts."));

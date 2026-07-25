@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using Microsoft.Extensions.AI;
 using Module.AI.AI;
 using Module.AI.Persistence;
@@ -22,14 +23,10 @@ public partial class HelgaChatService
     public async Task<ChatHistory> Recruit(JobApplication jobApplication)
     {
         var helga = await _coreAgentService.GetHelga();
-        var systemPrompt = helga.SystemPrompt;
+        var systemPrompt = helga.AgentTask;
         var chatMessages = new List<ChatMessage>
         {
-            new(ChatRole.System, systemPrompt),
-            new(ChatRole.System, $"This is the thread id: {jobApplication.ThreadId}"),
-            new(ChatRole.System, $"This is the supervisor id: {jobApplication.SupervisorId}"),
-            new(ChatRole.System, $"This is the agent id: {jobApplication.AgentId}"),
-            new(ChatRole.System, "Wenn dich jemand etwas über sich fragt, sag ihm, wer du bist und was du machst. Antworte nicht genrisch. Antworte mit extrahierten Details aus deinen Systemprompts."),
+            CreateSystemPrompt(systemPrompt, jobApplication),
             new(ChatRole.User, jobApplication.Message)
         };
         var response = await _chatClient.GetResponseAsync(chatMessages);
@@ -42,6 +39,17 @@ public partial class HelgaChatService
         _dbContext.ChatHistories.Add(chatHistory);
         await _dbContext.SaveChangesAsync();
         return chatHistory;
+    }
+
+    private ChatMessage CreateSystemPrompt(string systemPrompt, JobApplication jobApplication)
+    {
+        var message = new StringBuilder();
+        message.AppendLine(systemPrompt);
+        message.AppendLine($"This is the thread id: {jobApplication.ThreadId}");
+        message.AppendLine($"This is the supervisor id: {jobApplication.SupervisorId}");
+        message.AppendLine($"This is the agent id: {jobApplication.AgentId}");
+
+        return new(ChatRole.System, message.ToString());
     }
 
     public bool TryGetResponse(ChatHistory history, [NotNullWhen(true)] out Recruitment? response) =>

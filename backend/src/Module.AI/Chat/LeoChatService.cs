@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using Microsoft.Extensions.AI;
 using Module.AI.AI;
 using Module.AI.Persistence;
@@ -22,14 +23,11 @@ public partial class LeoChatService
     public async Task<ChatHistory> CreateVision(string initialMessage)
     {
         var leo = await _coreAgentService.GetLeo();
-        var systemPrompt = leo.SystemPrompt;
+        var systemPrompt = leo.AgentTask;
         var threadId = Guid.CreateVersion7().ToString("N")[..12];
         var chatMessages = new List<ChatMessage>
         {
-            new(ChatRole.System, systemPrompt),
-            new(ChatRole.System, $"This is the thread id: {threadId}"),
-            new(ChatRole.System,
-                "Wenn dich jemand etwas über sich fragt, sag ihm, wer du bist und was du machst. Antworte nicht genrisch. Antworte mit extrahierten Details aus deinen Systemprompts."),
+            CreateSystemPrompt(systemPrompt, threadId),
             new(ChatRole.User, initialMessage)
         };
         var response = await _chatClient.GetResponseAsync(chatMessages);
@@ -37,6 +35,15 @@ public partial class LeoChatService
         _dbContext.ChatHistories.Add(history);
         await _dbContext.SaveChangesAsync();
         return history;
+    }
+
+    private ChatMessage CreateSystemPrompt(string systemPrompt, string threadId)
+    {
+        var message = new StringBuilder(systemPrompt);
+
+        message.AppendLine($"This is the thread id: {threadId}");
+
+        return new(ChatRole.System, message.ToString());
     }
 
     public async Task<ChatHistory> AnswerQuestions(ChatHistory history, string answer)

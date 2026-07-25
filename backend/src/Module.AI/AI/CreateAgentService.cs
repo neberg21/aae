@@ -53,7 +53,7 @@ public class CreateAgentService
             AgentId = request.AgentId,
             JobTitle = request.JobTitle,
             JobDescription = request.JobDescription,
-            SystemPrompt = request.SystemPrompt,
+            AgentTask = request.SystemPrompt,
             Department = request.Department,
             Level = supervisor.Level + 1,
             SupervisorId = request.SupervisorId,
