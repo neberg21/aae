@@ -28,6 +28,8 @@ public partial class LeoChatService
         {
             new(ChatRole.System, systemPrompt),
             new(ChatRole.System, $"This is the thread id: {threadId}"),
+            new(ChatRole.System,
+                "Wenn dich jemand etwas über sich fragt, sag ihm, wer du bist und was du machst. Antworte nicht genrisch. Antworte mit extrahierten Details aus deinen Systemprompts."),
             new(ChatRole.User, initialMessage)
         };
         var response = await _chatClient.GetResponseAsync(chatMessages);

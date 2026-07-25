@@ -29,6 +29,7 @@ public partial class HelgaChatService
             new(ChatRole.System, $"This is the thread id: {jobApplication.ThreadId}"),
             new(ChatRole.System, $"This is the supervisor id: {jobApplication.SupervisorId}"),
             new(ChatRole.System, $"This is the agent id: {jobApplication.AgentId}"),
+            new(ChatRole.System, "Wenn dich jemand etwas über sich fragt, sag ihm, wer du bist und was du machst. Antworte nicht genrisch. Antworte mit extrahierten Details aus deinen Systemprompts."),
             new(ChatRole.User, jobApplication.Message)
         };
         var response = await _chatClient.GetResponseAsync(chatMessages);
