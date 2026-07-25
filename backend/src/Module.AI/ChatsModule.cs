@@ -50,16 +50,18 @@ public class ChatsModule : IModule
 
         endpoints.MapGet("/dashboard", (ChannelDashboard dashboard) => Results.Ok((object?)dashboard))
             .Produces<ChannelDashboard>();
-        endpoints.MapPost("", CreateChatMessage);
+        endpoints.MapPost("", CreateChatMessage)
+            .Produces<CreateAgentChatResponse>();
         endpoints.MapPost("/actions/create-vision", CreateVision)
             .Produces<CreateVisionResponse>();
         endpoints.MapPost("/actions/recruit-employee", RecruitEmployee)
             .Produces<RecruitEmployeeResponse>();
     }
 
-    private Task<IResult> CreateChatMessage(HttpContext context)
+    private async Task<IResult> CreateChatMessage([FromBody] CreateAgentChatRequest request, ChatService chatService)
     {
-        throw new NotImplementedException();
+        var response = await chatService.CreateChatMessage(request);
+        return Results.Ok(response);
     }
 
     private async Task<IResult> CreateVision(
