@@ -21,6 +21,7 @@ public class ChatsModule : IModule
         services.AddHostedService<ExecuteRecruitment>();
         services.AddHostedService<ExecuteOnboarding>();
 
+        services.AddSingleton<ChannelDashboard>();
         services.AddSingleton<ExecuteVisionChannel>();
         services.AddSingleton<ExecuteRecruitmentChannel>();
         services.AddSingleton<ExecuteOnboardingChannel>();
