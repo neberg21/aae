@@ -1,31 +1,29 @@
 ﻿namespace Module.AI.Chat.Jobs;
 
-public class ChannelDashboard
+public class ChannelDashboard : Dictionary<string, int>
 {
-    private readonly Dictionary<string, int> _dashboard = new();
-
     public void Decrement<T>()
     {
         var name = Name<T>();
 
-        if (!_dashboard.TryGetValue(name, out _))
+        if (!TryGetValue(name, out _))
         {
-            _dashboard[name] = 0;
+            this[name] = 0;
         }
 
-        _dashboard[name]--;
+        this[name]--;
     }
 
     public void Increment<T>()
     {
         var name = Name<T>();
 
-        if (!_dashboard.TryGetValue(name, out _))
+        if (!TryGetValue(name, out _))
         {
-            _dashboard[name] = 0;
+            this[name] = 0;
         }
 
-        _dashboard[name]++;
+        this[name]++;
     }
 
     private static string Name<T>()
