@@ -6,11 +6,30 @@ public class ChannelDashboard
 
     public void Decrement<T>()
     {
-        _dashboard[typeof(T).Name]--;
+        var name = Name<T>();
+
+        if (!_dashboard.TryGetValue(name, out _))
+        {
+            _dashboard[name] = 0;
+        }
+
+        _dashboard[name]--;
     }
 
     public void Increment<T>()
     {
-        _dashboard[typeof(T).Name]++;
+        var name = Name<T>();
+
+        if (!_dashboard.TryGetValue(name, out _))
+        {
+            _dashboard[name] = 0;
+        }
+
+        _dashboard[name]++;
+    }
+
+    private static string Name<T>()
+    {
+        return typeof(T).Name;
     }
 }
